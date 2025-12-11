@@ -1,7 +1,6 @@
 package http
 
 import (
-	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -42,42 +41,42 @@ func NewUserHandler(
 func (h *UserHandler) Create(c *gin.Context) {
 	var req user.CreateUserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		ErrorResponseBadRequest(c, err.Error())
 		return
 	}
 
 	response, err := h.createUseCase.Execute(c.Request.Context(), req)
 	if err != nil {
-		statusCode := http.StatusInternalServerError
 		if err == domainuser.ErrEmailExists {
-			statusCode = http.StatusConflict
+			ErrorResponseConflict(c, err.Error())
+		} else {
+			ErrorResponseInternalServerError(c, err.Error())
 		}
-		c.JSON(statusCode, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusCreated, response)
+	SuccessResponseCreated(c, "User created successfully", response)
 }
 
 // Get handles GET /users/:id
 func (h *UserHandler) Get(c *gin.Context) {
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user id"})
+		ErrorResponseBadRequest(c, "invalid user id")
 		return
 	}
 
 	response, err := h.getUseCase.Execute(c.Request.Context(), id)
 	if err != nil {
-		statusCode := http.StatusInternalServerError
 		if err == domainuser.ErrUserNotFound {
-			statusCode = http.StatusNotFound
+			ErrorResponseNotFound(c, err.Error())
+		} else {
+			ErrorResponseInternalServerError(c, err.Error())
 		}
-		c.JSON(statusCode, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, response)
+	SuccessResponseOK(c, "User retrieved successfully", response)
 }
 
 // List handles GET /users
@@ -87,104 +86,101 @@ func (h *UserHandler) List(c *gin.Context) {
 
 	response, err := h.listUseCase.Execute(c.Request.Context(), limit, offset)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		ErrorResponseInternalServerError(c, err.Error())
 		return
 	}
 
-	c.JSON(http.StatusOK, response)
+	SuccessResponseOK(c, "Users retrieved successfully", response)
 }
 
 // Update handles PUT /users/:id
 func (h *UserHandler) Update(c *gin.Context) {
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user id"})
+		ErrorResponseBadRequest(c, "invalid user id")
 		return
 	}
 
 	var req user.UpdateUserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		ErrorResponseBadRequest(c, err.Error())
 		return
 	}
 
 	response, err := h.updateUseCase.Execute(c.Request.Context(), id, req)
 	if err != nil {
-		statusCode := http.StatusInternalServerError
 		if err == domainuser.ErrUserNotFound {
-			statusCode = http.StatusNotFound
+			ErrorResponseNotFound(c, err.Error())
 		} else if err == domainuser.ErrEmailExists {
-			statusCode = http.StatusConflict
+			ErrorResponseConflict(c, err.Error())
+		} else {
+			ErrorResponseInternalServerError(c, err.Error())
 		}
-		c.JSON(statusCode, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, response)
+	SuccessResponseOK(c, "User updated successfully", response)
 }
 
 // Delete handles DELETE /users/:id
 func (h *UserHandler) Delete(c *gin.Context) {
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid user id"})
+		ErrorResponseBadRequest(c, "invalid user id")
 		return
 	}
 
 	err = h.deleteUseCase.Execute(c.Request.Context(), id)
 	if err != nil {
-		statusCode := http.StatusInternalServerError
 		if err == domainuser.ErrUserNotFound {
-			statusCode = http.StatusNotFound
+			ErrorResponseNotFound(c, err.Error())
+		} else {
+			ErrorResponseInternalServerError(c, err.Error())
 		}
-		c.JSON(statusCode, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "user deleted successfully"})
+	SuccessResponseOK(c, "User deleted successfully", nil)
 }
 
 // Register handles POST /users/register
 func (h *UserHandler) Register(c *gin.Context) {
 	var req user.CreateUserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		ErrorResponseBadRequest(c, err.Error())
 		return
 	}
 
 	response, err := h.createUseCase.Execute(c.Request.Context(), req)
 	if err != nil {
-		statusCode := http.StatusInternalServerError
 		if err == domainuser.ErrEmailExists {
-			statusCode = http.StatusConflict
+			ErrorResponseConflict(c, err.Error())
+		} else {
+			ErrorResponseInternalServerError(c, err.Error())
 		}
-		c.JSON(statusCode, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{
-		"message": "User registered successfully",
-		"user":    response,
-	})
+	SuccessResponseCreated(c, "User registered successfully", response)
 }
 
 // Login handles POST /users/login
 func (h *UserHandler) Login(c *gin.Context) {
 	var req user.LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		ErrorResponseBadRequest(c, err.Error())
 		return
 	}
 
 	response, err := h.loginUseCase.Execute(c.Request.Context(), req)
 	if err != nil {
-		statusCode := http.StatusInternalServerError
 		if err == domainuser.ErrInvalidCredentials {
-			statusCode = http.StatusUnauthorized
+			ErrorResponseUnauthorized(c, err.Error())
+		} else {
+			ErrorResponseInternalServerError(c, err.Error())
 		}
-		c.JSON(statusCode, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, response)
+	SuccessResponseOK(c, "Login successful", response)
 }

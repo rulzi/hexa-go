@@ -13,7 +13,7 @@ func AuthMiddleware(userService *domainuser.Service) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "authorization header is required"})
+			ErrorResponseUnauthorized(c, "authorization header is required")
 			c.Abort()
 			return
 		}
@@ -21,7 +21,7 @@ func AuthMiddleware(userService *domainuser.Service) gin.HandlerFunc {
 		// Extract token from "Bearer <token>"
 		parts := strings.Split(authHeader, " ")
 		if len(parts) != 2 || parts[0] != "Bearer" {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid authorization header format"})
+			ErrorResponseUnauthorized(c, "invalid authorization header format")
 			c.Abort()
 			return
 		}
@@ -31,7 +31,7 @@ func AuthMiddleware(userService *domainuser.Service) gin.HandlerFunc {
 		// Validate token
 		claims, err := userService.ValidateJWT(token)
 		if err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid or expired token"})
+			ErrorResponseUnauthorized(c, "invalid or expired token")
 			c.Abort()
 			return
 		}
@@ -47,9 +47,7 @@ func AuthMiddleware(userService *domainuser.Service) gin.HandlerFunc {
 // RecoveryMiddleware creates a middleware for panic recovery
 func RecoveryMiddleware() gin.HandlerFunc {
 	return gin.CustomRecovery(func(c *gin.Context, recovered interface{}) {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "internal server error",
-		})
+		ErrorResponseInternalServerError(c, "internal server error")
 		c.Abort()
 	})
 }

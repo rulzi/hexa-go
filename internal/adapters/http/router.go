@@ -61,6 +61,6 @@ func (r *Router) SetupRoutes(engine *gin.Engine, debug bool) {
 
 	// Health check endpoint
 	engine.GET("/health", func(c *gin.Context) {
-		c.JSON(200, gin.H{"status": "ok"})
+		SuccessResponseOK(c, "Service is healthy", gin.H{"status": "ok"})
 	})
 }
