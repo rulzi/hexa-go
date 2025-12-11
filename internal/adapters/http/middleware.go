@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/rulzi/hexa-go/internal/adapters/http/response"
 	domainuser "github.com/rulzi/hexa-go/internal/domain/user"
 )
 
@@ -13,7 +14,7 @@ func AuthMiddleware(userService *domainuser.Service) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
-			ErrorResponseUnauthorized(c, "authorization header is required")
+			response.ErrorResponseUnauthorized(c, "authorization header is required")
 			c.Abort()
 			return
 		}
@@ -21,7 +22,7 @@ func AuthMiddleware(userService *domainuser.Service) gin.HandlerFunc {
 		// Extract token from "Bearer <token>"
 		parts := strings.Split(authHeader, " ")
 		if len(parts) != 2 || parts[0] != "Bearer" {
-			ErrorResponseUnauthorized(c, "invalid authorization header format")
+			response.ErrorResponseUnauthorized(c, "invalid authorization header format")
 			c.Abort()
 			return
 		}
@@ -31,7 +32,7 @@ func AuthMiddleware(userService *domainuser.Service) gin.HandlerFunc {
 		// Validate token
 		claims, err := userService.ValidateJWT(token)
 		if err != nil {
-			ErrorResponseUnauthorized(c, "invalid or expired token")
+			response.ErrorResponseUnauthorized(c, "invalid or expired token")
 			c.Abort()
 			return
 		}
@@ -47,7 +48,7 @@ func AuthMiddleware(userService *domainuser.Service) gin.HandlerFunc {
 // RecoveryMiddleware creates a middleware for panic recovery
 func RecoveryMiddleware() gin.HandlerFunc {
 	return gin.CustomRecovery(func(c *gin.Context, recovered interface{}) {
-		ErrorResponseInternalServerError(c, "internal server error")
+		response.ErrorResponseInternalServerError(c, "internal server error")
 		c.Abort()
 	})
 }

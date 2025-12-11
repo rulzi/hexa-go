@@ -2,18 +2,21 @@ package http
 
 import (
 	"github.com/gin-gonic/gin"
+	httparticle "github.com/rulzi/hexa-go/internal/adapters/http/article"
+	"github.com/rulzi/hexa-go/internal/adapters/http/response"
+	httpuser "github.com/rulzi/hexa-go/internal/adapters/http/user"
 	domainuser "github.com/rulzi/hexa-go/internal/domain/user"
 )
 
 // Router sets up the HTTP routes
 type Router struct {
-	userHandler    *UserHandler
-	articleHandler *ArticleHandler
+	userHandler    *httpuser.Handler
+	articleHandler *httparticle.Handler
 	userService    *domainuser.Service
 }
 
 // NewRouter creates a new router
-func NewRouter(userHandler *UserHandler, articleHandler *ArticleHandler, userService *domainuser.Service) *Router {
+func NewRouter(userHandler *httpuser.Handler, articleHandler *httparticle.Handler, userService *domainuser.Service) *Router {
 	return &Router{
 		userHandler:    userHandler,
 		articleHandler: articleHandler,
@@ -61,6 +64,6 @@ func (r *Router) SetupRoutes(engine *gin.Engine, debug bool) {
 
 	// Health check endpoint
 	engine.GET("/health", func(c *gin.Context) {
-		SuccessResponseOK(c, "Service is healthy", gin.H{"status": "ok"})
+		response.SuccessResponseOK(c, "Service is healthy", gin.H{"status": "ok"})
 	})
 }

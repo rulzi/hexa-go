@@ -1,24 +1,24 @@
-package db
+package user
 
 import (
 	"context"
 	"database/sql"
 
-	"github.com/rulzi/hexa-go/internal/domain/user"
+	domainuser "github.com/rulzi/hexa-go/internal/domain/user"
 )
 
-// UserMySQLRepository is the MySQL implementation of user.Repository (driven adapter)
-type UserMySQLRepository struct {
+// MySQLRepository is the MySQL implementation of user.Repository (driven adapter)
+type MySQLRepository struct {
 	db *sql.DB
 }
 
-// NewUserMySQLRepository creates a new UserMySQLRepository
-func NewUserMySQLRepository(db *sql.DB) *UserMySQLRepository {
-	return &UserMySQLRepository{db: db}
+// NewMySQLRepository creates a new MySQLRepository
+func NewMySQLRepository(db *sql.DB) *MySQLRepository {
+	return &MySQLRepository{db: db}
 }
 
 // Create creates a new user
-func (r *UserMySQLRepository) Create(ctx context.Context, u *user.User) (*user.User, error) {
+func (r *MySQLRepository) Create(ctx context.Context, u *domainuser.User) (*domainuser.User, error) {
 	query := `
 		INSERT INTO users (name, email, password, created_at, updated_at)
 		VALUES (?, ?, ?, ?, ?)
@@ -39,14 +39,14 @@ func (r *UserMySQLRepository) Create(ctx context.Context, u *user.User) (*user.U
 }
 
 // GetByID retrieves a user by ID
-func (r *UserMySQLRepository) GetByID(ctx context.Context, id int64) (*user.User, error) {
+func (r *MySQLRepository) GetByID(ctx context.Context, id int64) (*domainuser.User, error) {
 	query := `
 		SELECT id, name, email, password, created_at, updated_at
 		FROM users
 		WHERE id = ?
 	`
 
-	u := &user.User{}
+	u := &domainuser.User{}
 	err := r.db.QueryRowContext(ctx, query, id).Scan(
 		&u.ID,
 		&u.Name,
@@ -57,7 +57,7 @@ func (r *UserMySQLRepository) GetByID(ctx context.Context, id int64) (*user.User
 	)
 
 	if err == sql.ErrNoRows {
-		return nil, user.ErrUserNotFound
+		return nil, domainuser.ErrUserNotFound
 	}
 	if err != nil {
 		return nil, err
@@ -67,14 +67,14 @@ func (r *UserMySQLRepository) GetByID(ctx context.Context, id int64) (*user.User
 }
 
 // GetByEmail retrieves a user by email
-func (r *UserMySQLRepository) GetByEmail(ctx context.Context, email string) (*user.User, error) {
+func (r *MySQLRepository) GetByEmail(ctx context.Context, email string) (*domainuser.User, error) {
 	query := `
 		SELECT id, name, email, password, created_at, updated_at
 		FROM users
 		WHERE email = ?
 	`
 
-	u := &user.User{}
+	u := &domainuser.User{}
 	err := r.db.QueryRowContext(ctx, query, email).Scan(
 		&u.ID,
 		&u.Name,
@@ -85,7 +85,7 @@ func (r *UserMySQLRepository) GetByEmail(ctx context.Context, email string) (*us
 	)
 
 	if err == sql.ErrNoRows {
-		return nil, user.ErrUserNotFound
+		return nil, domainuser.ErrUserNotFound
 	}
 	if err != nil {
 		return nil, err
@@ -95,7 +95,7 @@ func (r *UserMySQLRepository) GetByEmail(ctx context.Context, email string) (*us
 }
 
 // Update updates an existing user
-func (r *UserMySQLRepository) Update(ctx context.Context, u *user.User) (*user.User, error) {
+func (r *MySQLRepository) Update(ctx context.Context, u *domainuser.User) (*domainuser.User, error) {
 	query := `
 		UPDATE users
 		SET name = ?, email = ?, password = ?, updated_at = ?
@@ -111,7 +111,7 @@ func (r *UserMySQLRepository) Update(ctx context.Context, u *user.User) (*user.U
 }
 
 // Delete deletes a user by ID
-func (r *UserMySQLRepository) Delete(ctx context.Context, id int64) error {
+func (r *MySQLRepository) Delete(ctx context.Context, id int64) error {
 	query := `DELETE FROM users WHERE id = ?`
 
 	result, err := r.db.ExecContext(ctx, query, id)
@@ -125,14 +125,14 @@ func (r *UserMySQLRepository) Delete(ctx context.Context, id int64) error {
 	}
 
 	if rowsAffected == 0 {
-		return user.ErrUserNotFound
+		return domainuser.ErrUserNotFound
 	}
 
 	return nil
 }
 
 // List retrieves all users with pagination
-func (r *UserMySQLRepository) List(ctx context.Context, limit, offset int) ([]*user.User, error) {
+func (r *MySQLRepository) List(ctx context.Context, limit, offset int) ([]*domainuser.User, error) {
 	query := `
 		SELECT id, name, email, password, created_at, updated_at
 		FROM users
@@ -146,9 +146,9 @@ func (r *UserMySQLRepository) List(ctx context.Context, limit, offset int) ([]*u
 	}
 	defer rows.Close()
 
-	var users []*user.User
+	var users []*domainuser.User
 	for rows.Next() {
-		u := &user.User{}
+		u := &domainuser.User{}
 		err := rows.Scan(
 			&u.ID,
 			&u.Name,
@@ -171,7 +171,7 @@ func (r *UserMySQLRepository) List(ctx context.Context, limit, offset int) ([]*u
 }
 
 // Count returns the total number of users
-func (r *UserMySQLRepository) Count(ctx context.Context) (int64, error) {
+func (r *MySQLRepository) Count(ctx context.Context) (int64, error) {
 	query := `SELECT COUNT(*) FROM users`
 
 	var count int64
@@ -184,7 +184,7 @@ func (r *UserMySQLRepository) Count(ctx context.Context) (int64, error) {
 }
 
 // CreateTable creates the users table if it doesn't exist
-func (r *UserMySQLRepository) CreateTable(ctx context.Context) error {
+func (r *MySQLRepository) CreateTable(ctx context.Context) error {
 	query := `
 		CREATE TABLE IF NOT EXISTS users (
 			id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -200,3 +200,4 @@ func (r *UserMySQLRepository) CreateTable(ctx context.Context) error {
 	_, err := r.db.ExecContext(ctx, query)
 	return err
 }
+

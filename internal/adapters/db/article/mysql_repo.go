@@ -1,24 +1,24 @@
-package db
+package article
 
 import (
 	"context"
 	"database/sql"
 
-	"github.com/rulzi/hexa-go/internal/domain/article"
+	domainarticle "github.com/rulzi/hexa-go/internal/domain/article"
 )
 
-// ArticleMySQLRepository is the MySQL implementation of article.Repository (driven adapter)
-type ArticleMySQLRepository struct {
+// MySQLRepository is the MySQL implementation of article.Repository (driven adapter)
+type MySQLRepository struct {
 	db *sql.DB
 }
 
-// NewArticleMySQLRepository creates a new ArticleMySQLRepository
-func NewArticleMySQLRepository(db *sql.DB) *ArticleMySQLRepository {
-	return &ArticleMySQLRepository{db: db}
+// NewMySQLRepository creates a new MySQLRepository
+func NewMySQLRepository(db *sql.DB) *MySQLRepository {
+	return &MySQLRepository{db: db}
 }
 
 // Create creates a new article
-func (r *ArticleMySQLRepository) Create(ctx context.Context, a *article.Article) (*article.Article, error) {
+func (r *MySQLRepository) Create(ctx context.Context, a *domainarticle.Article) (*domainarticle.Article, error) {
 	query := `
 		INSERT INTO articles (title, content, author_id, created_at, updated_at)
 		VALUES (?, ?, ?, ?, ?)
@@ -39,14 +39,14 @@ func (r *ArticleMySQLRepository) Create(ctx context.Context, a *article.Article)
 }
 
 // GetByID retrieves an article by ID
-func (r *ArticleMySQLRepository) GetByID(ctx context.Context, id int64) (*article.Article, error) {
+func (r *MySQLRepository) GetByID(ctx context.Context, id int64) (*domainarticle.Article, error) {
 	query := `
 		SELECT id, title, content, author_id, created_at, updated_at
 		FROM articles
 		WHERE id = ?
 	`
 
-	a := &article.Article{}
+	a := &domainarticle.Article{}
 	err := r.db.QueryRowContext(ctx, query, id).Scan(
 		&a.ID,
 		&a.Title,
@@ -57,7 +57,7 @@ func (r *ArticleMySQLRepository) GetByID(ctx context.Context, id int64) (*articl
 	)
 
 	if err == sql.ErrNoRows {
-		return nil, article.ErrArticleNotFound
+		return nil, domainarticle.ErrArticleNotFound
 	}
 	if err != nil {
 		return nil, err
@@ -67,7 +67,7 @@ func (r *ArticleMySQLRepository) GetByID(ctx context.Context, id int64) (*articl
 }
 
 // Update updates an existing article
-func (r *ArticleMySQLRepository) Update(ctx context.Context, a *article.Article) (*article.Article, error) {
+func (r *MySQLRepository) Update(ctx context.Context, a *domainarticle.Article) (*domainarticle.Article, error) {
 	query := `
 		UPDATE articles
 		SET title = ?, content = ?, updated_at = ?
@@ -83,7 +83,7 @@ func (r *ArticleMySQLRepository) Update(ctx context.Context, a *article.Article)
 }
 
 // Delete deletes an article by ID
-func (r *ArticleMySQLRepository) Delete(ctx context.Context, id int64) error {
+func (r *MySQLRepository) Delete(ctx context.Context, id int64) error {
 	query := `DELETE FROM articles WHERE id = ?`
 
 	result, err := r.db.ExecContext(ctx, query, id)
@@ -97,14 +97,14 @@ func (r *ArticleMySQLRepository) Delete(ctx context.Context, id int64) error {
 	}
 
 	if rowsAffected == 0 {
-		return article.ErrArticleNotFound
+		return domainarticle.ErrArticleNotFound
 	}
 
 	return nil
 }
 
 // List retrieves all articles with pagination
-func (r *ArticleMySQLRepository) List(ctx context.Context, limit, offset int) ([]*article.Article, error) {
+func (r *MySQLRepository) List(ctx context.Context, limit, offset int) ([]*domainarticle.Article, error) {
 	query := `
 		SELECT id, title, content, author_id, created_at, updated_at
 		FROM articles
@@ -118,9 +118,9 @@ func (r *ArticleMySQLRepository) List(ctx context.Context, limit, offset int) ([
 	}
 	defer rows.Close()
 
-	var articles []*article.Article
+	var articles []*domainarticle.Article
 	for rows.Next() {
-		a := &article.Article{}
+		a := &domainarticle.Article{}
 		err := rows.Scan(
 			&a.ID,
 			&a.Title,
@@ -143,7 +143,7 @@ func (r *ArticleMySQLRepository) List(ctx context.Context, limit, offset int) ([
 }
 
 // ListByAuthor retrieves articles by author ID with pagination
-func (r *ArticleMySQLRepository) ListByAuthor(ctx context.Context, authorID int64, limit, offset int) ([]*article.Article, error) {
+func (r *MySQLRepository) ListByAuthor(ctx context.Context, authorID int64, limit, offset int) ([]*domainarticle.Article, error) {
 	query := `
 		SELECT id, title, content, author_id, created_at, updated_at
 		FROM articles
@@ -158,9 +158,9 @@ func (r *ArticleMySQLRepository) ListByAuthor(ctx context.Context, authorID int6
 	}
 	defer rows.Close()
 
-	var articles []*article.Article
+	var articles []*domainarticle.Article
 	for rows.Next() {
-		a := &article.Article{}
+		a := &domainarticle.Article{}
 		err := rows.Scan(
 			&a.ID,
 			&a.Title,
@@ -183,7 +183,7 @@ func (r *ArticleMySQLRepository) ListByAuthor(ctx context.Context, authorID int6
 }
 
 // Count returns the total number of articles
-func (r *ArticleMySQLRepository) Count(ctx context.Context) (int64, error) {
+func (r *MySQLRepository) Count(ctx context.Context) (int64, error) {
 	query := `SELECT COUNT(*) FROM articles`
 
 	var count int64
@@ -196,7 +196,7 @@ func (r *ArticleMySQLRepository) Count(ctx context.Context) (int64, error) {
 }
 
 // CountByAuthor returns the total number of articles by author
-func (r *ArticleMySQLRepository) CountByAuthor(ctx context.Context, authorID int64) (int64, error) {
+func (r *MySQLRepository) CountByAuthor(ctx context.Context, authorID int64) (int64, error) {
 	query := `SELECT COUNT(*) FROM articles WHERE author_id = ?`
 
 	var count int64
@@ -209,7 +209,7 @@ func (r *ArticleMySQLRepository) CountByAuthor(ctx context.Context, authorID int
 }
 
 // CreateTable creates the articles table if it doesn't exist
-func (r *ArticleMySQLRepository) CreateTable(ctx context.Context) error {
+func (r *MySQLRepository) CreateTable(ctx context.Context) error {
 	query := `
 		CREATE TABLE IF NOT EXISTS articles (
 			id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -227,4 +227,3 @@ func (r *ArticleMySQLRepository) CreateTable(ctx context.Context) error {
 	_, err := r.db.ExecContext(ctx, query)
 	return err
 }
-

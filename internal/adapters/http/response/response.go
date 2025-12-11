@@ -1,4 +1,4 @@
-package http
+package response
 
 import (
 	"net/http"
@@ -99,3 +99,4 @@ func ErrorResponseConflict(c *gin.Context, message string) {
 func ErrorResponseInternalServerError(c *gin.Context, message string) {
 	ErrorResponse(c, StatusCode.InternalServerError(), message)
 }
+

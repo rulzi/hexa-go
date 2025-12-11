@@ -1,4 +1,4 @@
-package cache
+package article
 
 import (
 	"context"
@@ -7,28 +7,28 @@ import (
 	"time"
 
 	"github.com/redis/go-redis/v9"
-	"github.com/rulzi/hexa-go/internal/application/article"
+	apparticle "github.com/rulzi/hexa-go/internal/application/article"
 )
 
-// ArticleRedisCache handles caching for articles using Redis
-type ArticleRedisCache struct {
+// RedisCache handles caching for articles using Redis
+type RedisCache struct {
 	client *redis.Client
 	ttl    time.Duration
 }
 
-// NewArticleRedisCache creates a new ArticleRedisCache
-func NewArticleRedisCache(client *redis.Client, ttl time.Duration) *ArticleRedisCache {
+// NewRedisCache creates a new RedisCache
+func NewRedisCache(client *redis.Client, ttl time.Duration) *RedisCache {
 	if ttl == 0 {
 		ttl = 5 * time.Minute // Default TTL: 5 minutes
 	}
-	return &ArticleRedisCache{
+	return &RedisCache{
 		client: client,
 		ttl:    ttl,
 	}
 }
 
 // GetArticle retrieves an article from cache by ID
-func (c *ArticleRedisCache) GetArticle(ctx context.Context, id int64) (*article.ArticleResponse, error) {
+func (c *RedisCache) GetArticle(ctx context.Context, id int64) (*apparticle.ArticleResponse, error) {
 	key := fmt.Sprintf("article:%d", id)
 
 	val, err := c.client.Get(ctx, key).Result()
@@ -39,7 +39,7 @@ func (c *ArticleRedisCache) GetArticle(ctx context.Context, id int64) (*article.
 		return nil, fmt.Errorf("failed to get from cache: %w", err)
 	}
 
-	var articleResp article.ArticleResponse
+	var articleResp apparticle.ArticleResponse
 	if err := json.Unmarshal([]byte(val), &articleResp); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal cached article: %w", err)
 	}
@@ -48,7 +48,7 @@ func (c *ArticleRedisCache) GetArticle(ctx context.Context, id int64) (*article.
 }
 
 // SetArticle stores an article in cache
-func (c *ArticleRedisCache) SetArticle(ctx context.Context, id int64, articleResp *article.ArticleResponse) error {
+func (c *RedisCache) SetArticle(ctx context.Context, id int64, articleResp *apparticle.ArticleResponse) error {
 	key := fmt.Sprintf("article:%d", id)
 
 	data, err := json.Marshal(articleResp)
@@ -64,13 +64,13 @@ func (c *ArticleRedisCache) SetArticle(ctx context.Context, id int64, articleRes
 }
 
 // DeleteArticle removes an article from cache
-func (c *ArticleRedisCache) DeleteArticle(ctx context.Context, id int64) error {
+func (c *RedisCache) DeleteArticle(ctx context.Context, id int64) error {
 	key := fmt.Sprintf("article:%d", id)
 	return c.client.Del(ctx, key).Err()
 }
 
 // GetArticleList retrieves a list of articles from cache
-func (c *ArticleRedisCache) GetArticleList(ctx context.Context, limit, offset int) (*article.ListArticlesResponse, error) {
+func (c *RedisCache) GetArticleList(ctx context.Context, limit, offset int) (*apparticle.ListArticlesResponse, error) {
 	key := fmt.Sprintf("article:list:%d:%d", limit, offset)
 
 	val, err := c.client.Get(ctx, key).Result()
@@ -81,7 +81,7 @@ func (c *ArticleRedisCache) GetArticleList(ctx context.Context, limit, offset in
 		return nil, fmt.Errorf("failed to get from cache: %w", err)
 	}
 
-	var listResp article.ListArticlesResponse
+	var listResp apparticle.ListArticlesResponse
 	if err := json.Unmarshal([]byte(val), &listResp); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal cached list: %w", err)
 	}
@@ -90,7 +90,7 @@ func (c *ArticleRedisCache) GetArticleList(ctx context.Context, limit, offset in
 }
 
 // SetArticleList stores a list of articles in cache
-func (c *ArticleRedisCache) SetArticleList(ctx context.Context, limit, offset int, listResp *article.ListArticlesResponse) error {
+func (c *RedisCache) SetArticleList(ctx context.Context, limit, offset int, listResp *apparticle.ListArticlesResponse) error {
 	key := fmt.Sprintf("article:list:%d:%d", limit, offset)
 
 	data, err := json.Marshal(listResp)
@@ -106,7 +106,7 @@ func (c *ArticleRedisCache) SetArticleList(ctx context.Context, limit, offset in
 }
 
 // InvalidateArticleList invalidates all article list caches
-func (c *ArticleRedisCache) InvalidateArticleList(ctx context.Context) error {
+func (c *RedisCache) InvalidateArticleList(ctx context.Context) error {
 	pattern := "article:list:*"
 	keys, err := c.client.Keys(ctx, pattern).Result()
 	if err != nil {

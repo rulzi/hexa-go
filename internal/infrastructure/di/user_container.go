@@ -3,9 +3,9 @@ package di
 import (
 	"database/sql"
 
-	"github.com/rulzi/hexa-go/internal/adapters/db"
-	"github.com/rulzi/hexa-go/internal/adapters/external"
-	"github.com/rulzi/hexa-go/internal/adapters/http"
+	userdb "github.com/rulzi/hexa-go/internal/adapters/db/user"
+	userexternal "github.com/rulzi/hexa-go/internal/adapters/external/user"
+	httpuser "github.com/rulzi/hexa-go/internal/adapters/http/user"
 	appuser "github.com/rulzi/hexa-go/internal/application/user"
 	domainuser "github.com/rulzi/hexa-go/internal/domain/user"
 )
@@ -21,19 +21,19 @@ type UserContainer struct {
 	UpdateUseCase *appuser.UpdateUserUseCase
 	DeleteUseCase *appuser.DeleteUserUseCase
 	LoginUseCase  *appuser.LoginUseCase
-	Handler       *http.UserHandler
+	Handler       *httpuser.Handler
 }
 
 // NewUserContainer creates a new user domain container
 func NewUserContainer(database *sql.DB, jwtSecret string, jwtExpiration int) *UserContainer {
 	// Initialize repository (driven adapter)
-	userRepo := db.NewUserMySQLRepository(database)
+	userRepo := userdb.NewMySQLRepository(database)
 
 	// Initialize domain service
 	userService := domainuser.NewService(userRepo, jwtSecret, jwtExpiration)
 
 	// Initialize external service adapter
-	emailSender := external.NewEmailSenderImpl()
+	emailSender := userexternal.NewEmailSenderImpl()
 
 	// Initialize use cases (application layer)
 	createUseCase := appuser.NewCreateUserUseCase(userRepo, userService, emailSender)
@@ -44,7 +44,7 @@ func NewUserContainer(database *sql.DB, jwtSecret string, jwtExpiration int) *Us
 	loginUseCase := appuser.NewLoginUseCase(userRepo, userService)
 
 	// Initialize HTTP handler (driving adapter)
-	userHandler := http.NewUserHandler(
+	userHandler := httpuser.NewHandler(
 		createUseCase,
 		getUseCase,
 		listUseCase,

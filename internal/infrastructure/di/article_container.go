@@ -5,9 +5,9 @@ import (
 	"time"
 
 	"github.com/redis/go-redis/v9"
-	"github.com/rulzi/hexa-go/internal/adapters/cache"
-	"github.com/rulzi/hexa-go/internal/adapters/db"
-	"github.com/rulzi/hexa-go/internal/adapters/http"
+	articlecache "github.com/rulzi/hexa-go/internal/adapters/cache/article"
+	articledb "github.com/rulzi/hexa-go/internal/adapters/db/article"
+	httparticle "github.com/rulzi/hexa-go/internal/adapters/http/article"
 	apparticle "github.com/rulzi/hexa-go/internal/application/article"
 	domainarticle "github.com/rulzi/hexa-go/internal/domain/article"
 )
@@ -21,19 +21,19 @@ type ArticleContainer struct {
 	ListUseCase   *apparticle.ListArticlesUseCase
 	UpdateUseCase *apparticle.UpdateArticleUseCase
 	DeleteUseCase *apparticle.DeleteArticleUseCase
-	Handler       *http.ArticleHandler
+	Handler       *httparticle.Handler
 }
 
 // NewArticleContainer creates a new article domain container
 func NewArticleContainer(database *sql.DB, redisClient *redis.Client) *ArticleContainer {
 	// Initialize repository (driven adapter)
-	articleRepo := db.NewArticleMySQLRepository(database)
+	articleRepo := articledb.NewMySQLRepository(database)
 
 	// Initialize cache (driven adapter)
 	var articleCache apparticle.ArticleCache
 	var articleSingleCache apparticle.ArticleSingleCache
 	if redisClient != nil {
-		cacheAdapter := cache.NewArticleRedisCache(redisClient, 5*time.Minute)
+		cacheAdapter := articlecache.NewRedisCache(redisClient, 5*time.Minute)
 		articleCache = cacheAdapter
 		articleSingleCache = cacheAdapter
 	}
@@ -49,7 +49,7 @@ func NewArticleContainer(database *sql.DB, redisClient *redis.Client) *ArticleCo
 	deleteArticleUseCase := apparticle.NewDeleteArticleUseCase(articleRepo, articleSingleCache, articleCache)
 
 	// Initialize HTTP handler (driving adapter)
-	articleHandler := http.NewArticleHandler(
+	articleHandler := httparticle.NewHandler(
 		createArticleUseCase,
 		getArticleUseCase,
 		listArticlesUseCase,
