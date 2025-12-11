@@ -45,6 +45,7 @@ func (r *Router) SetupRoutes(engine *gin.Engine, debug bool) {
 		{
 			usersProtected := protected.Group("/users")
 			{
+				usersProtected.POST("", r.userHandler.Create)
 				usersProtected.GET("", r.userHandler.List)
 				usersProtected.GET("/:id", r.userHandler.Get)
 				usersProtected.PUT("/:id", r.userHandler.Update)
