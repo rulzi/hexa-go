@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 
@@ -47,13 +46,6 @@ func main() {
 
 	// Initialize dependency injection container
 	container := di.NewContainer(db, redisClient, cfg.JWT.Secret, cfg.JWT.Expiration)
-
-	// Initialize database tables
-	ctx := context.Background()
-	if err := container.InitializeDatabase(ctx); err != nil {
-		appLogger.Fatal(fmt.Sprintf("Failed to initialize database: %v", err))
-	}
-	appLogger.Info("Database tables initialized")
 
 	// Setup Gin router
 	if cfg.Server.Debug {

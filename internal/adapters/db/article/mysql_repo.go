@@ -207,23 +207,3 @@ func (r *MySQLRepository) CountByAuthor(ctx context.Context, authorID int64) (in
 
 	return count, nil
 }
-
-// CreateTable creates the articles table if it doesn't exist
-func (r *MySQLRepository) CreateTable(ctx context.Context) error {
-	query := `
-		CREATE TABLE IF NOT EXISTS articles (
-			id BIGINT AUTO_INCREMENT PRIMARY KEY,
-			title VARCHAR(255) NOT NULL,
-			content TEXT NOT NULL,
-			author_id BIGINT NOT NULL,
-			created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-			updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-			INDEX idx_author_id (author_id),
-			INDEX idx_created_at (created_at),
-			FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE CASCADE
-		) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
-	`
-
-	_, err := r.db.ExecContext(ctx, query)
-	return err
-}

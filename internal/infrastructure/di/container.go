@@ -1,12 +1,9 @@
 package di
 
 import (
-	"context"
 	"database/sql"
 
 	"github.com/redis/go-redis/v9"
-	articledb "github.com/rulzi/hexa-go/internal/adapters/db/article"
-	userdb "github.com/rulzi/hexa-go/internal/adapters/db/user"
 	"github.com/rulzi/hexa-go/internal/adapters/http"
 	diarticle "github.com/rulzi/hexa-go/internal/infrastructure/di/article"
 	diuser "github.com/rulzi/hexa-go/internal/infrastructure/di/user"
@@ -37,21 +34,4 @@ func NewContainer(database *sql.DB, redisClient *redis.Client, jwtSecret string,
 		Article: articleContainer,
 		Router:  router,
 	}
-}
-
-// InitializeDatabase creates the necessary database tables
-func (c *Container) InitializeDatabase(ctx context.Context) error {
-	// Create users table
-	userRepo := c.User.Repo.(*userdb.MySQLRepository)
-	if err := userRepo.CreateTable(ctx); err != nil {
-		return err
-	}
-
-	// Create articles table
-	articleRepo := c.Article.Repo.(*articledb.MySQLRepository)
-	if err := articleRepo.CreateTable(ctx); err != nil {
-		return err
-	}
-
-	return nil
 }

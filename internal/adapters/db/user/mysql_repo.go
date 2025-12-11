@@ -182,22 +182,3 @@ func (r *MySQLRepository) Count(ctx context.Context) (int64, error) {
 
 	return count, nil
 }
-
-// CreateTable creates the users table if it doesn't exist
-func (r *MySQLRepository) CreateTable(ctx context.Context) error {
-	query := `
-		CREATE TABLE IF NOT EXISTS users (
-			id BIGINT AUTO_INCREMENT PRIMARY KEY,
-			name VARCHAR(255) NOT NULL,
-			email VARCHAR(255) NOT NULL UNIQUE,
-			password VARCHAR(255) NOT NULL,
-			created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-			updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-			INDEX idx_email (email)
-		) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
-	`
-
-	_, err := r.db.ExecContext(ctx, query)
-	return err
-}
-
