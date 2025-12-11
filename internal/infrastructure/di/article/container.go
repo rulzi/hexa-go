@@ -12,8 +12,8 @@ import (
 	domainarticle "github.com/rulzi/hexa-go/internal/domain/article"
 )
 
-// ArticleContainer holds all article domain dependencies
-type ArticleContainer struct {
+// Container holds all article domain dependencies
+type Container struct {
 	Repo          domainarticle.Repository
 	Service       *domainarticle.Service
 	CreateUseCase *usecase.CreateArticleUseCase
@@ -24,8 +24,8 @@ type ArticleContainer struct {
 	Handler       *httparticle.Handler
 }
 
-// NewArticleContainer creates a new article domain container
-func NewArticleContainer(database *sql.DB, redisClient *redis.Client) *ArticleContainer {
+// NewContainer creates a new article domain container
+func NewContainer(database *sql.DB, redisClient *redis.Client) *Container {
 	// Initialize repository (driven adapter)
 	articleRepo := articledb.NewMySQLRepository(database)
 
@@ -57,7 +57,7 @@ func NewArticleContainer(database *sql.DB, redisClient *redis.Client) *ArticleCo
 		deleteArticleUseCase,
 	)
 
-	return &ArticleContainer{
+	return &Container{
 		Repo:          articleRepo,
 		Service:       articleService,
 		CreateUseCase: createArticleUseCase,

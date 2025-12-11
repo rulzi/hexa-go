@@ -16,16 +16,16 @@ import (
 type Container struct {
 	DB      *sql.DB
 	Redis   *redis.Client
-	User    *diuser.UserContainer
-	Article *diarticle.ArticleContainer
+	User    *diuser.Container
+	Article *diarticle.Container
 	Router  *http.Router
 }
 
 // NewContainer creates a new dependency injection container
 func NewContainer(database *sql.DB, redisClient *redis.Client, jwtSecret string, jwtExpiration int) *Container {
 	// Initialize domain containers
-	userContainer := diuser.NewUserContainer(database, jwtSecret, jwtExpiration)
-	articleContainer := diarticle.NewArticleContainer(database, redisClient)
+	userContainer := diuser.NewContainer(database, jwtSecret, jwtExpiration)
+	articleContainer := diarticle.NewContainer(database, redisClient)
 
 	// Initialize router
 	router := http.NewRouter(userContainer.Handler, articleContainer.Handler, userContainer.Service)

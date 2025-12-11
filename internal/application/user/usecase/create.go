@@ -8,6 +8,7 @@ import (
 	domainuser "github.com/rulzi/hexa-go/internal/domain/user"
 )
 
+// EmailSender defines the interface for sending emails
 type EmailSender interface {
 	SendWelcomeEmail(ctx context.Context, email, name string) error
 }

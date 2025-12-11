@@ -10,8 +10,8 @@ import (
 	domainuser "github.com/rulzi/hexa-go/internal/domain/user"
 )
 
-// UserContainer holds all user domain dependencies
-type UserContainer struct {
+// Container holds all user domain dependencies
+type Container struct {
 	Repo          domainuser.Repository
 	Service       *domainuser.Service
 	EmailSender   usecase.EmailSender
@@ -24,8 +24,8 @@ type UserContainer struct {
 	Handler       *httpuser.Handler
 }
 
-// NewUserContainer creates a new user domain container
-func NewUserContainer(database *sql.DB, jwtSecret string, jwtExpiration int) *UserContainer {
+// NewContainer creates a new user domain container
+func NewContainer(database *sql.DB, jwtSecret string, jwtExpiration int) *Container {
 	// Initialize repository (driven adapter)
 	userRepo := userdb.NewMySQLRepository(database)
 
@@ -53,7 +53,7 @@ func NewUserContainer(database *sql.DB, jwtSecret string, jwtExpiration int) *Us
 		loginUseCase,
 	)
 
-	return &UserContainer{
+	return &Container{
 		Repo:          userRepo,
 		Service:       userService,
 		EmailSender:   emailSender,

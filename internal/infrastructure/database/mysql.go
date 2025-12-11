@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	// Import MySQL driver for database/sql
 	_ "github.com/go-sql-driver/mysql"
 )
 
