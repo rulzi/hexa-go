@@ -96,7 +96,8 @@ hexa-go/
 │   │   │   ├── article_handler.go
 │   │   │   ├── user_handler.go
 │   │   │   ├── router.go
-│   │   │   └── middleware.go
+│   │   │   ├── middleware.go
+│   │   │   └── response.go            # Standard response format
 │   │   ├── db/                        # Driven Adapter (Database)
 │   │   │   ├── article_mysql_repo.go
 │   │   │   └── user_mysql_repo.go
@@ -196,7 +197,39 @@ type ArticleHandler struct {
 func (h *ArticleHandler) Get(c *gin.Context) {
     // 1. Parse request
     // 2. Panggil use case
-    // 3. Return HTTP response
+    // 3. Return HTTP response menggunakan standar response
+    response, err := h.getUseCase.Execute(ctx, id)
+    if err != nil {
+        ErrorResponseNotFound(c, err.Error())
+        return
+    }
+    SuccessResponseOK(c, "Article retrieved successfully", response)
+}
+```
+
+**Contoh: `internal/adapters/http/response.go`**
+```go
+// StandardResponse adalah struktur response standar untuk semua endpoint
+type StandardResponse struct {
+    Status  ResponseStatus `json:"status"`  // "success" atau "error"
+    Message string         `json:"message"` // Pesan yang menjelaskan hasil
+    Data    interface{}    `json:"data,omitempty"` // Data (optional)
+}
+
+// Helper functions untuk response
+func SuccessResponseOK(c *gin.Context, message string, data interface{}) {
+    c.JSON(200, StandardResponse{
+        Status:  StatusSuccess,
+        Message: message,
+        Data:    data,
+    })
+}
+
+func ErrorResponseNotFound(c *gin.Context, message string) {
+    c.JSON(404, StandardResponse{
+        Status:  StatusError,
+        Message: message,
+    })
 }
 ```
 
@@ -392,6 +425,13 @@ curl -X POST http://localhost:8080/api/v1/users/register \
     "password": "password123"
   }'
 
+# Response:
+# {
+#   "status": "success",
+#   "message": "User registered successfully",
+#   "data": { ... }
+# }
+
 # Login
 curl -X POST http://localhost:8080/api/v1/users/login \
   -H "Content-Type: application/json" \
@@ -400,20 +440,59 @@ curl -X POST http://localhost:8080/api/v1/users/login \
     "password": "password123"
   }'
 
+# Response:
+# {
+#   "status": "success",
+#   "message": "Login successful",
+#   "data": {
+#     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+#     "user": { ... }
+#   }
+# }
+
 # Create article (dengan token JWT)
 curl -X POST http://localhost:8080/api/v1/articles \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   -d '{
     "title": "My First Article",
-    "content": "This is the content of my article"
+    "content": "This is the content of my article",
+    "author_id": 1
   }'
 
+# Response:
+# {
+#   "status": "success",
+#   "message": "Article created successfully",
+#   "data": { ... }
+# }
+
 # Get article
-curl -X GET http://localhost:8080/api/v1/articles/1
+curl -X GET http://localhost:8080/api/v1/articles/1 \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+
+# Response:
+# {
+#   "status": "success",
+#   "message": "Article retrieved successfully",
+#   "data": { ... }
+# }
 
 # List articles
-curl -X GET http://localhost:8080/api/v1/articles?limit=10&offset=0
+curl -X GET "http://localhost:8080/api/v1/articles?limit=10&offset=0" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+
+# Response:
+# {
+#   "status": "success",
+#   "message": "Articles retrieved successfully",
+#   "data": {
+#     "articles": [ ... ],
+#     "total": 100,
+#     "limit": 10,
+#     "offset": 0
+#   }
+# }
 ```
 
 ## 📡 Struktur API
@@ -434,6 +513,173 @@ curl -X GET http://localhost:8080/api/v1/articles?limit=10&offset=0
 - `GET /api/v1/articles` - List articles (with pagination)
 - `PUT /api/v1/articles/:id` - Update article (requires authentication)
 - `DELETE /api/v1/articles/:id` - Delete article (requires authentication)
+
+## 📦 Format Response Standar
+
+Semua endpoint API menggunakan format response yang standar untuk memastikan konsistensi. Format response terdiri dari tiga field utama:
+
+### Struktur Response
+
+```json
+{
+  "status": "success" | "error",
+  "message": "Pesan yang menjelaskan hasil operasi",
+  "data": {} // Optional, hanya ada pada success response
+}
+```
+
+### Success Response
+
+Response sukses memiliki `status: "success"` dan field `data` yang berisi data yang diminta:
+
+**Contoh: Get User Success (200 OK)**
+```json
+{
+  "status": "success",
+  "message": "User retrieved successfully",
+  "data": {
+    "id": 1,
+    "name": "John Doe",
+    "email": "john@example.com",
+    "created_at": "2024-01-01T00:00:00Z",
+    "updated_at": "2024-01-01T00:00:00Z"
+  }
+}
+```
+
+**Contoh: Create Article Success (201 Created)**
+```json
+{
+  "status": "success",
+  "message": "Article created successfully",
+  "data": {
+    "id": 1,
+    "title": "My First Article",
+    "content": "This is the content",
+    "author_id": 1,
+    "created_at": "2024-01-01T00:00:00Z",
+    "updated_at": "2024-01-01T00:00:00Z"
+  }
+}
+```
+
+**Contoh: Delete Success (200 OK)**
+```json
+{
+  "status": "success",
+  "message": "Article deleted successfully",
+  "data": null
+}
+```
+
+### Error Response
+
+Response error memiliki `status: "error"` dan tidak memiliki field `data`:
+
+**Contoh: Not Found (404)**
+```json
+{
+  "status": "error",
+  "message": "User not found"
+}
+```
+
+**Contoh: Bad Request (400)**
+```json
+{
+  "status": "error",
+  "message": "invalid user id"
+}
+```
+
+**Contoh: Unauthorized (401)**
+```json
+{
+  "status": "error",
+  "message": "authorization header is required"
+}
+```
+
+**Contoh: Conflict (409)**
+```json
+{
+  "status": "error",
+  "message": "email already exists"
+}
+```
+
+**Contoh: Internal Server Error (500)**
+```json
+{
+  "status": "error",
+  "message": "internal server error"
+}
+```
+
+### Standarisasi Status Code
+
+Aplikasi menggunakan standar HTTP status codes yang konsisten:
+
+#### Success Status Codes
+- `200 OK` - Request berhasil (GET, PUT, DELETE)
+- `201 Created` - Resource berhasil dibuat (POST)
+- `202 Accepted` - Request diterima untuk diproses
+- `204 No Content` - Request berhasil tanpa response body
+
+#### Client Error Status Codes
+- `400 Bad Request` - Request tidak valid (validation error, invalid parameter)
+- `401 Unauthorized` - Tidak terautentikasi (missing/invalid token)
+- `403 Forbidden` - Tidak memiliki akses
+- `404 Not Found` - Resource tidak ditemukan
+- `405 Method Not Allowed` - HTTP method tidak diizinkan
+- `409 Conflict` - Konflik dengan state saat ini (e.g., duplicate email)
+- `422 Unprocessable Entity` - Request valid tetapi tidak dapat diproses
+- `429 Too Many Requests` - Rate limit terlampaui
+
+#### Server Error Status Codes
+- `500 Internal Server Error` - Error server internal
+- `502 Bad Gateway` - Error dari upstream server
+- `503 Service Unavailable` - Service tidak tersedia
+
+### Contoh Penggunaan
+
+**Success Response dengan Data:**
+```bash
+curl -X GET http://localhost:8080/api/v1/users/1 \
+  -H "Authorization: Bearer YOUR_TOKEN"
+
+# Response:
+{
+  "status": "success",
+  "message": "User retrieved successfully",
+  "data": { ... }
+}
+```
+
+**Error Response:**
+```bash
+curl -X GET http://localhost:8080/api/v1/users/999 \
+  -H "Authorization: Bearer YOUR_TOKEN"
+
+# Response (404):
+{
+  "status": "error",
+  "message": "User not found"
+}
+```
+
+**Validation Error:**
+```bash
+curl -X POST http://localhost:8080/api/v1/users/register \
+  -H "Content-Type: application/json" \
+  -d '{"name": "John"}'
+
+# Response (400):
+{
+  "status": "error",
+  "message": "Key: 'CreateUserRequest.Email' Error:Field validation for 'Email' failed on the 'required' tag"
+}
+```
 
 ## 🎯 Prinsip-Prinsip Hexagonal Architecture dalam Proyek Ini
 
