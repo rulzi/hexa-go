@@ -1,8 +1,9 @@
-package user
+package usecase
 
 import (
 	"context"
 
+	"github.com/rulzi/hexa-go/internal/application/user/dto"
 	domainuser "github.com/rulzi/hexa-go/internal/domain/user"
 )
 
@@ -19,7 +20,7 @@ func NewListUsersUseCase(userRepo domainuser.Repository) *ListUsersUseCase {
 }
 
 // Execute executes the list users use case
-func (uc *ListUsersUseCase) Execute(ctx context.Context, limit, offset int) (*ListUsersResponse, error) {
+func (uc *ListUsersUseCase) Execute(ctx context.Context, limit, offset int) (*dto.ListUsersResponse, error) {
 	// Default pagination
 	if limit <= 0 {
 		limit = 10
@@ -41,9 +42,9 @@ func (uc *ListUsersUseCase) Execute(ctx context.Context, limit, offset int) (*Li
 	}
 
 	// Convert to response DTOs
-	userResponses := make([]UserResponse, len(users))
+	userResponses := make([]dto.UserResponse, len(users))
 	for i, u := range users {
-		userResponses[i] = UserResponse{
+		userResponses[i] = dto.UserResponse{
 			ID:        u.ID,
 			Name:      u.Name,
 			Email:     u.Email,
@@ -52,7 +53,7 @@ func (uc *ListUsersUseCase) Execute(ctx context.Context, limit, offset int) (*Li
 		}
 	}
 
-	return &ListUsersResponse{
+	return &dto.ListUsersResponse{
 		Users:  userResponses,
 		Total:  total,
 		Limit:  limit,

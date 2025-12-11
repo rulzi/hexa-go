@@ -4,27 +4,28 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	apparticle "github.com/rulzi/hexa-go/internal/application/article"
-	domainarticle "github.com/rulzi/hexa-go/internal/domain/article"
 	"github.com/rulzi/hexa-go/internal/adapters/http/response"
+	"github.com/rulzi/hexa-go/internal/application/article/dto"
+	"github.com/rulzi/hexa-go/internal/application/article/usecase"
+	domainarticle "github.com/rulzi/hexa-go/internal/domain/article"
 )
 
 // Handler handles HTTP requests for articles
 type Handler struct {
-	createUseCase *apparticle.CreateArticleUseCase
-	getUseCase    *apparticle.GetArticleUseCase
-	listUseCase   *apparticle.ListArticlesUseCase
-	updateUseCase *apparticle.UpdateArticleUseCase
-	deleteUseCase *apparticle.DeleteArticleUseCase
+	createUseCase *usecase.CreateArticleUseCase
+	getUseCase    *usecase.GetArticleUseCase
+	listUseCase   *usecase.ListArticlesUseCase
+	updateUseCase *usecase.UpdateArticleUseCase
+	deleteUseCase *usecase.DeleteArticleUseCase
 }
 
 // NewHandler creates a new Handler
 func NewHandler(
-	createUseCase *apparticle.CreateArticleUseCase,
-	getUseCase *apparticle.GetArticleUseCase,
-	listUseCase *apparticle.ListArticlesUseCase,
-	updateUseCase *apparticle.UpdateArticleUseCase,
-	deleteUseCase *apparticle.DeleteArticleUseCase,
+	createUseCase *usecase.CreateArticleUseCase,
+	getUseCase *usecase.GetArticleUseCase,
+	listUseCase *usecase.ListArticlesUseCase,
+	updateUseCase *usecase.UpdateArticleUseCase,
+	deleteUseCase *usecase.DeleteArticleUseCase,
 ) *Handler {
 	return &Handler{
 		createUseCase: createUseCase,
@@ -37,7 +38,7 @@ func NewHandler(
 
 // Create handles POST /articles
 func (h *Handler) Create(c *gin.Context) {
-	var req apparticle.CreateArticleRequest
+	var req dto.CreateArticleRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.ErrorResponseBadRequest(c, err.Error())
 		return
@@ -95,7 +96,7 @@ func (h *Handler) Update(c *gin.Context) {
 		return
 	}
 
-	var req apparticle.UpdateArticleRequest
+	var req dto.UpdateArticleRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.ErrorResponseBadRequest(c, err.Error())
 		return
@@ -134,4 +135,3 @@ func (h *Handler) Delete(c *gin.Context) {
 
 	response.SuccessResponseOK(c, "Article deleted successfully", nil)
 }
-

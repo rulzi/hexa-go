@@ -1,8 +1,9 @@
-package user
+package usecase
 
 import (
 	"context"
 
+	"github.com/rulzi/hexa-go/internal/application/user/dto"
 	domainuser "github.com/rulzi/hexa-go/internal/domain/user"
 )
 
@@ -23,20 +24,8 @@ func NewLoginUseCase(
 	}
 }
 
-// LoginRequest represents the request DTO for login
-type LoginRequest struct {
-	Email    string `json:"email" binding:"required,email"`
-	Password string `json:"password" binding:"required"`
-}
-
-// LoginResponse represents the response DTO for login
-type LoginResponse struct {
-	Token string       `json:"token"`
-	User  UserResponse `json:"user"`
-}
-
 // Execute executes the login use case
-func (uc *LoginUseCase) Execute(ctx context.Context, req LoginRequest) (*LoginResponse, error) {
+func (uc *LoginUseCase) Execute(ctx context.Context, req dto.LoginRequest) (*dto.LoginResponse, error) {
 	// Get user by email
 	userEntity, err := uc.userRepo.GetByEmail(ctx, req.Email)
 	if err != nil {
@@ -55,9 +44,9 @@ func (uc *LoginUseCase) Execute(ctx context.Context, req LoginRequest) (*LoginRe
 	}
 
 	// Return response
-	return &LoginResponse{
+	return &dto.LoginResponse{
 		Token: token,
-		User: UserResponse{
+		User: dto.UserResponse{
 			ID:        userEntity.ID,
 			Name:      userEntity.Name,
 			Email:     userEntity.Email,
@@ -66,4 +55,3 @@ func (uc *LoginUseCase) Execute(ctx context.Context, req LoginRequest) (*LoginRe
 		},
 	}, nil
 }
-

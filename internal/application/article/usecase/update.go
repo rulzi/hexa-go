@@ -1,9 +1,10 @@
-package article
+package usecase
 
 import (
 	"context"
 	"time"
 
+	"github.com/rulzi/hexa-go/internal/application/article/dto"
 	domainarticle "github.com/rulzi/hexa-go/internal/domain/article"
 )
 
@@ -31,7 +32,7 @@ func NewUpdateArticleUseCase(
 }
 
 // Execute executes the update article use case
-func (uc *UpdateArticleUseCase) Execute(ctx context.Context, id int64, req UpdateArticleRequest) (*ArticleResponse, error) {
+func (uc *UpdateArticleUseCase) Execute(ctx context.Context, id int64, req dto.UpdateArticleRequest) (*dto.ArticleResponse, error) {
 	// Get existing article
 	existingArticle, err := uc.articleRepo.GetByID(ctx, id)
 	if err != nil {
@@ -58,7 +59,7 @@ func (uc *UpdateArticleUseCase) Execute(ctx context.Context, id int64, req Updat
 		return nil, err
 	}
 
-	response := &ArticleResponse{
+	response := &dto.ArticleResponse{
 		ID:        updatedArticle.ID,
 		Title:     updatedArticle.Title,
 		Content:   updatedArticle.Content,
@@ -77,4 +78,3 @@ func (uc *UpdateArticleUseCase) Execute(ctx context.Context, id int64, req Updat
 
 	return response, nil
 }
-

@@ -1,11 +1,16 @@
-package user
+package usecase
 
 import (
 	"context"
 	"time"
 
+	"github.com/rulzi/hexa-go/internal/application/user/dto"
 	domainuser "github.com/rulzi/hexa-go/internal/domain/user"
 )
+
+type EmailSender interface {
+	SendWelcomeEmail(ctx context.Context, email, name string) error
+}
 
 // CreateUserUseCase handles the creation of a new user
 type CreateUserUseCase struct {
@@ -28,7 +33,7 @@ func NewCreateUserUseCase(
 }
 
 // Execute executes the create user use case
-func (uc *CreateUserUseCase) Execute(ctx context.Context, req CreateUserRequest) (*UserResponse, error) {
+func (uc *CreateUserUseCase) Execute(ctx context.Context, req dto.CreateUserRequest) (*dto.UserResponse, error) {
 	// Check if email already exists
 	existingUser, err := uc.userRepo.GetByEmail(ctx, req.Email)
 	if err == nil && existingUser != nil {
@@ -65,7 +70,7 @@ func (uc *CreateUserUseCase) Execute(ctx context.Context, req CreateUserRequest)
 	_ = uc.emailSender.SendWelcomeEmail(ctx, createdUser.Email, createdUser.Name)
 
 	// Return response DTO
-	return &UserResponse{
+	return &dto.UserResponse{
 		ID:        createdUser.ID,
 		Name:      createdUser.Name,
 		Email:     createdUser.Email,

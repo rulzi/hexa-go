@@ -1,9 +1,10 @@
-package user
+package usecase
 
 import (
 	"context"
 	"time"
 
+	"github.com/rulzi/hexa-go/internal/application/user/dto"
 	domainuser "github.com/rulzi/hexa-go/internal/domain/user"
 )
 
@@ -25,7 +26,7 @@ func NewUpdateUserUseCase(
 }
 
 // Execute executes the update user use case
-func (uc *UpdateUserUseCase) Execute(ctx context.Context, id int64, req UpdateUserRequest) (*UserResponse, error) {
+func (uc *UpdateUserUseCase) Execute(ctx context.Context, id int64, req dto.UpdateUserRequest) (*dto.UserResponse, error) {
 	// Get existing user
 	existingUser, err := uc.userRepo.GetByID(ctx, id)
 	if err != nil {
@@ -69,7 +70,7 @@ func (uc *UpdateUserUseCase) Execute(ctx context.Context, id int64, req UpdateUs
 		return nil, err
 	}
 
-	return &UserResponse{
+	return &dto.UserResponse{
 		ID:        updatedUser.ID,
 		Name:      updatedUser.Name,
 		Email:     updatedUser.Email,

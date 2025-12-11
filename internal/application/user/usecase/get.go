@@ -1,8 +1,9 @@
-package user
+package usecase
 
 import (
 	"context"
 
+	"github.com/rulzi/hexa-go/internal/application/user/dto"
 	domainuser "github.com/rulzi/hexa-go/internal/domain/user"
 )
 
@@ -19,7 +20,7 @@ func NewGetUserUseCase(userRepo domainuser.Repository) *GetUserUseCase {
 }
 
 // Execute executes the get user use case
-func (uc *GetUserUseCase) Execute(ctx context.Context, id int64) (*UserResponse, error) {
+func (uc *GetUserUseCase) Execute(ctx context.Context, id int64) (*dto.UserResponse, error) {
 	userEntity, err := uc.userRepo.GetByID(ctx, id)
 	if err != nil {
 		return nil, err
@@ -29,7 +30,7 @@ func (uc *GetUserUseCase) Execute(ctx context.Context, id int64) (*UserResponse,
 		return nil, domainuser.ErrUserNotFound
 	}
 
-	return &UserResponse{
+	return &dto.UserResponse{
 		ID:        userEntity.ID,
 		Name:      userEntity.Name,
 		Email:     userEntity.Email,

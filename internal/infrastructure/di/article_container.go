@@ -8,7 +8,7 @@ import (
 	articlecache "github.com/rulzi/hexa-go/internal/adapters/cache/article"
 	articledb "github.com/rulzi/hexa-go/internal/adapters/db/article"
 	httparticle "github.com/rulzi/hexa-go/internal/adapters/http/article"
-	apparticle "github.com/rulzi/hexa-go/internal/application/article"
+	"github.com/rulzi/hexa-go/internal/application/article/usecase"
 	domainarticle "github.com/rulzi/hexa-go/internal/domain/article"
 )
 
@@ -16,11 +16,11 @@ import (
 type ArticleContainer struct {
 	Repo          domainarticle.Repository
 	Service       *domainarticle.Service
-	CreateUseCase *apparticle.CreateArticleUseCase
-	GetUseCase    *apparticle.GetArticleUseCase
-	ListUseCase   *apparticle.ListArticlesUseCase
-	UpdateUseCase *apparticle.UpdateArticleUseCase
-	DeleteUseCase *apparticle.DeleteArticleUseCase
+	CreateUseCase *usecase.CreateArticleUseCase
+	GetUseCase    *usecase.GetArticleUseCase
+	ListUseCase   *usecase.ListArticlesUseCase
+	UpdateUseCase *usecase.UpdateArticleUseCase
+	DeleteUseCase *usecase.DeleteArticleUseCase
 	Handler       *httparticle.Handler
 }
 
@@ -30,8 +30,8 @@ func NewArticleContainer(database *sql.DB, redisClient *redis.Client) *ArticleCo
 	articleRepo := articledb.NewMySQLRepository(database)
 
 	// Initialize cache (driven adapter)
-	var articleCache apparticle.ArticleCache
-	var articleSingleCache apparticle.ArticleSingleCache
+	var articleCache usecase.ArticleCache
+	var articleSingleCache usecase.ArticleSingleCache
 	if redisClient != nil {
 		cacheAdapter := articlecache.NewRedisCache(redisClient, 5*time.Minute)
 		articleCache = cacheAdapter
@@ -42,11 +42,11 @@ func NewArticleContainer(database *sql.DB, redisClient *redis.Client) *ArticleCo
 	articleService := domainarticle.NewService(articleRepo)
 
 	// Initialize use cases (application layer)
-	createArticleUseCase := apparticle.NewCreateArticleUseCase(articleRepo, articleService, articleCache)
-	getArticleUseCase := apparticle.NewGetArticleUseCase(articleRepo, articleSingleCache)
-	listArticlesUseCase := apparticle.NewListArticlesUseCase(articleRepo, articleCache)
-	updateArticleUseCase := apparticle.NewUpdateArticleUseCase(articleRepo, articleService, articleSingleCache, articleCache)
-	deleteArticleUseCase := apparticle.NewDeleteArticleUseCase(articleRepo, articleSingleCache, articleCache)
+	createArticleUseCase := usecase.NewCreateArticleUseCase(articleRepo, articleService, articleCache)
+	getArticleUseCase := usecase.NewGetArticleUseCase(articleRepo, articleSingleCache)
+	listArticlesUseCase := usecase.NewListArticlesUseCase(articleRepo, articleCache)
+	updateArticleUseCase := usecase.NewUpdateArticleUseCase(articleRepo, articleService, articleSingleCache, articleCache)
+	deleteArticleUseCase := usecase.NewDeleteArticleUseCase(articleRepo, articleSingleCache, articleCache)
 
 	// Initialize HTTP handler (driving adapter)
 	articleHandler := httparticle.NewHandler(

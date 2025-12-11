@@ -5,28 +5,29 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/rulzi/hexa-go/internal/adapters/http/response"
-	appuser "github.com/rulzi/hexa-go/internal/application/user"
+	"github.com/rulzi/hexa-go/internal/application/user/dto"
+	"github.com/rulzi/hexa-go/internal/application/user/usecase"
 	domainuser "github.com/rulzi/hexa-go/internal/domain/user"
 )
 
 // Handler handles HTTP requests for users
 type Handler struct {
-	createUseCase *appuser.CreateUserUseCase
-	getUseCase    *appuser.GetUserUseCase
-	listUseCase   *appuser.ListUsersUseCase
-	updateUseCase *appuser.UpdateUserUseCase
-	deleteUseCase *appuser.DeleteUserUseCase
-	loginUseCase  *appuser.LoginUseCase
+	createUseCase *usecase.CreateUserUseCase
+	getUseCase    *usecase.GetUserUseCase
+	listUseCase   *usecase.ListUsersUseCase
+	updateUseCase *usecase.UpdateUserUseCase
+	deleteUseCase *usecase.DeleteUserUseCase
+	loginUseCase  *usecase.LoginUseCase
 }
 
 // NewHandler creates a new Handler
 func NewHandler(
-	createUseCase *appuser.CreateUserUseCase,
-	getUseCase *appuser.GetUserUseCase,
-	listUseCase *appuser.ListUsersUseCase,
-	updateUseCase *appuser.UpdateUserUseCase,
-	deleteUseCase *appuser.DeleteUserUseCase,
-	loginUseCase *appuser.LoginUseCase,
+	createUseCase *usecase.CreateUserUseCase,
+	getUseCase *usecase.GetUserUseCase,
+	listUseCase *usecase.ListUsersUseCase,
+	updateUseCase *usecase.UpdateUserUseCase,
+	deleteUseCase *usecase.DeleteUserUseCase,
+	loginUseCase *usecase.LoginUseCase,
 ) *Handler {
 	return &Handler{
 		createUseCase: createUseCase,
@@ -40,7 +41,7 @@ func NewHandler(
 
 // Create handles POST /users
 func (h *Handler) Create(c *gin.Context) {
-	var req appuser.CreateUserRequest
+	var req dto.CreateUserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.ErrorResponseBadRequest(c, err.Error())
 		return
@@ -102,7 +103,7 @@ func (h *Handler) Update(c *gin.Context) {
 		return
 	}
 
-	var req appuser.UpdateUserRequest
+	var req dto.UpdateUserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.ErrorResponseBadRequest(c, err.Error())
 		return
@@ -146,7 +147,7 @@ func (h *Handler) Delete(c *gin.Context) {
 
 // Register handles POST /users/register
 func (h *Handler) Register(c *gin.Context) {
-	var req appuser.CreateUserRequest
+	var req dto.CreateUserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.ErrorResponseBadRequest(c, err.Error())
 		return
@@ -167,7 +168,7 @@ func (h *Handler) Register(c *gin.Context) {
 
 // Login handles POST /users/login
 func (h *Handler) Login(c *gin.Context) {
-	var req appuser.LoginRequest
+	var req dto.LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.ErrorResponseBadRequest(c, err.Error())
 		return

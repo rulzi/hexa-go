@@ -6,7 +6,7 @@ import (
 	userdb "github.com/rulzi/hexa-go/internal/adapters/db/user"
 	userexternal "github.com/rulzi/hexa-go/internal/adapters/external/user"
 	httpuser "github.com/rulzi/hexa-go/internal/adapters/http/user"
-	appuser "github.com/rulzi/hexa-go/internal/application/user"
+	"github.com/rulzi/hexa-go/internal/application/user/usecase"
 	domainuser "github.com/rulzi/hexa-go/internal/domain/user"
 )
 
@@ -14,13 +14,13 @@ import (
 type UserContainer struct {
 	Repo          domainuser.Repository
 	Service       *domainuser.Service
-	EmailSender   appuser.EmailSender
-	CreateUseCase *appuser.CreateUserUseCase
-	GetUseCase    *appuser.GetUserUseCase
-	ListUseCase   *appuser.ListUsersUseCase
-	UpdateUseCase *appuser.UpdateUserUseCase
-	DeleteUseCase *appuser.DeleteUserUseCase
-	LoginUseCase  *appuser.LoginUseCase
+	EmailSender   usecase.EmailSender
+	CreateUseCase *usecase.CreateUserUseCase
+	GetUseCase    *usecase.GetUserUseCase
+	ListUseCase   *usecase.ListUsersUseCase
+	UpdateUseCase *usecase.UpdateUserUseCase
+	DeleteUseCase *usecase.DeleteUserUseCase
+	LoginUseCase  *usecase.LoginUseCase
 	Handler       *httpuser.Handler
 }
 
@@ -36,12 +36,12 @@ func NewUserContainer(database *sql.DB, jwtSecret string, jwtExpiration int) *Us
 	emailSender := userexternal.NewEmailSenderImpl()
 
 	// Initialize use cases (application layer)
-	createUseCase := appuser.NewCreateUserUseCase(userRepo, userService, emailSender)
-	getUseCase := appuser.NewGetUserUseCase(userRepo)
-	listUseCase := appuser.NewListUsersUseCase(userRepo)
-	updateUseCase := appuser.NewUpdateUserUseCase(userRepo, userService)
-	deleteUseCase := appuser.NewDeleteUserUseCase(userRepo)
-	loginUseCase := appuser.NewLoginUseCase(userRepo, userService)
+	createUseCase := usecase.NewCreateUserUseCase(userRepo, userService, emailSender)
+	getUseCase := usecase.NewGetUserUseCase(userRepo)
+	listUseCase := usecase.NewListUsersUseCase(userRepo)
+	updateUseCase := usecase.NewUpdateUserUseCase(userRepo, userService)
+	deleteUseCase := usecase.NewDeleteUserUseCase(userRepo)
+	loginUseCase := usecase.NewLoginUseCase(userRepo, userService)
 
 	// Initialize HTTP handler (driving adapter)
 	userHandler := httpuser.NewHandler(

@@ -1,4 +1,4 @@
-package article
+package usecase
 
 import (
 	"context"
@@ -49,4 +49,3 @@ func (uc *DeleteArticleUseCase) Execute(ctx context.Context, id int64) error {
 
 	return nil
 }
-

@@ -1,15 +1,16 @@
-package article
+package usecase
 
 import (
 	"context"
 
+	"github.com/rulzi/hexa-go/internal/application/article/dto"
 	domainarticle "github.com/rulzi/hexa-go/internal/domain/article"
 )
 
 // ArticleCache defines the interface for article caching
 type ArticleCache interface {
-	GetArticleList(ctx context.Context, limit, offset int) (*ListArticlesResponse, error)
-	SetArticleList(ctx context.Context, limit, offset int, listResp *ListArticlesResponse) error
+	GetArticleList(ctx context.Context, limit, offset int) (*dto.ListArticlesResponse, error)
+	SetArticleList(ctx context.Context, limit, offset int, listResp *dto.ListArticlesResponse) error
 	InvalidateArticleList(ctx context.Context) error
 }
 
@@ -28,7 +29,7 @@ func NewListArticlesUseCase(articleRepo domainarticle.Repository, cache ArticleC
 }
 
 // Execute executes the list articles use case
-func (uc *ListArticlesUseCase) Execute(ctx context.Context, limit, offset int) (*ListArticlesResponse, error) {
+func (uc *ListArticlesUseCase) Execute(ctx context.Context, limit, offset int) (*dto.ListArticlesResponse, error) {
 	// Default pagination
 	if limit <= 0 {
 		limit = 10
@@ -58,9 +59,9 @@ func (uc *ListArticlesUseCase) Execute(ctx context.Context, limit, offset int) (
 	}
 
 	// Convert to response DTOs
-	articleResponses := make([]ArticleResponse, len(articles))
+	articleResponses := make([]dto.ArticleResponse, len(articles))
 	for i, a := range articles {
-		articleResponses[i] = ArticleResponse{
+		articleResponses[i] = dto.ArticleResponse{
 			ID:        a.ID,
 			Title:     a.Title,
 			Content:   a.Content,
@@ -70,7 +71,7 @@ func (uc *ListArticlesUseCase) Execute(ctx context.Context, limit, offset int) (
 		}
 	}
 
-	response := &ListArticlesResponse{
+	response := &dto.ListArticlesResponse{
 		Articles: articleResponses,
 		Total:    total,
 		Limit:    limit,

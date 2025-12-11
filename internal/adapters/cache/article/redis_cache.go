@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/redis/go-redis/v9"
-	apparticle "github.com/rulzi/hexa-go/internal/application/article"
+	"github.com/rulzi/hexa-go/internal/application/article/dto"
 )
 
 // RedisCache handles caching for articles using Redis
@@ -28,7 +28,7 @@ func NewRedisCache(client *redis.Client, ttl time.Duration) *RedisCache {
 }
 
 // GetArticle retrieves an article from cache by ID
-func (c *RedisCache) GetArticle(ctx context.Context, id int64) (*apparticle.ArticleResponse, error) {
+func (c *RedisCache) GetArticle(ctx context.Context, id int64) (*dto.ArticleResponse, error) {
 	key := fmt.Sprintf("article:%d", id)
 
 	val, err := c.client.Get(ctx, key).Result()
@@ -39,7 +39,7 @@ func (c *RedisCache) GetArticle(ctx context.Context, id int64) (*apparticle.Arti
 		return nil, fmt.Errorf("failed to get from cache: %w", err)
 	}
 
-	var articleResp apparticle.ArticleResponse
+	var articleResp dto.ArticleResponse
 	if err := json.Unmarshal([]byte(val), &articleResp); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal cached article: %w", err)
 	}
@@ -48,7 +48,7 @@ func (c *RedisCache) GetArticle(ctx context.Context, id int64) (*apparticle.Arti
 }
 
 // SetArticle stores an article in cache
-func (c *RedisCache) SetArticle(ctx context.Context, id int64, articleResp *apparticle.ArticleResponse) error {
+func (c *RedisCache) SetArticle(ctx context.Context, id int64, articleResp *dto.ArticleResponse) error {
 	key := fmt.Sprintf("article:%d", id)
 
 	data, err := json.Marshal(articleResp)
@@ -70,7 +70,7 @@ func (c *RedisCache) DeleteArticle(ctx context.Context, id int64) error {
 }
 
 // GetArticleList retrieves a list of articles from cache
-func (c *RedisCache) GetArticleList(ctx context.Context, limit, offset int) (*apparticle.ListArticlesResponse, error) {
+func (c *RedisCache) GetArticleList(ctx context.Context, limit, offset int) (*dto.ListArticlesResponse, error) {
 	key := fmt.Sprintf("article:list:%d:%d", limit, offset)
 
 	val, err := c.client.Get(ctx, key).Result()
@@ -81,7 +81,7 @@ func (c *RedisCache) GetArticleList(ctx context.Context, limit, offset int) (*ap
 		return nil, fmt.Errorf("failed to get from cache: %w", err)
 	}
 
-	var listResp apparticle.ListArticlesResponse
+	var listResp dto.ListArticlesResponse
 	if err := json.Unmarshal([]byte(val), &listResp); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal cached list: %w", err)
 	}
@@ -90,7 +90,7 @@ func (c *RedisCache) GetArticleList(ctx context.Context, limit, offset int) (*ap
 }
 
 // SetArticleList stores a list of articles in cache
-func (c *RedisCache) SetArticleList(ctx context.Context, limit, offset int, listResp *apparticle.ListArticlesResponse) error {
+func (c *RedisCache) SetArticleList(ctx context.Context, limit, offset int, listResp *dto.ListArticlesResponse) error {
 	key := fmt.Sprintf("article:list:%d:%d", limit, offset)
 
 	data, err := json.Marshal(listResp)

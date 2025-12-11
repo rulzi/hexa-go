@@ -1,9 +1,10 @@
-package article
+package usecase
 
 import (
 	"context"
 	"time"
 
+	"github.com/rulzi/hexa-go/internal/application/article/dto"
 	domainarticle "github.com/rulzi/hexa-go/internal/domain/article"
 )
 
@@ -28,7 +29,7 @@ func NewCreateArticleUseCase(
 }
 
 // Execute executes the create article use case
-func (uc *CreateArticleUseCase) Execute(ctx context.Context, req CreateArticleRequest) (*ArticleResponse, error) {
+func (uc *CreateArticleUseCase) Execute(ctx context.Context, req dto.CreateArticleRequest) (*dto.ArticleResponse, error) {
 	// Create article entity
 	newArticle := &domainarticle.Article{
 		Title:     req.Title,
@@ -55,7 +56,7 @@ func (uc *CreateArticleUseCase) Execute(ctx context.Context, req CreateArticleRe
 	}
 
 	// Return response DTO
-	return &ArticleResponse{
+	return &dto.ArticleResponse{
 		ID:        createdArticle.ID,
 		Title:     createdArticle.Title,
 		Content:   createdArticle.Content,
