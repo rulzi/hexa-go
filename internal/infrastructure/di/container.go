@@ -8,22 +8,24 @@ import (
 	articledb "github.com/rulzi/hexa-go/internal/adapters/db/article"
 	userdb "github.com/rulzi/hexa-go/internal/adapters/db/user"
 	"github.com/rulzi/hexa-go/internal/adapters/http"
+	diarticle "github.com/rulzi/hexa-go/internal/infrastructure/di/article"
+	diuser "github.com/rulzi/hexa-go/internal/infrastructure/di/user"
 )
 
 // Container holds all dependencies
 type Container struct {
 	DB      *sql.DB
 	Redis   *redis.Client
-	User    *UserContainer
-	Article *ArticleContainer
+	User    *diuser.UserContainer
+	Article *diarticle.ArticleContainer
 	Router  *http.Router
 }
 
 // NewContainer creates a new dependency injection container
 func NewContainer(database *sql.DB, redisClient *redis.Client, jwtSecret string, jwtExpiration int) *Container {
 	// Initialize domain containers
-	userContainer := NewUserContainer(database, jwtSecret, jwtExpiration)
-	articleContainer := NewArticleContainer(database, redisClient)
+	userContainer := diuser.NewUserContainer(database, jwtSecret, jwtExpiration)
+	articleContainer := diarticle.NewArticleContainer(database, redisClient)
 
 	// Initialize router
 	router := http.NewRouter(userContainer.Handler, articleContainer.Handler, userContainer.Service)
