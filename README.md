@@ -76,35 +76,48 @@ hexa-go/
 │   │
 │   ├── application/                   # Application Layer (Use Cases)
 │   │   ├── article/
-│   │   │   ├── dto.go                 # Data Transfer Objects
-│   │   │   ├── usecase_create.go
-│   │   │   ├── usecase_get.go
-│   │   │   ├── usecase_list.go
-│   │   │   ├── usecase_update.go
-│   │   │   └── usecase_delete.go
+│   │   │   ├── dto/                   # Data Transfer Objects
+│   │   │   │   ├── request.go
+│   │   │   │   └── response.go
+│   │   │   └── usecase/
+│   │   │       ├── create.go
+│   │   │       ├── get.go
+│   │   │       ├── list.go
+│   │   │       ├── update.go
+│   │   │       └── delete.go
 │   │   └── user/
-│   │       ├── dto.go
-│   │       ├── usecase_create.go
-│   │       ├── usecase_get.go
-│   │       ├── usecase_list.go
-│   │       ├── usecase_update.go
-│   │       ├── usecase_delete.go
-│   │       └── usecase_login.go
+│   │       ├── dto/                   # Data Transfer Objects
+│   │       │   ├── request.go
+│   │       │   └── response.go
+│   │       └── usecase/
+│   │           ├── create.go
+│   │           ├── get.go
+│   │           ├── list.go
+│   │           ├── update.go
+│   │           ├── delete.go
+│   │           └── login.go
 │   │
 │   ├── adapters/                      # Adapters Layer
 │   │   ├── http/                      # Driving Adapter (HTTP)
-│   │   │   ├── article_handler.go
-│   │   │   ├── user_handler.go
+│   │   │   ├── article/
+│   │   │   │   └── handler.go
+│   │   │   ├── user/
+│   │   │   │   └── handler.go
+│   │   │   ├── response/              # Standard response format
+│   │   │   │   └── response.go
 │   │   │   ├── router.go
-│   │   │   ├── middleware.go
-│   │   │   └── response.go            # Standard response format
+│   │   │   └── middleware.go
 │   │   ├── db/                        # Driven Adapter (Database)
-│   │   │   ├── article_mysql_repo.go
-│   │   │   └── user_mysql_repo.go
+│   │   │   ├── article/
+│   │   │   │   └── mysql_repo.go
+│   │   │   └── user/
+│   │   │       └── mysql_repo.go
 │   │   ├── cache/                     # Driven Adapter (Cache)
-│   │   │   └── article_redis_cache.go
+│   │   │   └── article/
+│   │   │       └── redis_cache.go
 │   │   └── external/                  # Driven Adapter (External Services)
-│   │       └── email_sender.go
+│   │       └── user/
+│   │           └── email_sender.go
 │   │
 │   └── infrastructure/                # Infrastructure Layer
 │       ├── config/
@@ -114,12 +127,18 @@ hexa-go/
 │       │   └── redis.go               # Koneksi Redis
 │       ├── di/                        # Dependency Injection
 │       │   ├── container.go
-│       │   ├── article_container.go
-│       │   └── user_container.go
+│       │   ├── article/
+│       │   │   └── container.go
+│       │   └── user/
+│       │       └── container.go
 │       └── logger/
 │           └── logger.go
+├── migration/                         # Database migrations
+│   ├── article.sql
+│   └── user.sql
 ├── go.mod
 ├── go.sum
+├── Makefile
 └── README.md
 ```
 
@@ -157,7 +176,7 @@ type Repository interface {
 - **Use Cases**: Setiap use case mewakili satu operasi bisnis
 - **DTOs**: Data Transfer Objects untuk komunikasi antar layer
 
-**Contoh: `internal/application/article/usecase_get.go`**
+**Contoh: `internal/application/article/usecase/get.go`**
 ```go
 // GetArticleUseCase mengorkestrasikan logika untuk mendapatkan artikel
 type GetArticleUseCase struct {
@@ -165,7 +184,7 @@ type GetArticleUseCase struct {
     cache       ArticleSingleCache        // Port untuk cache
 }
 
-func (uc *GetArticleUseCase) Execute(ctx context.Context, id int64) (*ArticleResponse, error) {
+func (uc *GetArticleUseCase) Execute(ctx context.Context, id int64) (*dto.ArticleResponse, error) {
     // 1. Cek cache dulu
     // 2. Jika tidak ada, ambil dari repository
     // 3. Simpan ke cache
@@ -187,27 +206,27 @@ func (uc *GetArticleUseCase) Execute(ctx context.Context, id int64) (*ArticleRes
 - **CLI**: Command line interface (jika ada)
 - **gRPC**: gRPC handlers (jika ada)
 
-**Contoh: `internal/adapters/http/article_handler.go`**
+**Contoh: `internal/adapters/http/article/handler.go`**
 ```go
-// ArticleHandler adalah driving adapter yang menerima HTTP request
-type ArticleHandler struct {
+// Handler adalah driving adapter yang menerima HTTP request
+type Handler struct {
     getUseCase *article.GetArticleUseCase  // Menggunakan use case
 }
 
-func (h *ArticleHandler) Get(c *gin.Context) {
+func (h *Handler) Get(c *gin.Context) {
     // 1. Parse request
     // 2. Panggil use case
     // 3. Return HTTP response menggunakan standar response
     response, err := h.getUseCase.Execute(ctx, id)
     if err != nil {
-        ErrorResponseNotFound(c, err.Error())
+        response.ErrorResponseNotFound(c, err.Error())
         return
     }
-    SuccessResponseOK(c, "Article retrieved successfully", response)
+    response.SuccessResponseOK(c, "Article retrieved successfully", response)
 }
 ```
 
-**Contoh: `internal/adapters/http/response.go`**
+**Contoh: `internal/adapters/http/response/response.go`**
 ```go
 // StandardResponse adalah struktur response standar untuk semua endpoint
 type StandardResponse struct {
@@ -238,15 +257,15 @@ func ErrorResponseNotFound(c *gin.Context, message string) {
 - **Cache**: Implementasi cache untuk Redis
 - **External Services**: Integrasi dengan API eksternal
 
-**Contoh: `internal/adapters/db/article_mysql_repo.go`**
+**Contoh: `internal/adapters/db/article/mysql_repo.go`**
 ```go
-// ArticleMySQLRepository adalah driven adapter yang mengimplementasikan
+// Repository adalah driven adapter yang mengimplementasikan
 // domain article.Repository interface
-type ArticleMySQLRepository struct {
+type Repository struct {
     db *sql.DB
 }
 
-func (r *ArticleMySQLRepository) GetByID(ctx context.Context, id int64) (*article.Article, error) {
+func (r *Repository) GetByID(ctx context.Context, id int64) (*article.Article, error) {
     // Implementasi konkret menggunakan MySQL
 }
 ```
@@ -265,15 +284,15 @@ func (r *ArticleMySQLRepository) GetByID(ctx context.Context, id int64) (*articl
 - **Dependency Injection**: Wiring semua dependencies
 - **Logging**: Setup logger
 
-**Contoh: `internal/infrastructure/di/article_container.go`**
+**Contoh: `internal/infrastructure/di/article/container.go`**
 ```go
-// NewArticleContainer melakukan dependency injection
-func NewArticleContainer(database *sql.DB, redisClient *redis.Client) *ArticleContainer {
+// NewContainer melakukan dependency injection
+func NewContainer(database *sql.DB, redisClient *redis.Client) *Container {
     // 1. Buat repository (driven adapter)
-    articleRepo := db.NewArticleMySQLRepository(database)
+    articleRepo := dbarticle.NewRepository(database)
     
     // 2. Buat cache (driven adapter)
-    articleCache := cache.NewArticleRedisCache(redisClient, 5*time.Minute)
+    articleCache := cachearticle.NewRedisCache(redisClient, 5*time.Minute)
     
     // 3. Buat domain service
     articleService := domainarticle.NewService(articleRepo)
@@ -282,9 +301,9 @@ func NewArticleContainer(database *sql.DB, redisClient *redis.Client) *ArticleCo
     getArticleUseCase := apparticle.NewGetArticleUseCase(articleRepo, articleCache)
     
     // 5. Buat handler (driving adapter)
-    articleHandler := http.NewArticleHandler(getArticleUseCase, ...)
+    articleHandler := httparticle.NewHandler(getArticleUseCase, ...)
     
-    return &ArticleContainer{...}
+    return &Container{...}
 }
 ```
 
@@ -397,18 +416,47 @@ Buat database MySQL:
 CREATE DATABASE hexa_go CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
-Tabel akan dibuat otomatis saat aplikasi pertama kali dijalankan.
+Jalankan migration SQL untuk membuat tabel:
+```bash
+# Masuk ke MySQL
+mysql -u root -p hexa_go
+
+# Jalankan migration
+source migration/user.sql
+source migration/article.sql
+```
+
+Atau jalankan file SQL secara langsung:
+```bash
+mysql -u root -p hexa_go < migration/user.sql
+mysql -u root -p hexa_go < migration/article.sql
+```
 
 ## 🚀 Menjalankan Aplikasi
 
-1. **Jalankan aplikasi**
+1. **Jalankan aplikasi menggunakan Go**
 ```bash
 go run cmd/api/main.go
 ```
 
-2. **Aplikasi akan berjalan di**
+Atau menggunakan Make:
+```bash
+make run
+```
+
+2. **Build aplikasi**
+```bash
+make build-generate
+```
+
+3. **Aplikasi akan berjalan di**
 ```
 http://localhost:8080
+```
+
+4. **Test aplikasi**
+```bash
+make test
 ```
 
 3. **Test API**
@@ -456,8 +504,7 @@ curl -X POST http://localhost:8080/api/v1/articles \
   -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   -d '{
     "title": "My First Article",
-    "content": "This is the content of my article",
-    "author_id": 1
+    "content": "This is the content of my article"
   }'
 
 # Response:
@@ -499,20 +546,29 @@ curl -X GET "http://localhost:8080/api/v1/articles?limit=10&offset=0" \
 
 ### User Endpoints
 
+**Public Routes (No Authentication Required):**
 - `POST /api/v1/users/register` - Register user baru
 - `POST /api/v1/users/login` - Login user
-- `GET /api/v1/users/:id` - Get user by ID
+
+**Protected Routes (Authentication Required):**
+- `POST /api/v1/users` - Create user baru
 - `GET /api/v1/users` - List users
+- `GET /api/v1/users/:id` - Get user by ID
 - `PUT /api/v1/users/:id` - Update user
 - `DELETE /api/v1/users/:id` - Delete user
 
 ### Article Endpoints
 
-- `POST /api/v1/articles` - Create article (requires authentication)
-- `GET /api/v1/articles/:id` - Get article by ID
+**Protected Routes (Authentication Required):**
+- `POST /api/v1/articles` - Create article
 - `GET /api/v1/articles` - List articles (with pagination)
-- `PUT /api/v1/articles/:id` - Update article (requires authentication)
-- `DELETE /api/v1/articles/:id` - Delete article (requires authentication)
+- `GET /api/v1/articles/:id` - Get article by ID
+- `PUT /api/v1/articles/:id` - Update article
+- `DELETE /api/v1/articles/:id` - Delete article
+
+### Health Check
+
+- `GET /health` - Health check endpoint (no authentication required)
 
 ## 📦 Format Response Standar
 
