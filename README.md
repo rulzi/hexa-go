@@ -73,6 +73,12 @@ hexa-go/
 │   │       ├── repository.go
 │   │       ├── service.go
 │   │       └── errors.go
+│   │   └── media/
+│   │       ├── entity.go
+│   │       ├── repository.go
+│   │       ├── service.go
+│   │       ├── storage.go
+│   │       └── errors.go
 │   │
 │   ├── application/                   # Application Layer (Use Cases)
 │   │   ├── article/
@@ -96,12 +102,24 @@ hexa-go/
 │   │           ├── update.go
 │   │           ├── delete.go
 │   │           └── login.go
+│   │   └── media/
+│   │       ├── dto/
+│   │       │   ├── request.go
+│   │       │   └── response.go
+│   │       └── usecase/
+│   │           ├── create.go
+│   │           ├── get.go
+│   │           ├── list.go
+│   │           ├── update.go
+│   │           └── delete.go
 │   │
 │   ├── adapters/                      # Adapters Layer
 │   │   ├── http/                      # Driving Adapter (HTTP)
 │   │   │   ├── article/
 │   │   │   │   └── handler.go
 │   │   │   ├── user/
+│   │   │   │   └── handler.go
+│   │   │   ├── media/
 │   │   │   │   └── handler.go
 │   │   │   ├── response/              # Standard response format
 │   │   │   │   └── response.go
@@ -110,11 +128,16 @@ hexa-go/
 │   │   ├── db/                        # Driven Adapter (Database)
 │   │   │   ├── article/
 │   │   │   │   └── mysql_repo.go
-│   │   │   └── user/
+│   │   │   ├── user/
+│   │   │   │   └── mysql_repo.go
+│   │   │   └── media/
 │   │   │       └── mysql_repo.go
 │   │   ├── cache/                     # Driven Adapter (Cache)
 │   │   │   └── article/
 │   │   │       └── redis_cache.go
+│   │   ├── storage/                   # Driven Adapter (File Storage)
+│   │   │   └── media/
+│   │   │       └── local_storage.go
 │   │   └── external/                  # Driven Adapter (External Services)
 │   │       └── user/
 │   │           └── email_sender.go
@@ -129,13 +152,16 @@ hexa-go/
 │       │   ├── container.go
 │       │   ├── article/
 │       │   │   └── container.go
-│       │   └── user/
+│       │   ├── user/
+│       │   │   └── container.go
+│       │   └── media/
 │       │       └── container.go
 │       └── logger/
 │           └── logger.go
 ├── migration/                         # Database migrations
 │   ├── article.sql
-│   └── user.sql
+│   ├── user.sql
+│   └── media.sql
 ├── go.mod
 ├── go.sum
 ├── Makefile
@@ -407,6 +433,10 @@ REDIS_DB=0
 # JWT Configuration
 JWT_SECRET=your-secret-key-change-in-production
 JWT_EXPIRATION=24
+
+# Storage Configuration
+STORAGE_BASE_PATH=./storage
+STORAGE_BASE_URL=http://localhost:8080
 ```
 
 4. **Setup Database**
@@ -424,12 +454,14 @@ mysql -u root -p hexa_go
 # Jalankan migration
 source migration/user.sql
 source migration/article.sql
+source migration/media.sql
 ```
 
 Atau jalankan file SQL secara langsung:
 ```bash
 mysql -u root -p hexa_go < migration/user.sql
 mysql -u root -p hexa_go < migration/article.sql
+mysql -u root -p hexa_go < migration/media.sql
 ```
 
 ## 🚀 Menjalankan Aplikasi
@@ -540,6 +572,42 @@ curl -X GET "http://localhost:8080/api/v1/articles?limit=10&offset=0" \
 #     "offset": 0
 #   }
 # }
+
+# Upload media file
+curl -X POST http://localhost:8080/api/v1/media \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -F "file=@/path/to/your/file.jpg"
+
+# Response:
+# {
+#   "status": "success",
+#   "message": "Media created successfully",
+#   "data": {
+#     "id": 1,
+#     "name": "file.jpg",
+#     "path": "2024/01/15/file_1705320000.jpg",
+#     "url": "http://localhost:8080/api/v1/media/files/2024/01/15/file_1705320000.jpg",
+#     "created_at": "2024-01-15T10:00:00Z",
+#     "updated_at": "2024-01-15T10:00:00Z"
+#   }
+# }
+
+# Get media by ID
+curl -X GET http://localhost:8080/api/v1/media/1 \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+
+# List media
+curl -X GET "http://localhost:8080/api/v1/media?limit=10&offset=0" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+
+# Update media (upload new file)
+curl -X PUT http://localhost:8080/api/v1/media/1 \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -F "file=@/path/to/new/file.jpg"
+
+# Delete media
+curl -X DELETE http://localhost:8080/api/v1/media/1 \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
 ```
 
 ## 📡 Struktur API
@@ -565,6 +633,36 @@ curl -X GET "http://localhost:8080/api/v1/articles?limit=10&offset=0" \
 - `GET /api/v1/articles/:id` - Get article by ID
 - `PUT /api/v1/articles/:id` - Update article
 - `DELETE /api/v1/articles/:id` - Delete article
+
+### Media Endpoints
+
+**Public Routes (No Authentication Required):**
+- `GET /api/v1/media/files/*` - Access uploaded media files
+
+**Protected Routes (Authentication Required):**
+- `POST /api/v1/media` - Upload media file (multipart/form-data, field: `file`)
+- `GET /api/v1/media` - List media (with pagination)
+- `GET /api/v1/media/:id` - Get media by ID
+- `PUT /api/v1/media/:id` - Update media (upload new file, multipart/form-data, field: `file`)
+- `DELETE /api/v1/media/:id` - Delete media
+
+**Media Response Format:**
+```json
+{
+  "id": 1,
+  "name": "image.jpg",
+  "path": "2024/01/15/image_1705320000.jpg",
+  "url": "http://localhost:8080/api/v1/media/files/2024/01/15/image_1705320000.jpg",
+  "created_at": "2024-01-15T10:00:00Z",
+  "updated_at": "2024-01-15T10:00:00Z"
+}
+```
+
+**Note:**
+- Files are stored in directory structure: `YYYY/MM/DD/filename_timestamp.ext`
+- Files can be accessed via the `url` field in the response
+- The `path` field contains the relative storage path
+- When updating media, the old file is automatically deleted
 
 ### Health Check
 
