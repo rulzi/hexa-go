@@ -45,7 +45,10 @@ func main() {
 	}
 
 	// Initialize dependency injection container
-	container := di.NewContainer(db, redisClient, cfg.JWT.Secret, cfg.JWT.Expiration)
+	container, err := di.NewContainer(db, redisClient, cfg.JWT.Secret, cfg.JWT.Expiration, cfg.Storage.BasePath, cfg.Storage.BaseURL)
+	if err != nil {
+		appLogger.Fatal(fmt.Sprintf("Failed to initialize container: %v", err))
+	}
 
 	// Setup Gin router
 	if cfg.Server.Debug {

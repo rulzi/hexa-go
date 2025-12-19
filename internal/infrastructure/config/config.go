@@ -13,6 +13,7 @@ type Config struct {
 	Database DatabaseConfig
 	Redis    RedisConfig
 	JWT      JWTConfig
+	Storage  StorageConfig
 }
 
 // ServerConfig holds server configuration
@@ -45,6 +46,12 @@ type JWTConfig struct {
 	Expiration int // in hours
 }
 
+// StorageConfig holds storage configuration
+type StorageConfig struct {
+	BasePath string
+	BaseURL  string
+}
+
 // Load loads configuration from environment variables
 func Load() *Config {
 	// Load .env file (ignore error if file doesn't exist)
@@ -71,6 +78,10 @@ func Load() *Config {
 		JWT: JWTConfig{
 			Secret:     getEnv("JWT_SECRET", "your-secret-key-change-in-production"),
 			Expiration: getEnvInt("JWT_EXPIRATION", 24), // 24 hours default
+		},
+		Storage: StorageConfig{
+			BasePath: getEnv("STORAGE_BASE_PATH", "./storage"),
+			BaseURL:  getEnv("STORAGE_BASE_URL", "http://localhost:8080"),
 		},
 	}
 }
