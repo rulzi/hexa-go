@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	httparticle "github.com/rulzi/hexa-go/internal/adapters/http/article"
 	httpmedia "github.com/rulzi/hexa-go/internal/adapters/http/media"
+	"github.com/rulzi/hexa-go/internal/adapters/http/middleware"
 	"github.com/rulzi/hexa-go/internal/adapters/http/response"
 	httpuser "github.com/rulzi/hexa-go/internal/adapters/http/user"
 	domainuser "github.com/rulzi/hexa-go/internal/domain/user"
@@ -32,7 +33,7 @@ func NewRouter(userHandler *httpuser.Handler, articleHandler *httparticle.Handle
 // SetupRoutes configures all HTTP routes
 func (r *Router) SetupRoutes(engine *gin.Engine, debug bool) {
 	// Apply default middlewares
-	SetupDefaultMiddlewares(engine, debug)
+	middleware.SetupDefaultMiddlewares(engine, debug)
 
 	api := engine.Group("/api/v1")
 	{
@@ -47,7 +48,7 @@ func (r *Router) SetupRoutes(engine *gin.Engine, debug bool) {
 		}
 
 		// Protected routes (authentication required)
-		authMiddleware := AuthMiddleware(r.userService)
+		authMiddleware := middleware.AuthMiddleware(r.userService)
 		protected := api.Group("")
 		protected.Use(authMiddleware)
 		{

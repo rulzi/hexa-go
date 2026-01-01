@@ -121,10 +121,14 @@ hexa-go/
 │   │   │   │   └── handler.go
 │   │   │   ├── media/
 │   │   │   │   └── handler.go
+│   │   │   ├── middleware/            # HTTP Middlewares
+│   │   │   │   ├── auth.go            # JWT Authentication middleware
+│   │   │   │   ├── cors.go            # CORS middleware
+│   │   │   │   ├── recovery.go        # Panic recovery middleware
+│   │   │   │   └── setup.go           # Middleware setup
 │   │   │   ├── response/              # Standard response format
 │   │   │   │   └── response.go
-│   │   │   ├── router.go
-│   │   │   └── middleware.go
+│   │   │   └── router.go
 │   │   ├── db/                        # Driven Adapter (Database)
 │   │   │   ├── article/
 │   │   │   │   └── mysql_repo.go
