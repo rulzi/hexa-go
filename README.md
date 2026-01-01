@@ -394,6 +394,241 @@ HTTP 200 OK dengan JSON response
 - Redis (opsional, untuk caching)
 - Git
 
+## 🐳 Menjalankan dengan Docker
+
+Cara termudah untuk menjalankan aplikasi adalah menggunakan Docker Compose, yang akan menjalankan semua dependencies (MySQL, Redis) dan aplikasi Go secara otomatis.
+
+### Persyaratan Docker
+
+- Docker 20.10 atau lebih tinggi
+- Docker Compose 2.0 atau lebih tinggi
+
+### 🚀 Quick Start dengan Docker
+
+1. **Clone repository**
+```bash
+git clone <repository-url>
+cd hexa-go
+```
+
+2. **Jalankan aplikasi dengan Docker Compose**
+```bash
+docker-compose up -d
+```
+
+3. **Tunggu beberapa saat hingga semua service berjalan**
+```bash
+# Lihat status containers
+docker-compose ps
+
+# Lihat logs
+docker-compose logs -f app
+```
+
+4. **Aplikasi akan berjalan di**
+```
+http://localhost:8080
+```
+
+### 📦 Services yang Berjalan
+
+Docker Compose akan menjalankan 3 services:
+
+- **hexa-app**: Aplikasi Go (port 8080)
+- **hexa-mysql**: MySQL 8.0 database (port 3306)
+- **hexa-redis**: Redis cache (port 6379)
+
+### 🔧 Environment Variables untuk Docker
+
+Environment variables sudah dikonfigurasi dalam `docker-compose.yml`. Untuk kustomisasi, Anda bisa:
+
+1. **Edit docker-compose.yml** (langsung ubah environment section)
+2. **Buat file `.env`** di root directory
+3. **Gunakan environment file custom**
+```bash
+docker-compose --env-file .env.custom up -d
+```
+
+### 📋 Docker Commands yang Berguna
+
+```bash
+# Jalankan aplikasi
+docker-compose up -d
+
+# Lihat logs aplikasi
+docker-compose logs -f app
+
+# Lihat logs database
+docker-compose logs -f mysql
+
+# Lihat logs Redis
+docker-compose logs -f redis
+
+# Restart aplikasi
+docker-compose restart app
+
+# Stop semua services
+docker-compose down
+
+# Stop dan hapus volumes (menghapus data)
+docker-compose down -v
+
+# Rebuild aplikasi (jika ada perubahan kode)
+docker-compose build app
+docker-compose up -d app
+
+# Eksekusi command di dalam container
+docker-compose exec app sh
+docker-compose exec app go run cmd/api/main.go
+
+# Lihat status services
+docker-compose ps
+
+# Lihat resource usage
+docker-compose top
+```
+
+### 🔍 Health Checks
+
+Aplikasi memiliki health check endpoint yang bisa dipantau:
+
+```bash
+# Health check aplikasi
+curl http://localhost:8080/health
+
+# Health check database via docker-compose
+docker-compose exec mysql mysqladmin ping -h localhost
+```
+
+### 🗄️ Volume Management
+
+Data akan tersimpan dalam named volumes:
+
+- **mysql_data**: Data database MySQL
+- **redis_data**: Data Redis
+- **storage_data**: File upload storage
+
+```bash
+# Lihat volumes
+docker volume ls | grep hexa
+
+# Backup database
+docker-compose exec mysql mysqldump -u hexa_user -phexapassword123 hexa_go > backup.sql
+
+# Restore database
+docker-compose exec -T mysql mysql -u hexa_user -phexapassword123 hexa_go < backup.sql
+```
+
+### 🌐 Akses Database dari Host
+
+Untuk development, Anda bisa akses MySQL dari host:
+
+```bash
+# Connect ke MySQL dari host
+mysql -h 127.0.0.1 -P 3306 -u hexa_user -phexapassword123 hexa_go
+
+# Connect ke Redis dari host
+redis-cli -h 127.0.0.1 -p 6379
+```
+
+### 🛠️ Development dengan Docker
+
+#### Development Mode (dengan code reload)
+
+Untuk development, Anda bisa mount source code dan gunakan hot reload:
+
+1. **Edit docker-compose.yml** untuk development:
+
+```yaml
+# Tambahkan volume untuk development
+app:
+  build:
+    context: .
+    dockerfile: Dockerfile
+  volumes:
+    - .:/app  # Mount source code
+    - storage_data:/app/storage
+  environment:
+    # ... environment variables
+```
+
+2. **Gunakan air untuk hot reload**:
+
+```bash
+# Install air
+go install github.com/cosmtrek/air@latest
+
+# Run dengan air
+air
+```
+
+#### Production Mode
+
+Untuk production, gunakan multi-stage build yang sudah dikonfigurasi:
+
+```bash
+# Build production image
+docker build -t hexa-go:latest .
+
+# Jalankan container
+docker run -d \
+  --name hexa-go-prod \
+  -p 8080:8080 \
+  -e DB_HOST=your-db-host \
+  -e DB_USER=your-db-user \
+  -e DB_PASSWORD=your-db-password \
+  -e DB_NAME=your-db-name \
+  -e REDIS_HOST=your-redis-host \
+  -e JWT_SECRET=your-production-secret \
+  hexa-go:latest
+```
+
+### 🐛 Troubleshooting Docker
+
+**Container tidak bisa start:**
+```bash
+# Lihat logs detail
+docker-compose logs app
+docker-compose logs mysql
+docker-compose logs redis
+```
+
+**Database connection error:**
+```bash
+# Pastikan MySQL sudah healthy
+docker-compose exec mysql mysqladmin ping -h localhost
+docker-compose logs mysql
+```
+
+**Port sudah digunakan:**
+```bash
+# Cek port yang digunakan
+lsof -i :8080
+lsof -i :3306
+lsof -i :6379
+
+# Stop container yang menggunakan port
+docker-compose down
+```
+
+**Reset semua data:**
+```bash
+# Hapus semua containers dan volumes
+docker-compose down -v
+docker system prune -f
+
+# Jalankan ulang
+docker-compose up -d
+```
+
+### 🔒 Production Security Notes
+
+1. **Ganti default passwords** dalam `docker-compose.yml`
+2. **Gunakan environment files** untuk secrets
+3. **Gunakan Docker secrets** untuk data sensitif
+4. **Setup SSL/TLS** untuk production
+5. **Gunakan specific image tags** bukan `latest`
+
 ## ⚙️ Instalasi dan Konfigurasi
 
 1. **Clone repository**
