@@ -54,6 +54,242 @@ Proyek ini adalah contoh implementasi **Hexagonal Architecture** (Ports and Adap
 └─────────────────────────────────────────┘
 ```
 
+### Diagram Arsitektur Detail
+
+Diagram berikut menunjukkan arsitektur lengkap dengan semua ports dan adapters:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           DRIVING ADAPTERS                                   │
+│  ┌──────────────────────────────────────────────────────────────────────┐   │
+│  │  HTTP Adapters (Gin Framework)                                      │   │
+│  │  ├── UserHandler    ├── ArticleHandler    ├── MediaHandler         │   │
+│  │  └── AuthMiddleware (TokenValidator)                                │   │
+│  └──────────────────────────────────────────────────────────────────────┘   │
+└───────────────────────────────┬─────────────────────────────────────────────┘
+                                │
+                                │ Uses
+                                ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                        APPLICATION LAYER                                     │
+│  ┌──────────────────────────────────────────────────────────────────────┐  │
+│  │  Use Cases (Orchestration)                                           │  │
+│  │  ├── User Use Cases                                                  │  │
+│  │  │   ├── CreateUserUseCase                                           │  │
+│  │  │   │   ├── Repository (port)                                       │  │
+│  │  │   │   ├── PasswordHasher (port)                                   │  │
+│  │  │   │   └── NotificationService (port)                              │  │
+│  │  │   ├── LoginUseCase                                                │  │
+│  │  │   │   ├── Repository (port)                                       │  │
+│  │  │   │   ├── PasswordHasher (port)                                    │  │
+│  │  │   │   └── TokenGenerator (port)                                    │  │
+│  │  │   └── ...                                                          │  │
+│  │  ├── Article Use Cases                                               │  │
+│  │  │   ├── GetArticleUseCase                                           │  │
+│  │  │   │   ├── Repository (port)                                       │  │
+│  │  │   │   └── Cache (port)                                            │  │
+│  │  │   └── ...                                                          │  │
+│  │  └── Media Use Cases                                                  │  │
+│  └──────────────────────────────────────────────────────────────────────┘  │
+└───────────────────────────────┬─────────────────────────────────────────────┘
+                                │
+                                │ Depends on
+                                ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                            DOMAIN LAYER                                       │
+│  ┌──────────────────────────────────────────────────────────────────────┐  │
+│  │  Entities & Business Logic                                           │  │
+│  │  ├── User, Article, Media (entities with validation)                │  │
+│  │  └── Domain Services (business logic)                                │  │
+│  │                                                                       │  │
+│  │  PORTS (Interfaces) - Defined by Domain                              │  │
+│  │  ├── Repository Ports                                               │  │
+│  │  │   ├── user.Repository                                             │  │
+│  │  │   ├── article.Repository                                          │  │
+│  │  │   └── media.Repository                                            │  │
+│  │  ├── Authentication Ports                                            │  │
+│  │  │   ├── TokenGenerator                                              │  │
+│  │  │   ├── TokenValidator                                              │  │
+│  │  │   └── PasswordHasher                                               │  │
+│  │  ├── Infrastructure Ports                                            │  │
+│  │  │   ├── article.Cache                                               │  │
+│  │  │   ├── media.Storage                                                │  │
+│  │  │   └── user.NotificationService                                     │  │
+│  └──────────────────────────────────────────────────────────────────────┘  │
+└───────────────────────────────┬─────────────────────────────────────────────┘
+                                │
+                                │ Implemented by
+                                ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                          DRIVEN ADAPTERS                                      │
+│  ┌──────────────────────────────────────────────────────────────────────┐   │
+│  │  Database Adapters                                                   │   │
+│  │  ├── MySQLRepository (implements Repository ports)                 │   │
+│  │  │   ├── user.MySQLRepository → user.Repository                     │   │
+│  │  │   ├── article.MySQLRepository → article.Repository              │   │
+│  │  │   └── media.MySQLRepository → media.Repository                   │   │
+│  │                                                                      │   │
+│  │  Authentication Adapters                                            │   │
+│  │  ├── JWTAdapter → TokenGenerator, TokenValidator                   │   │
+│  │  └── BcryptPasswordHasher → PasswordHasher                         │   │
+│  │                                                                      │   │
+│  │  Cache Adapters                                                     │   │
+│  │  ├── RedisCache (DTO-based)                                         │   │
+│  │  └── DomainCacheAdapter → article.Cache                             │   │
+│  │                                                                      │   │
+│  │  External Service Adapters                                          │   │
+│  │  ├── EmailSenderImpl → NotificationService                          │   │
+│  │  └── LocalStorage → media.Storage                                    │   │
+│  └──────────────────────────────────────────────────────────────────────┘   │
+└───────────────────────────────┬─────────────────────────────────────────────┘
+                                │
+                                │ Managed by
+                                ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                        INFRASTRUCTURE LAYER                                   │
+│  ┌──────────────────────────────────────────────────────────────────────┐  │
+│  │  Dependency Injection Containers                                     │  │
+│  │  ├── di/container.go (main container)                               │  │
+│  │  ├── di/user/container.go                                            │  │
+│  │  ├── di/article/container.go                                        │  │
+│  │  └── di/media/container.go                                           │  │
+│  │                                                                      │  │
+│  │  Infrastructure Setup                                                │  │
+│  │  ├── database/ (MySQL, Redis connections)                          │  │
+│  │  ├── config/ (configuration management)                              │  │
+│  │  └── logger/ (logging setup)                                         │  │
+│  └──────────────────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Diagram Dependency Flow
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                        DEPENDENCY FLOW                                    │
+│                                                                           │
+│  Infrastructure Layer                                                     │
+│  ┌───────────────────────────────────────────────────────────────────┐  │
+│  │  DI Container wires:                                               │  │
+│  │  Adapters → Use Cases → Domain Ports                              │  │
+│  └───────────────────────────────────────────────────────────────────┘  │
+│                              │                                            │
+│                              │ Creates & Wires                            │
+│                              ▼                                            │
+│  ┌───────────────────────────────────────────────────────────────────┐  │
+│  │  HTTP Handler (Driving Adapter)                                    │  │
+│  │  ┌─────────────────────────────────────────────────────────────┐  │  │
+│  │  │  Handler.Create() → UseCase.Execute()                       │  │  │
+│  │  └─────────────────────────────────────────────────────────────┘  │  │
+│  └───────────────────────────────────────────────────────────────────┘  │
+│                              │                                            │
+│                              │ Calls                                      │
+│                              ▼                                            │
+│  ┌───────────────────────────────────────────────────────────────────┐  │
+│  │  Use Case (Application Layer)                                     │  │
+│  │  ┌─────────────────────────────────────────────────────────────┐  │  │
+│  │  │  CreateUserUseCase.Execute()                                 │  │  │
+│  │  │  ├── passwordHasher.Hash() [port]                           │  │  │
+│  │  │  ├── repository.Create() [port]                             │  │  │
+│  │  │  └── notificationService.SendWelcomeEmail() [port]         │  │  │
+│  │  └─────────────────────────────────────────────────────────────┘  │  │
+│  └───────────────────────────────────────────────────────────────────┘  │
+│                              │                                            │
+│                              │ Uses Ports                                 │
+│                              ▼                                            │
+│  ┌───────────────────────────────────────────────────────────────────┐  │
+│  │  Domain Ports (Interfaces)                                        │  │
+│  │  ┌─────────────────────────────────────────────────────────────┐  │  │
+│  │  │  PasswordHasher, Repository, NotificationService          │  │  │
+│  │  └─────────────────────────────────────────────────────────────┘  │  │
+│  └───────────────────────────────────────────────────────────────────┘  │
+│                              ▲                                            │
+│                              │ Implemented by                             │
+│                              │                                            │
+│  ┌───────────────────────────────────────────────────────────────────┐  │
+│  │  Adapters (Driven)                                                │  │
+│  │  ┌─────────────────────────────────────────────────────────────┐  │  │
+│  │  │  BcryptPasswordHasher → PasswordHasher                      │  │  │
+│  │  │  MySQLRepository → Repository                               │  │  │
+│  │  │  EmailSenderImpl → NotificationService                      │  │  │
+│  │  └─────────────────────────────────────────────────────────────┘  │  │
+│  └───────────────────────────────────────────────────────────────────┘  │
+│                                                                           │
+│  ✅ Dependency Direction: Adapters → Application → Domain                │
+│  ✅ Domain is independent (no dependencies on other layers)              │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+### Diagram User Domain (Detail)
+
+Contoh detail implementasi untuk User domain:
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                          USER DOMAIN FLOW                                │
+│                                                                           │
+│  ┌───────────────────────────────────────────────────────────────────┐  │
+│  │  HTTP Handler (Driving Adapter)                                    │  │
+│  │  ┌─────────────────────────────────────────────────────────────┐  │  │
+│  │  │  POST /users/register                                       │  │  │
+│  │  │  → CreateUserUseCase.Execute()                              │  │  │
+│  │  └─────────────────────────────────────────────────────────────┘  │  │
+│  └───────────────────────────────────────────────────────────────────┘  │
+│                              │                                            │
+│                              ▼                                            │
+│  ┌───────────────────────────────────────────────────────────────────┐  │
+│  │  CreateUserUseCase (Application)                                  │  │
+│  │  ┌─────────────────────────────────────────────────────────────┐  │  │
+│  │  │  Dependencies (Ports):                                      │  │  │
+│  │  │  ├── Repository (port)                                      │  │  │
+│  │  │  ├── PasswordHasher (port)                                  │  │  │
+│  │  │  └── NotificationService (port)                             │  │  │
+│  │  │                                                             │  │  │
+│  │  │  Flow:                                                      │  │  │
+│  │  │  1. Check email exists (Repository)                         │  │  │
+│  │  │  2. Hash password (PasswordHasher)                           │  │  │
+│  │  │  3. Create user (Repository)                                 │  │  │
+│  │  │  4. Send welcome email (NotificationService)                 │  │  │
+│  │  └─────────────────────────────────────────────────────────────┘  │  │
+│  └───────────────────────────────────────────────────────────────────┘  │
+│                              │                                            │
+│                              │ Uses Ports                                 │
+│                              ▼                                            │
+│  ┌───────────────────────────────────────────────────────────────────┐  │
+│  │  Domain Ports (Defined in domain/user/)                          │  │
+│  │  ┌─────────────────────────────────────────────────────────────┐  │  │
+│  │  │  • Repository interface                                     │  │  │
+│  │  │  • PasswordHasher interface                                 │  │  │
+│  │  │  • NotificationService interface                            │  │  │
+│  │  │  • TokenGenerator interface                                 │  │  │
+│  │  │  • TokenValidator interface                                 │  │  │
+│  │  └─────────────────────────────────────────────────────────────┘  │  │
+│  └───────────────────────────────────────────────────────────────────┘  │
+│                              ▲                                            │
+│                              │ Implemented by                             │
+│                              │                                            │
+│  ┌───────────────────────────────────────────────────────────────────┐  │
+│  │  Adapters (Implementations)                                       │  │
+│  │  ┌─────────────────────────────────────────────────────────────┐  │  │
+│  │  │  • MySQLRepository → Repository                              │  │  │
+│  │  │  • BcryptPasswordHasher → PasswordHasher                    │  │  │
+│  │  │  • EmailSenderImpl → NotificationService                     │  │  │
+│  │  │  • JWTAdapter → TokenGenerator, TokenValidator              │  │  │
+│  │  └─────────────────────────────────────────────────────────────┘  │  │
+│  └───────────────────────────────────────────────────────────────────┘  │
+│                              │                                            │
+│                              │ Connects to                                 │
+│                              ▼                                            │
+│  ┌───────────────────────────────────────────────────────────────────┐  │
+│  │  External Systems                                                 │  │
+│  │  ┌─────────────────────────────────────────────────────────────┐  │  │
+│  │  │  • MySQL Database                                            │  │  │
+│  │  │  • Email Service (SMTP/SendGrid/etc)                         │  │  │
+│  │  └─────────────────────────────────────────────────────────────┘  │  │
+│  └───────────────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
 ## 📁 Struktur Proyek
 
 ```
@@ -67,17 +303,21 @@ hexa-go/
 │   │   │   ├── entity.go              # Entity Article
 │   │   │   ├── repository.go          # Port (Interface) untuk repository
 │   │   │   ├── service.go             # Domain service
+│   │   │   ├── cache.go               # Port (Interface) untuk cache
 │   │   │   └── errors.go              # Domain errors
-│   │   └── user/
-│   │       ├── entity.go
-│   │       ├── repository.go
-│   │       ├── service.go
-│   │       └── errors.go
+│   │   ├── user/
+│   │   │   ├── entity.go              # Entity User
+│   │   │   ├── repository.go          # Port (Interface) untuk repository
+│   │   │   ├── service.go             # Domain service
+│   │   │   ├── token.go               # Ports: TokenGenerator, TokenValidator
+│   │   │   ├── password.go            # Port: PasswordHasher
+│   │   │   ├── notification.go        # Port: NotificationService
+│   │   │   └── errors.go              # Domain errors
 │   │   └── media/
 │   │       ├── entity.go
 │   │       ├── repository.go
 │   │       ├── service.go
-│   │       ├── storage.go
+│   │       ├── storage.go             # Port (Interface) untuk storage
 │   │       └── errors.go
 │   │
 │   ├── application/                   # Application Layer (Use Cases)
@@ -136,15 +376,19 @@ hexa-go/
 │   │   │   │   └── mysql_repo.go
 │   │   │   └── media/
 │   │   │       └── mysql_repo.go
+│   │   ├── auth/                      # Driven Adapter (Authentication)
+│   │   │   ├── jwt_adapter.go         # Implements TokenGenerator, TokenValidator
+│   │   │   └── bcrypt_adapter.go      # Implements PasswordHasher
 │   │   ├── cache/                     # Driven Adapter (Cache)
 │   │   │   └── article/
-│   │   │       └── redis_cache.go
+│   │   │       ├── redis_cache.go     # Redis cache implementation
+│   │   │       └── domain_cache_adapter.go  # Adapter untuk domain cache port
 │   │   ├── storage/                   # Driven Adapter (File Storage)
 │   │   │   └── media/
 │   │   │       └── local_storage.go
 │   │   └── external/                  # Driven Adapter (External Services)
 │   │       └── user/
-│   │           └── email_sender.go
+│   │           └── email_sender.go    # Implements NotificationService
 │   │
 │   └── infrastructure/                # Infrastructure Layer
 │       ├── config/
@@ -183,21 +427,52 @@ hexa-go/
 - **Domain Services**: Logika bisnis yang tidak cocok di entity
 - **Domain Errors**: Error spesifik domain
 
-**Contoh: `internal/domain/article/repository.go`**
+**Ports yang Didefinisikan di Domain:**
+
+1. **Repository Ports** (Persistence):
+   - `user.Repository` - User persistence
+   - `article.Repository` - Article persistence
+   - `media.Repository` - Media persistence
+
+2. **Authentication Ports**:
+   - `user.TokenGenerator` - Generate authentication tokens
+   - `user.TokenValidator` - Validate authentication tokens
+   - `user.PasswordHasher` - Hash and verify passwords
+
+3. **Infrastructure Ports**:
+   - `article.Cache` - Article caching
+   - `media.Storage` - File storage
+   - `user.NotificationService` - Send notifications (emails)
+
+**Contoh: `internal/domain/user/token.go`**
 ```go
-// Repository adalah port (interface) yang didefinisikan oleh domain
-// Domain tidak peduli bagaimana implementasinya
-type Repository interface {
-    Create(ctx context.Context, article *Article) (*Article, error)
-    GetByID(ctx context.Context, id int64) (*Article, error)
-    // ... methods lainnya
+// TokenGenerator adalah port (interface) yang didefinisikan oleh domain
+// Domain tidak peduli apakah implementasinya JWT, OAuth, atau lainnya
+type TokenGenerator interface {
+    Generate(userID int64, email string) (string, error)
+}
+
+type TokenValidator interface {
+    Validate(token string) (*TokenClaims, error)
+}
+```
+
+**Contoh: `internal/domain/user/password.go`**
+```go
+// PasswordHasher adalah port untuk password operations
+// Domain tidak peduli apakah implementasinya bcrypt, argon2, atau lainnya
+type PasswordHasher interface {
+    Hash(password string) (string, error)
+    Verify(hashedPassword, password string) bool
 }
 ```
 
 **Karakteristik:**
-- ✅ Tidak bergantung pada framework atau teknologi eksternal
+- ✅ **100% bebas dari framework atau teknologi eksternal**
+- ✅ Hanya bergantung pada standard library Go (`context`, `time`, `errors`)
 - ✅ Hanya berisi logika bisnis murni
 - ✅ Mendefinisikan kontrak (ports) yang harus dipenuhi oleh adapters
+- ✅ Domain services menggunakan ports, bukan concrete implementations
 
 ### 2. Application Layer (`internal/application/`)
 
@@ -206,19 +481,37 @@ type Repository interface {
 - **Use Cases**: Setiap use case mewakili satu operasi bisnis
 - **DTOs**: Data Transfer Objects untuk komunikasi antar layer
 
+**Contoh: `internal/application/user/usecase/create.go`**
+```go
+// CreateUserUseCase mengorkestrasikan logika untuk membuat user baru
+type CreateUserUseCase struct {
+    userRepo            domainuser.Repository          // Port dari domain
+    passwordHasher      domainuser.PasswordHasher      // Port dari domain
+    notificationService domainuser.NotificationService // Port dari domain
+}
+
+func (uc *CreateUserUseCase) Execute(ctx context.Context, req dto.CreateUserRequest) (*dto.UserResponse, error) {
+    // 1. Check email exists (Repository port)
+    // 2. Hash password (PasswordHasher port)
+    // 3. Create user (Repository port)
+    // 4. Send welcome email (NotificationService port)
+    // 5. Return response DTO
+}
+```
+
 **Contoh: `internal/application/article/usecase/get.go`**
 ```go
 // GetArticleUseCase mengorkestrasikan logika untuk mendapatkan artikel
 type GetArticleUseCase struct {
     articleRepo domainarticle.Repository  // Port dari domain
-    cache       ArticleSingleCache        // Port untuk cache
+    cache       domainarticle.Cache        // Port dari domain
 }
 
 func (uc *GetArticleUseCase) Execute(ctx context.Context, id int64) (*dto.ArticleResponse, error) {
-    // 1. Cek cache dulu
-    // 2. Jika tidak ada, ambil dari repository
-    // 3. Simpan ke cache
-    // 4. Return response
+    // 1. Cek cache dulu (Cache port)
+    // 2. Jika tidak ada, ambil dari repository (Repository port)
+    // 3. Simpan ke cache (Cache port)
+    // 4. Return response DTO
 }
 ```
 
@@ -289,14 +582,49 @@ func ErrorResponseNotFound(c *gin.Context, message string) {
 
 **Contoh: `internal/adapters/db/article/mysql_repo.go`**
 ```go
-// Repository adalah driven adapter yang mengimplementasikan
+// MySQLRepository adalah driven adapter yang mengimplementasikan
 // domain article.Repository interface
-type Repository struct {
+type MySQLRepository struct {
     db *sql.DB
 }
 
-func (r *Repository) GetByID(ctx context.Context, id int64) (*article.Article, error) {
+func (r *MySQLRepository) GetByID(ctx context.Context, id int64) (*article.Article, error) {
     // Implementasi konkret menggunakan MySQL
+    // Mengkonversi infrastructure errors ke domain errors
+    if err == sql.ErrNoRows {
+        return nil, domainarticle.ErrArticleNotFound
+    }
+}
+```
+
+**Contoh: `internal/adapters/auth/jwt_adapter.go`**
+```go
+// JWTAdapter adalah driven adapter yang mengimplementasikan
+// domain user.TokenGenerator dan user.TokenValidator interfaces
+type JWTAdapter struct {
+    secret     string
+    expiration int
+}
+
+func (a *JWTAdapter) Generate(userID int64, email string) (string, error) {
+    // Implementasi konkret menggunakan JWT library
+    // Domain tidak tahu bahwa ini menggunakan JWT
+}
+
+func (a *JWTAdapter) Validate(tokenString string) (*domainuser.TokenClaims, error) {
+    // Implementasi konkret menggunakan JWT library
+}
+```
+
+**Contoh: `internal/adapters/auth/bcrypt_adapter.go`**
+```go
+// BcryptPasswordHasher adalah driven adapter yang mengimplementasikan
+// domain user.PasswordHasher interface
+type BcryptPasswordHasher struct{}
+
+func (h *BcryptPasswordHasher) Hash(password string) (string, error) {
+    // Implementasi konkret menggunakan bcrypt library
+    // Domain tidak tahu bahwa ini menggunakan bcrypt
 }
 ```
 
@@ -1080,6 +1408,92 @@ curl -X POST http://localhost:8080/api/v1/users/register \
 2. **Interface Segregation**: Setiap port (interface) memiliki tanggung jawab yang spesifik
 3. **Single Responsibility**: Setiap layer dan komponen memiliki satu tanggung jawab
 4. **Open/Closed Principle**: Mudah menambah adapter baru tanpa mengubah domain logic
+
+## 🏆 Arsitektur Implementasi
+
+### Domain Independence (100% Framework-Free)
+
+Domain layer **100% bebas dari framework dan library eksternal**:
+
+- ✅ **Tidak ada import** `gin`, `sql`, `redis`, `jwt`, `bcrypt` di domain layer
+- ✅ **Hanya standard library**: `context`, `time`, `errors`
+- ✅ **Semua ports didefinisikan di domain**: TokenGenerator, PasswordHasher, NotificationService, Cache
+- ✅ **Domain services menggunakan ports**: Tidak ada concrete implementations
+
+### Ports & Adapters Pattern
+
+**Semua ports didefinisikan di domain layer:**
+
+| Port | Lokasi | Implementasi |
+|------|--------|--------------|
+| `user.Repository` | `domain/user/repository.go` | `adapters/db/user/mysql_repo.go` |
+| `user.TokenGenerator` | `domain/user/token.go` | `adapters/auth/jwt_adapter.go` |
+| `user.TokenValidator` | `domain/user/token.go` | `adapters/auth/jwt_adapter.go` |
+| `user.PasswordHasher` | `domain/user/password.go` | `adapters/auth/bcrypt_adapter.go` |
+| `user.NotificationService` | `domain/user/notification.go` | `adapters/external/user/email_sender.go` |
+| `article.Repository` | `domain/article/repository.go` | `adapters/db/article/mysql_repo.go` |
+| `article.Cache` | `domain/article/cache.go` | `adapters/cache/article/domain_cache_adapter.go` |
+| `media.Storage` | `domain/media/storage.go` | `adapters/storage/media/local_storage.go` |
+
+### Dependency Flow
+
+```
+Infrastructure (DI Container)
+    ↓ wires
+Adapters (Concrete Implementations)
+    ↓ implements
+Domain Ports (Interfaces)
+    ↑ used by
+Application Layer (Use Cases)
+    ↑ called by
+Driving Adapters (HTTP Handlers)
+```
+
+**Key Points:**
+- ✅ Domain tidak bergantung pada layer lain
+- ✅ Application hanya bergantung pada domain ports
+- ✅ Adapters mengimplementasikan domain ports
+- ✅ DI container meng-wire semua dependencies
+
+### Testability
+
+Dengan arsitektur ini, setiap layer dapat di-test secara independen:
+
+- **Domain**: Test entities dan business logic tanpa dependencies
+- **Application**: Mock domain ports untuk test use cases
+- **Adapters**: Test implementasi ports secara terpisah
+- **Integration**: Test end-to-end dengan real adapters
+
+**Contoh Test Domain:**
+```go
+// Domain dapat di-test tanpa framework
+func TestUser_Validate(t *testing.T) {
+    user := &domainuser.User{
+        Name:     "John",
+        Email:    "john@example.com",
+        Password: "hashed",
+    }
+    err := user.Validate()
+    assert.NoError(t, err)
+}
+```
+
+**Contoh Test Use Case dengan Mock:**
+```go
+// Use case dapat di-test dengan mock ports
+func TestCreateUserUseCase(t *testing.T) {
+    mockRepo := &MockRepository{}
+    mockPasswordHasher := &MockPasswordHasher{}
+    mockNotification := &MockNotificationService{}
+    
+    useCase := usecase.NewCreateUserUseCase(
+        mockRepo,
+        mockPasswordHasher,
+        mockNotification,
+    )
+    // Test use case...
+}
+```
 
 ## 📚 Referensi
 
