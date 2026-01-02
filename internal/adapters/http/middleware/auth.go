@@ -9,7 +9,7 @@ import (
 )
 
 // AuthMiddleware creates a middleware for JWT authentication
-func AuthMiddleware(userService *domainuser.Service) gin.HandlerFunc {
+func AuthMiddleware(tokenValidator domainuser.TokenValidator) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
@@ -29,7 +29,7 @@ func AuthMiddleware(userService *domainuser.Service) gin.HandlerFunc {
 		token := parts[1]
 
 		// Validate token
-		claims, err := userService.ValidateJWT(token)
+		claims, err := tokenValidator.Validate(token)
 		if err != nil {
 			response.ErrorResponseUnauthorized(c, "invalid or expired token")
 			c.Abort()

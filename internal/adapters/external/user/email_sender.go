@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 	"log"
+
+	domainuser "github.com/rulzi/hexa-go/internal/domain/user"
 )
 
-// EmailSenderImpl is the implementation of the email sender (external service adapter)
+// EmailSenderImpl implements NotificationService (external service adapter)
 type EmailSenderImpl struct {
 	// In a real implementation, this would have SMTP config, API keys, etc.
 }
@@ -16,7 +18,7 @@ func NewEmailSenderImpl() *EmailSenderImpl {
 	return &EmailSenderImpl{}
 }
 
-// SendWelcomeEmail sends a welcome email to a new user
+// SendWelcomeEmail implements NotificationService interface
 func (e *EmailSenderImpl) SendWelcomeEmail(ctx context.Context, email, name string) error {
 	// In a real implementation, this would send an actual email
 	// For now, we'll just log it
@@ -30,4 +32,7 @@ func (e *EmailSenderImpl) SendWelcomeEmail(ctx context.Context, email, name stri
 	fmt.Printf("[EMAIL] Welcome %s! Your account has been created successfully.\n", name)
 	return nil
 }
+
+// Ensure EmailSenderImpl implements domainuser.NotificationService
+var _ domainuser.NotificationService = (*EmailSenderImpl)(nil)
 

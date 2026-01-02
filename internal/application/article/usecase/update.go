@@ -12,21 +12,21 @@ import (
 type UpdateArticleUseCase struct {
 	articleRepo    domainarticle.Repository
 	articleService *domainarticle.Service
-	singleCache    ArticleSingleCache
-	listCache      ArticleCache
+	cache          domainarticle.Cache
+	listCache      ArticleListCache
 }
 
 // NewUpdateArticleUseCase creates a new UpdateArticleUseCase
 func NewUpdateArticleUseCase(
 	articleRepo domainarticle.Repository,
 	articleService *domainarticle.Service,
-	singleCache ArticleSingleCache,
-	listCache ArticleCache,
+	cache domainarticle.Cache,
+	listCache ArticleListCache,
 ) *UpdateArticleUseCase {
 	return &UpdateArticleUseCase{
 		articleRepo:    articleRepo,
 		articleService: articleService,
-		singleCache:    singleCache,
+		cache:          cache,
 		listCache:      listCache,
 	}
 }
@@ -69,8 +69,9 @@ func (uc *UpdateArticleUseCase) Execute(ctx context.Context, id int64, req dto.U
 	}
 
 	// Invalidate cache
-	if uc.singleCache != nil {
-		_ = uc.singleCache.DeleteArticle(ctx, id)
+	if uc.cache != nil {
+		_ = uc.cache.Delete(ctx, id)
+		_ = uc.cache.InvalidateList(ctx)
 	}
 	if uc.listCache != nil {
 		_ = uc.listCache.InvalidateArticleList(ctx)

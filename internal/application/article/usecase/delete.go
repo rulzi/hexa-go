@@ -9,15 +9,15 @@ import (
 // DeleteArticleUseCase handles deleting an article
 type DeleteArticleUseCase struct {
 	articleRepo domainarticle.Repository
-	singleCache ArticleSingleCache
-	listCache   ArticleCache
+	cache       domainarticle.Cache
+	listCache   ArticleListCache
 }
 
 // NewDeleteArticleUseCase creates a new DeleteArticleUseCase
-func NewDeleteArticleUseCase(articleRepo domainarticle.Repository, singleCache ArticleSingleCache, listCache ArticleCache) *DeleteArticleUseCase {
+func NewDeleteArticleUseCase(articleRepo domainarticle.Repository, cache domainarticle.Cache, listCache ArticleListCache) *DeleteArticleUseCase {
 	return &DeleteArticleUseCase{
 		articleRepo: articleRepo,
-		singleCache: singleCache,
+		cache:       cache,
 		listCache:   listCache,
 	}
 }
@@ -40,8 +40,9 @@ func (uc *DeleteArticleUseCase) Execute(ctx context.Context, id int64) error {
 	}
 
 	// Invalidate cache
-	if uc.singleCache != nil {
-		_ = uc.singleCache.DeleteArticle(ctx, id)
+	if uc.cache != nil {
+		_ = uc.cache.Delete(ctx, id)
+		_ = uc.cache.InvalidateList(ctx)
 	}
 	if uc.listCache != nil {
 		_ = uc.listCache.InvalidateArticleList(ctx)

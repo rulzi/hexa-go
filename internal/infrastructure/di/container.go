@@ -31,7 +31,7 @@ func NewContainer(database *sql.DB, redisClient *redis.Client, jwtSecret string,
 	}
 
 	// Initialize router
-	router := http.NewRouter(userContainer.Handler, articleContainer.Handler, mediaContainer.Handler, userContainer.Service, storageBasePath)
+	router := http.NewRouter(userContainer.Handler, articleContainer.Handler, mediaContainer.Handler, userContainer.TokenValidator, storageBasePath)
 
 	return &Container{
 		DB:      database,

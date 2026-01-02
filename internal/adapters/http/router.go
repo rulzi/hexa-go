@@ -15,17 +15,17 @@ type Router struct {
 	userHandler     *httpuser.Handler
 	articleHandler  *httparticle.Handler
 	mediaHandler    *httpmedia.Handler
-	userService     *domainuser.Service
+	tokenValidator  domainuser.TokenValidator
 	storageBasePath string
 }
 
 // NewRouter creates a new router
-func NewRouter(userHandler *httpuser.Handler, articleHandler *httparticle.Handler, mediaHandler *httpmedia.Handler, userService *domainuser.Service, storageBasePath string) *Router {
+func NewRouter(userHandler *httpuser.Handler, articleHandler *httparticle.Handler, mediaHandler *httpmedia.Handler, tokenValidator domainuser.TokenValidator, storageBasePath string) *Router {
 	return &Router{
 		userHandler:     userHandler,
 		articleHandler:  articleHandler,
 		mediaHandler:    mediaHandler,
-		userService:     userService,
+		tokenValidator:  tokenValidator,
 		storageBasePath: storageBasePath,
 	}
 }
@@ -48,7 +48,7 @@ func (r *Router) SetupRoutes(engine *gin.Engine, debug bool) {
 		}
 
 		// Protected routes (authentication required)
-		authMiddleware := middleware.AuthMiddleware(r.userService)
+		authMiddleware := middleware.AuthMiddleware(r.tokenValidator)
 		protected := api.Group("")
 		protected.Use(authMiddleware)
 		{

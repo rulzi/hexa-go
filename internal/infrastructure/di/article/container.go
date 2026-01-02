@@ -30,23 +30,23 @@ func NewContainer(database *sql.DB, redisClient *redis.Client) *Container {
 	articleRepo := articledb.NewMySQLRepository(database)
 
 	// Initialize cache (driven adapter)
-	var articleCache usecase.ArticleCache
-	var articleSingleCache usecase.ArticleSingleCache
+	var domainCache domainarticle.Cache
+	var dtoCache usecase.ArticleListCache
 	if redisClient != nil {
-		cacheAdapter := articlecache.NewRedisCache(redisClient, 5*time.Minute)
-		articleCache = cacheAdapter
-		articleSingleCache = cacheAdapter
+		dtoCacheAdapter := articlecache.NewRedisCache(redisClient, 5*time.Minute)
+		domainCache = articlecache.NewDomainCacheAdapter(dtoCacheAdapter)
+		dtoCache = dtoCacheAdapter
 	}
 
 	// Initialize domain service
 	articleService := domainarticle.NewService(articleRepo)
 
 	// Initialize use cases (application layer)
-	createArticleUseCase := usecase.NewCreateArticleUseCase(articleRepo, articleService, articleCache)
-	getArticleUseCase := usecase.NewGetArticleUseCase(articleRepo, articleSingleCache)
-	listArticlesUseCase := usecase.NewListArticlesUseCase(articleRepo, articleCache)
-	updateArticleUseCase := usecase.NewUpdateArticleUseCase(articleRepo, articleService, articleSingleCache, articleCache)
-	deleteArticleUseCase := usecase.NewDeleteArticleUseCase(articleRepo, articleSingleCache, articleCache)
+	createArticleUseCase := usecase.NewCreateArticleUseCase(articleRepo, articleService, domainCache)
+	getArticleUseCase := usecase.NewGetArticleUseCase(articleRepo, domainCache)
+	listArticlesUseCase := usecase.NewListArticlesUseCase(articleRepo, domainCache, dtoCache)
+	updateArticleUseCase := usecase.NewUpdateArticleUseCase(articleRepo, articleService, domainCache, dtoCache)
+	deleteArticleUseCase := usecase.NewDeleteArticleUseCase(articleRepo, domainCache, dtoCache)
 
 	// Initialize HTTP handler (driving adapter)
 	articleHandler := httparticle.NewHandler(

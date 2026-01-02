@@ -10,18 +10,18 @@ import (
 
 // UpdateUserUseCase handles updating a user
 type UpdateUserUseCase struct {
-	userRepo    domainuser.Repository
-	userService *domainuser.Service
+	userRepo       domainuser.Repository
+	passwordHasher domainuser.PasswordHasher
 }
 
 // NewUpdateUserUseCase creates a new UpdateUserUseCase
 func NewUpdateUserUseCase(
 	userRepo domainuser.Repository,
-	userService *domainuser.Service,
+	passwordHasher domainuser.PasswordHasher,
 ) *UpdateUserUseCase {
 	return &UpdateUserUseCase{
-		userRepo:    userRepo,
-		userService: userService,
+		userRepo:       userRepo,
+		passwordHasher: passwordHasher,
 	}
 }
 
@@ -52,7 +52,7 @@ func (uc *UpdateUserUseCase) Execute(ctx context.Context, id int64, req dto.Upda
 
 	// Update password if provided
 	if req.Password != "" {
-		hashedPassword, err := uc.userService.HashPassword(req.Password)
+		hashedPassword, err := uc.passwordHasher.Hash(req.Password)
 		if err != nil {
 			return nil, err
 		}

@@ -7,21 +7,14 @@ import (
 	domainarticle "github.com/rulzi/hexa-go/internal/domain/article"
 )
 
-// ArticleSingleCache defines the interface for single article caching
-type ArticleSingleCache interface {
-	GetArticle(ctx context.Context, id int64) (*dto.ArticleResponse, error)
-	SetArticle(ctx context.Context, id int64, articleResp *dto.ArticleResponse) error
-	DeleteArticle(ctx context.Context, id int64) error
-}
-
 // GetArticleUseCase handles retrieving an article by ID
 type GetArticleUseCase struct {
 	articleRepo domainarticle.Repository
-	cache       ArticleSingleCache
+	cache       domainarticle.Cache
 }
 
 // NewGetArticleUseCase creates a new GetArticleUseCase
-func NewGetArticleUseCase(articleRepo domainarticle.Repository, cache ArticleSingleCache) *GetArticleUseCase {
+func NewGetArticleUseCase(articleRepo domainarticle.Repository, cache domainarticle.Cache) *GetArticleUseCase {
 	return &GetArticleUseCase{
 		articleRepo: articleRepo,
 		cache:       cache,
@@ -32,9 +25,16 @@ func NewGetArticleUseCase(articleRepo domainarticle.Repository, cache ArticleSin
 func (uc *GetArticleUseCase) Execute(ctx context.Context, id int64) (*dto.ArticleResponse, error) {
 	// Try to get from cache first
 	if uc.cache != nil {
-		cached, err := uc.cache.GetArticle(ctx, id)
+		cached, err := uc.cache.Get(ctx, id)
 		if err == nil && cached != nil {
-			return cached, nil
+			return &dto.ArticleResponse{
+				ID:        cached.ID,
+				Title:     cached.Title,
+				Content:   cached.Content,
+				AuthorID:  cached.AuthorID,
+				CreatedAt: cached.CreatedAt,
+				UpdatedAt: cached.UpdatedAt,
+			}, nil
 		}
 	}
 
@@ -59,7 +59,7 @@ func (uc *GetArticleUseCase) Execute(ctx context.Context, id int64) (*dto.Articl
 
 	// Store in cache
 	if uc.cache != nil {
-		_ = uc.cache.SetArticle(ctx, id, response)
+		_ = uc.cache.Set(ctx, id, articleEntity)
 	}
 
 	return response, nil

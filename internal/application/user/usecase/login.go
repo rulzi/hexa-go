@@ -9,18 +9,21 @@ import (
 
 // LoginUseCase handles user login
 type LoginUseCase struct {
-	userRepo    domainuser.Repository
-	userService *domainuser.Service
+	userRepo       domainuser.Repository
+	passwordHasher domainuser.PasswordHasher
+	tokenGen       domainuser.TokenGenerator
 }
 
 // NewLoginUseCase creates a new LoginUseCase
 func NewLoginUseCase(
 	userRepo domainuser.Repository,
-	userService *domainuser.Service,
+	passwordHasher domainuser.PasswordHasher,
+	tokenGen domainuser.TokenGenerator,
 ) *LoginUseCase {
 	return &LoginUseCase{
-		userRepo:    userRepo,
-		userService: userService,
+		userRepo:       userRepo,
+		passwordHasher: passwordHasher,
+		tokenGen:       tokenGen,
 	}
 }
 
@@ -33,12 +36,12 @@ func (uc *LoginUseCase) Execute(ctx context.Context, req dto.LoginRequest) (*dto
 	}
 
 	// Verify password
-	if !uc.userService.VerifyPassword(userEntity.Password, req.Password) {
+	if !uc.passwordHasher.Verify(userEntity.Password, req.Password) {
 		return nil, domainuser.ErrInvalidCredentials
 	}
 
 	// Generate JWT token
-	token, err := uc.userService.GenerateJWT(userEntity.ID, userEntity.Email)
+	token, err := uc.tokenGen.Generate(userEntity.ID, userEntity.Email)
 	if err != nil {
 		return nil, err
 	}

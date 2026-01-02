@@ -12,14 +12,14 @@ import (
 type CreateArticleUseCase struct {
 	articleRepo    domainarticle.Repository
 	articleService *domainarticle.Service
-	cache          ArticleCache
+	cache          domainarticle.Cache
 }
 
 // NewCreateArticleUseCase creates a new CreateArticleUseCase
 func NewCreateArticleUseCase(
 	articleRepo domainarticle.Repository,
 	articleService *domainarticle.Service,
-	cache ArticleCache,
+	cache domainarticle.Cache,
 ) *CreateArticleUseCase {
 	return &CreateArticleUseCase{
 		articleRepo:    articleRepo,
@@ -52,7 +52,7 @@ func (uc *CreateArticleUseCase) Execute(ctx context.Context, req dto.CreateArtic
 
 	// Invalidate cache
 	if uc.cache != nil {
-		_ = uc.cache.InvalidateArticleList(ctx)
+		_ = uc.cache.InvalidateList(ctx)
 	}
 
 	// Return response DTO

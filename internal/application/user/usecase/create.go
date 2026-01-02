@@ -8,28 +8,23 @@ import (
 	domainuser "github.com/rulzi/hexa-go/internal/domain/user"
 )
 
-// EmailSender defines the interface for sending emails
-type EmailSender interface {
-	SendWelcomeEmail(ctx context.Context, email, name string) error
-}
-
 // CreateUserUseCase handles the creation of a new user
 type CreateUserUseCase struct {
-	userRepo    domainuser.Repository
-	userService *domainuser.Service
-	emailSender EmailSender // External service adapter
+	userRepo            domainuser.Repository
+	passwordHasher      domainuser.PasswordHasher
+	notificationService domainuser.NotificationService
 }
 
 // NewCreateUserUseCase creates a new CreateUserUseCase
 func NewCreateUserUseCase(
 	userRepo domainuser.Repository,
-	userService *domainuser.Service,
-	emailSender EmailSender,
+	passwordHasher domainuser.PasswordHasher,
+	notificationService domainuser.NotificationService,
 ) *CreateUserUseCase {
 	return &CreateUserUseCase{
-		userRepo:    userRepo,
-		userService: userService,
-		emailSender: emailSender,
+		userRepo:            userRepo,
+		passwordHasher:      passwordHasher,
+		notificationService: notificationService,
 	}
 }
 
@@ -42,7 +37,7 @@ func (uc *CreateUserUseCase) Execute(ctx context.Context, req dto.CreateUserRequ
 	}
 
 	// Hash password
-	hashedPassword, err := uc.userService.HashPassword(req.Password)
+	hashedPassword, err := uc.passwordHasher.Hash(req.Password)
 	if err != nil {
 		return nil, err
 	}
@@ -68,7 +63,7 @@ func (uc *CreateUserUseCase) Execute(ctx context.Context, req dto.CreateUserRequ
 	}
 
 	// Send welcome email (external service)
-	_ = uc.emailSender.SendWelcomeEmail(ctx, createdUser.Email, createdUser.Name)
+	_ = uc.notificationService.SendWelcomeEmail(ctx, createdUser.Email, createdUser.Name)
 
 	// Return response DTO
 	return &dto.UserResponse{

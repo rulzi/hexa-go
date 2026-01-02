@@ -7,24 +7,27 @@ import (
 	domainarticle "github.com/rulzi/hexa-go/internal/domain/article"
 )
 
-// ArticleCache defines the interface for article caching
-type ArticleCache interface {
+// ListArticlesUseCase handles listing articles with pagination
+type ListArticlesUseCase struct {
+	articleRepo domainarticle.Repository
+	cache       domainarticle.Cache
+	dtoCache    ArticleListCache // Keep DTO cache for list caching (performance optimization)
+}
+
+// ArticleListCache defines the interface for article list caching (DTO-based for performance)
+// This is a secondary adapter interface for list caching
+type ArticleListCache interface {
 	GetArticleList(ctx context.Context, limit, offset int) (*dto.ListArticlesResponse, error)
 	SetArticleList(ctx context.Context, limit, offset int, listResp *dto.ListArticlesResponse) error
 	InvalidateArticleList(ctx context.Context) error
 }
 
-// ListArticlesUseCase handles listing articles with pagination
-type ListArticlesUseCase struct {
-	articleRepo domainarticle.Repository
-	cache       ArticleCache
-}
-
 // NewListArticlesUseCase creates a new ListArticlesUseCase
-func NewListArticlesUseCase(articleRepo domainarticle.Repository, cache ArticleCache) *ListArticlesUseCase {
+func NewListArticlesUseCase(articleRepo domainarticle.Repository, cache domainarticle.Cache, dtoCache ArticleListCache) *ListArticlesUseCase {
 	return &ListArticlesUseCase{
 		articleRepo: articleRepo,
 		cache:       cache,
+		dtoCache:    dtoCache,
 	}
 }
 
@@ -38,9 +41,9 @@ func (uc *ListArticlesUseCase) Execute(ctx context.Context, limit, offset int) (
 		offset = 0
 	}
 
-	// Try to get from cache first
-	if uc.cache != nil {
-		cached, err := uc.cache.GetArticleList(ctx, limit, offset)
+	// Try to get from cache first (using DTO cache for performance)
+	if uc.dtoCache != nil {
+		cached, err := uc.dtoCache.GetArticleList(ctx, limit, offset)
 		if err == nil && cached != nil {
 			return cached, nil
 		}
@@ -78,9 +81,9 @@ func (uc *ListArticlesUseCase) Execute(ctx context.Context, limit, offset int) (
 		Offset:   offset,
 	}
 
-	// Store in cache
-	if uc.cache != nil {
-		_ = uc.cache.SetArticleList(ctx, limit, offset, response)
+	// Store in cache (using DTO cache for performance)
+	if uc.dtoCache != nil {
+		_ = uc.dtoCache.SetArticleList(ctx, limit, offset, response)
 	}
 
 	return response, nil
