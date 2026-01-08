@@ -4,15 +4,21 @@ Proyek ini adalah contoh implementasi **Hexagonal Architecture** (Ports and Adap
 
 ## 📋 Daftar Isi
 
-- [Apa itu Hexagonal Architecture?](#apa-itu-hexagonal-architecture)
-- [Struktur Proyek](#struktur-proyek)
-- [Komponen Arsitektur](#komponen-arsitektur)
-- [Alur Data](#alur-data)
-- [Teknologi yang Digunakan](#teknologi-yang-digunakan)
-- [Persyaratan](#persyaratan)
-- [Instalasi dan Konfigurasi](#instalasi-dan-konfigurasi)
-- [Menjalankan Aplikasi](#menjalankan-aplikasi)
-- [Struktur API](#struktur-api)
+- [Apa itu Hexagonal Architecture?](#-apa-itu-hexagonal-architecture)
+- [Struktur Proyek](#-struktur-proyek)
+- [Komponen Arsitektur](#-komponen-arsitektur)
+- [Alur Data](#-alur-data)
+- [Teknologi yang Digunakan](#-teknologi-yang-digunakan)
+- [Persyaratan](#-persyaratan)
+- [Menjalankan dengan Docker](#-menjalankan-dengan-docker)
+- [Instalasi dan Konfigurasi](#%EF%B8%8F-instalasi-dan-konfigurasi)
+- [Menjalankan Aplikasi](#-menjalankan-aplikasi)
+- [Struktur API](#-struktur-api)
+- [Format Response Standar](#-format-response-standar)
+- [Prinsip-Prinsip Hexagonal Architecture](#-prinsip-prinsip-hexagonal-architecture-dalam-proyek-ini)
+- [Arsitektur Implementasi](#-arsitektur-implementasi)
+- [Referensi](#-referensi)
+- [License](#-license)
 
 ## 🏗️ Apa itu Hexagonal Architecture?
 
@@ -81,8 +87,8 @@ Diagram berikut menunjukkan arsitektur lengkap dengan semua ports dan adapters:
 │  │  │   │   └── NotificationService (port)                              │  │
 │  │  │   ├── LoginUseCase                                                │  │
 │  │  │   │   ├── Repository (port)                                       │  │
-│  │  │   │   ├── PasswordHasher (port)                                    │  │
-│  │  │   │   └── TokenGenerator (port)                                    │  │
+│  │  │   │   ├── PasswordHasher (port)                                   │  │
+│  │  │   │   └── TokenGenerator (port)                                   │  │
 │  │  │   └── ...                                                          │  │
 │  │  ├── Article Use Cases                                               │  │
 │  │  │   ├── GetArticleUseCase                                           │  │
@@ -125,9 +131,9 @@ Diagram berikut menunjukkan arsitektur lengkap dengan semua ports dan adapters:
 │  ┌──────────────────────────────────────────────────────────────────────┐   │
 │  │  Database Adapters                                                   │   │
 │  │  ├── MySQLRepository (implements Repository ports)                 │   │
-│  │  │   ├── user.MySQLRepository → user.Repository                     │   │
-│  │  │   ├── article.MySQLRepository → article.Repository              │   │
-│  │  │   └── media.MySQLRepository → media.Repository                   │   │
+│  │  │   ├── user.Repository → user.Repository                           │   │
+│  │  │   ├── article.Repository → article.Repository                    │   │
+│  │  │   └── media.Repository → media.Repository                         │   │
 │  │                                                                      │   │
 │  │  Authentication Adapters                                            │   │
 │  │  ├── JWTAdapter → TokenGenerator, TokenValidator                   │   │
@@ -271,7 +277,7 @@ Contoh detail implementasi untuk User domain:
 │  ┌───────────────────────────────────────────────────────────────────┐  │
 │  │  Adapters (Implementations)                                       │  │
 │  │  ┌─────────────────────────────────────────────────────────────┐  │  │
-│  │  │  • MySQLRepository → Repository                              │  │  │
+│  │  │  • Repository → Repository                                      │  │  │
 │  │  │  • BcryptPasswordHasher → PasswordHasher                    │  │  │
 │  │  │  • EmailSenderImpl → NotificationService                     │  │  │
 │  │  │  • JWTAdapter → TokenGenerator, TokenValidator              │  │  │
@@ -371,11 +377,11 @@ hexa-go/
 │   │   │   └── router.go
 │   │   ├── db/                        # Driven Adapter (Database)
 │   │   │   ├── article/
-│   │   │   │   └── mysql_repo.go
+│   │   │   │   └── repository.go
 │   │   │   ├── user/
-│   │   │   │   └── mysql_repo.go
+│   │   │   │   └── repository.go
 │   │   │   └── media/
-│   │   │       └── mysql_repo.go
+│   │   │       └── repository.go
 │   │   ├── auth/                      # Driven Adapter (Authentication)
 │   │   │   ├── jwt_adapter.go         # Implements TokenGenerator, TokenValidator
 │   │   │   └── bcrypt_adapter.go      # Implements PasswordHasher
@@ -580,7 +586,7 @@ func ErrorResponseNotFound(c *gin.Context, message string) {
 - **Cache**: Implementasi cache untuk Redis
 - **External Services**: Integrasi dengan API eksternal
 
-**Contoh: `internal/adapters/db/article/mysql_repo.go`**
+**Contoh: `internal/adapters/db/article/repository.go`**
 ```go
 // MySQLRepository adalah driven adapter yang mengimplementasikan
 // domain article.Repository interface
@@ -1058,7 +1064,7 @@ http://localhost:8080
 make test
 ```
 
-3. **Test API**
+5. **Test API**
 
 Gunakan curl atau Postman untuk test API:
 
@@ -1426,12 +1432,12 @@ Domain layer **100% bebas dari framework dan library eksternal**:
 
 | Port | Lokasi | Implementasi |
 |------|--------|--------------|
-| `user.Repository` | `domain/user/repository.go` | `adapters/db/user/mysql_repo.go` |
+| `user.Repository` | `domain/user/repository.go` | `adapters/db/user/repository.go` |
 | `user.TokenGenerator` | `domain/user/token.go` | `adapters/auth/jwt_adapter.go` |
 | `user.TokenValidator` | `domain/user/token.go` | `adapters/auth/jwt_adapter.go` |
 | `user.PasswordHasher` | `domain/user/password.go` | `adapters/auth/bcrypt_adapter.go` |
 | `user.NotificationService` | `domain/user/notification.go` | `adapters/external/user/email_sender.go` |
-| `article.Repository` | `domain/article/repository.go` | `adapters/db/article/mysql_repo.go` |
+| `article.Repository` | `domain/article/repository.go` | `adapters/db/article/repository.go` |
 | `article.Cache` | `domain/article/cache.go` | `adapters/cache/article/domain_cache_adapter.go` |
 | `media.Storage` | `domain/media/storage.go` | `adapters/storage/media/local_storage.go` |
 
@@ -1507,4 +1513,3 @@ MIT License
 ---
 
 **Dibuat dengan ❤️ menggunakan Go dan Hexagonal Architecture**
-
