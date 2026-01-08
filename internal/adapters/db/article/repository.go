@@ -207,3 +207,4 @@ func (r *MySQLRepository) CountByAuthor(ctx context.Context, authorID int64) (in
 
 	return count, nil
 }
+
