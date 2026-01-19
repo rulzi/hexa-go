@@ -1,31 +1,52 @@
 package article
 
 import (
+	"context"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/rulzi/hexa-go/internal/adapters/http/response"
 	"github.com/rulzi/hexa-go/internal/application/article/dto"
-	"github.com/rulzi/hexa-go/internal/application/article/usecase"
 	domainarticle "github.com/rulzi/hexa-go/internal/domain/article"
 )
 
+// UseCase interfaces for dependency injection and testing
+type CreateArticleUseCase interface {
+	Execute(ctx context.Context, req dto.CreateArticleRequest) (*dto.ArticleResponse, error)
+}
+
+type GetArticleUseCase interface {
+	Execute(ctx context.Context, id int64) (*dto.ArticleResponse, error)
+}
+
+type ListArticlesUseCase interface {
+	Execute(ctx context.Context, limit, offset int) (*dto.ListArticlesResponse, error)
+}
+
+type UpdateArticleUseCase interface {
+	Execute(ctx context.Context, id int64, req dto.UpdateArticleRequest) (*dto.ArticleResponse, error)
+}
+
+type DeleteArticleUseCase interface {
+	Execute(ctx context.Context, id int64) error
+}
+
 // Handler handles HTTP requests for articles
 type Handler struct {
-	createUseCase *usecase.CreateArticleUseCase
-	getUseCase    *usecase.GetArticleUseCase
-	listUseCase   *usecase.ListArticlesUseCase
-	updateUseCase *usecase.UpdateArticleUseCase
-	deleteUseCase *usecase.DeleteArticleUseCase
+	createUseCase CreateArticleUseCase
+	getUseCase    GetArticleUseCase
+	listUseCase   ListArticlesUseCase
+	updateUseCase UpdateArticleUseCase
+	deleteUseCase DeleteArticleUseCase
 }
 
 // NewHandler creates a new Handler
 func NewHandler(
-	createUseCase *usecase.CreateArticleUseCase,
-	getUseCase *usecase.GetArticleUseCase,
-	listUseCase *usecase.ListArticlesUseCase,
-	updateUseCase *usecase.UpdateArticleUseCase,
-	deleteUseCase *usecase.DeleteArticleUseCase,
+	createUseCase CreateArticleUseCase,
+	getUseCase GetArticleUseCase,
+	listUseCase ListArticlesUseCase,
+	updateUseCase UpdateArticleUseCase,
+	deleteUseCase DeleteArticleUseCase,
 ) *Handler {
 	return &Handler{
 		createUseCase: createUseCase,

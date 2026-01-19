@@ -1,31 +1,54 @@
 package media
 
 import (
+	"context"
+	"io"
 	"log"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/rulzi/hexa-go/internal/adapters/http/response"
-	"github.com/rulzi/hexa-go/internal/application/media/usecase"
+	"github.com/rulzi/hexa-go/internal/application/media/dto"
 	domainmedia "github.com/rulzi/hexa-go/internal/domain/media"
 )
 
+// UseCase interfaces for dependency injection and testing
+type CreateMediaUseCase interface {
+	Execute(ctx context.Context, filename string, file io.Reader) (*dto.MediaResponse, error)
+}
+
+type GetMediaUseCase interface {
+	Execute(ctx context.Context, id int64) (*dto.MediaResponse, error)
+}
+
+type ListMediaUseCase interface {
+	Execute(ctx context.Context, limit, offset int) (*dto.ListMediaResponse, error)
+}
+
+type UpdateMediaUseCase interface {
+	Execute(ctx context.Context, id int64, filename string, file io.Reader) (*dto.MediaResponse, error)
+}
+
+type DeleteMediaUseCase interface {
+	Execute(ctx context.Context, id int64) error
+}
+
 // Handler handles HTTP requests for media
 type Handler struct {
-	createUseCase *usecase.CreateMediaUseCase
-	getUseCase    *usecase.GetMediaUseCase
-	listUseCase   *usecase.ListMediaUseCase
-	updateUseCase *usecase.UpdateMediaUseCase
-	deleteUseCase *usecase.DeleteMediaUseCase
+	createUseCase CreateMediaUseCase
+	getUseCase    GetMediaUseCase
+	listUseCase   ListMediaUseCase
+	updateUseCase UpdateMediaUseCase
+	deleteUseCase DeleteMediaUseCase
 }
 
 // NewHandler creates a new Handler
 func NewHandler(
-	createUseCase *usecase.CreateMediaUseCase,
-	getUseCase *usecase.GetMediaUseCase,
-	listUseCase *usecase.ListMediaUseCase,
-	updateUseCase *usecase.UpdateMediaUseCase,
-	deleteUseCase *usecase.DeleteMediaUseCase,
+	createUseCase CreateMediaUseCase,
+	getUseCase GetMediaUseCase,
+	listUseCase ListMediaUseCase,
+	updateUseCase UpdateMediaUseCase,
+	deleteUseCase DeleteMediaUseCase,
 ) *Handler {
 	return &Handler{
 		createUseCase: createUseCase,

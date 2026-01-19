@@ -1,33 +1,58 @@
 package user
 
 import (
+	"context"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/rulzi/hexa-go/internal/adapters/http/response"
 	"github.com/rulzi/hexa-go/internal/application/user/dto"
-	"github.com/rulzi/hexa-go/internal/application/user/usecase"
 	domainuser "github.com/rulzi/hexa-go/internal/domain/user"
 )
 
+// UseCase interfaces for dependency injection and testing
+type CreateUserUseCase interface {
+	Execute(ctx context.Context, req dto.CreateUserRequest) (*dto.UserResponse, error)
+}
+
+type GetUserUseCase interface {
+	Execute(ctx context.Context, id int64) (*dto.UserResponse, error)
+}
+
+type ListUsersUseCase interface {
+	Execute(ctx context.Context, limit, offset int) (*dto.ListUsersResponse, error)
+}
+
+type UpdateUserUseCase interface {
+	Execute(ctx context.Context, id int64, req dto.UpdateUserRequest) (*dto.UserResponse, error)
+}
+
+type DeleteUserUseCase interface {
+	Execute(ctx context.Context, id int64) error
+}
+
+type LoginUseCase interface {
+	Execute(ctx context.Context, req dto.LoginRequest) (*dto.LoginResponse, error)
+}
+
 // Handler handles HTTP requests for users
 type Handler struct {
-	createUseCase *usecase.CreateUserUseCase
-	getUseCase    *usecase.GetUserUseCase
-	listUseCase   *usecase.ListUsersUseCase
-	updateUseCase *usecase.UpdateUserUseCase
-	deleteUseCase *usecase.DeleteUserUseCase
-	loginUseCase  *usecase.LoginUseCase
+	createUseCase CreateUserUseCase
+	getUseCase    GetUserUseCase
+	listUseCase   ListUsersUseCase
+	updateUseCase UpdateUserUseCase
+	deleteUseCase DeleteUserUseCase
+	loginUseCase  LoginUseCase
 }
 
 // NewHandler creates a new Handler
 func NewHandler(
-	createUseCase *usecase.CreateUserUseCase,
-	getUseCase *usecase.GetUserUseCase,
-	listUseCase *usecase.ListUsersUseCase,
-	updateUseCase *usecase.UpdateUserUseCase,
-	deleteUseCase *usecase.DeleteUserUseCase,
-	loginUseCase *usecase.LoginUseCase,
+	createUseCase CreateUserUseCase,
+	getUseCase GetUserUseCase,
+	listUseCase ListUsersUseCase,
+	updateUseCase UpdateUserUseCase,
+	deleteUseCase DeleteUserUseCase,
+	loginUseCase LoginUseCase,
 ) *Handler {
 	return &Handler{
 		createUseCase: createUseCase,
