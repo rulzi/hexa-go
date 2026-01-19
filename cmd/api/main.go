@@ -25,7 +25,11 @@ func main() {
 	if err != nil {
 		appLogger.Fatal(fmt.Sprintf("Failed to connect to database: %v", err))
 	}
-	defer db.Close()
+	defer func() {
+		if err := db.Close(); err != nil {
+			appLogger.Error(fmt.Sprintf("Failed to close database connection: %v", err))
+		}
+	}()
 	appLogger.Info("Database connected successfully")
 
 	// Connect to Redis
@@ -39,9 +43,13 @@ func main() {
 		if err != nil {
 			appLogger.Error(fmt.Sprintf("Failed to connect to Redis: %v. Continuing without cache.", err))
 		} else {
-			defer redisClient.Close()
-			appLogger.Info("Redis connected successfully")
+			defer func() {
+				if err := redisClient.Close(); err != nil {
+					appLogger.Error(fmt.Sprintf("Failed to close Redis connection: %v", err))
+				}
+			}()
 		}
+		appLogger.Info("Redis connected successfully")
 	}
 
 	// Initialize dependency injection container

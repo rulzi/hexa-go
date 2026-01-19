@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"path/filepath"
 	"time"
@@ -52,11 +53,17 @@ func (s *LocalStorage) Save(ctx context.Context, filename string, file io.Reader
 	if err != nil {
 		return "", fmt.Errorf("failed to create file: %w", err)
 	}
-	defer dst.Close()
+	defer func() {
+		if err := dst.Close(); err != nil {
+			log.Printf("Failed to close file: %v", err)
+		}
+	}()
 
 	// Copy file content
 	if _, err := io.Copy(dst, file); err != nil {
-		os.Remove(fullPath) // Clean up on error
+		if err := os.Remove(fullPath); err != nil {
+			log.Printf("Failed to remove file: %v", err)
+		}
 		return "", fmt.Errorf("failed to save file: %w", err)
 	}
 

@@ -34,8 +34,7 @@ func (uc *DeleteMediaUseCase) Execute(ctx context.Context, id int64) error {
 
 	// Delete file from storage
 	if err := uc.storage.Delete(ctx, existingMedia.Path); err != nil {
-		// Log error but continue with database deletion
-		// This ensures database consistency even if file deletion fails
+		return err
 	}
 
 	// Delete media from database

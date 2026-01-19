@@ -3,6 +3,7 @@ package user
 import (
 	"context"
 	"database/sql"
+	"log"
 
 	domainuser "github.com/rulzi/hexa-go/internal/domain/user"
 )
@@ -144,7 +145,11 @@ func (r *MySQLRepository) List(ctx context.Context, limit, offset int) ([]*domai
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			log.Printf("Failed to close rows: %v", err)
+		}
+	}()
 
 	var users []*domainuser.User
 	for rows.Next() {
@@ -182,4 +187,3 @@ func (r *MySQLRepository) Count(ctx context.Context) (int64, error) {
 
 	return count, nil
 }
-

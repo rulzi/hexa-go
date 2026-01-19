@@ -111,11 +111,12 @@ func (h *Handler) Update(c *gin.Context) {
 
 	resp, err := h.updateUseCase.Execute(c.Request.Context(), id, req)
 	if err != nil {
-		if err == domainuser.ErrUserNotFound {
+		switch err {
+		case domainuser.ErrUserNotFound:
 			response.ErrorResponseNotFound(c, err.Error())
-		} else if err == domainuser.ErrEmailExists {
+		case domainuser.ErrEmailExists:
 			response.ErrorResponseConflict(c, err.Error())
-		} else {
+		default:
 			response.ErrorResponseInternalServerError(c, err.Error())
 		}
 		return

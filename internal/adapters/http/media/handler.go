@@ -1,6 +1,7 @@
 package media
 
 import (
+	"log"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -50,7 +51,11 @@ func (h *Handler) Create(c *gin.Context) {
 		response.ErrorResponseBadRequest(c, "failed to open file")
 		return
 	}
-	defer src.Close()
+	defer func() {
+		if err := src.Close(); err != nil {
+			log.Printf("Failed to close file: %v", err)
+		}
+	}()
 
 	// Execute use case
 	resp, err := h.createUseCase.Execute(c.Request.Context(), file.Filename, src)
@@ -122,15 +127,20 @@ func (h *Handler) Update(c *gin.Context) {
 		response.ErrorResponseBadRequest(c, "failed to open file")
 		return
 	}
-	defer src.Close()
+	defer func() {
+		if err := src.Close(); err != nil {
+			log.Printf("Failed to close file: %v", err)
+		}
+	}()
 
 	resp, err := h.updateUseCase.Execute(c.Request.Context(), id, file.Filename, src)
 	if err != nil {
-		if err == domainmedia.ErrMediaNotFound {
+		switch err {
+		case domainmedia.ErrMediaNotFound:
 			response.ErrorResponseNotFound(c, err.Error())
-		} else if err == domainmedia.ErrNameRequired || err == domainmedia.ErrPathRequired {
+		case domainmedia.ErrNameRequired, domainmedia.ErrPathRequired:
 			response.ErrorResponseBadRequest(c, err.Error())
-		} else {
+		default:
 			response.ErrorResponseInternalServerError(c, err.Error())
 		}
 		return

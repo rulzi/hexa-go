@@ -3,6 +3,7 @@ package article
 import (
 	"context"
 	"database/sql"
+	"log"
 
 	domainarticle "github.com/rulzi/hexa-go/internal/domain/article"
 )
@@ -116,7 +117,11 @@ func (r *MySQLRepository) List(ctx context.Context, limit, offset int) ([]*domai
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			log.Printf("Failed to close rows: %v", err)
+		}
+	}()
 
 	var articles []*domainarticle.Article
 	for rows.Next() {
@@ -156,7 +161,11 @@ func (r *MySQLRepository) ListByAuthor(ctx context.Context, authorID int64, limi
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			log.Printf("Failed to close rows: %v", err)
+		}
+	}()
 
 	var articles []*domainarticle.Article
 	for rows.Next() {
@@ -207,4 +216,3 @@ func (r *MySQLRepository) CountByAuthor(ctx context.Context, authorID int64) (in
 
 	return count, nil
 }
-

@@ -93,7 +93,9 @@ func getEnvInt(key string, defaultValue int) int {
 		return defaultValue
 	}
 	var result int
-	fmt.Sscanf(value, "%d", &result)
+	if _, err := fmt.Sscanf(value, "%d", &result); err != nil {
+		return defaultValue
+	}
 	return result
 }
 

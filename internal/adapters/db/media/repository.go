@@ -3,6 +3,7 @@ package media
 import (
 	"context"
 	"database/sql"
+	"log"
 
 	domainmedia "github.com/rulzi/hexa-go/internal/domain/media"
 )
@@ -115,7 +116,11 @@ func (r *MySQLRepository) List(ctx context.Context, limit, offset int) ([]*domai
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			log.Printf("Failed to close rows: %v", err)
+		}
+	}()
 
 	var mediaList []*domainmedia.Media
 	for rows.Next() {
@@ -152,4 +157,3 @@ func (r *MySQLRepository) Count(ctx context.Context) (int64, error) {
 
 	return count, nil
 }
-
