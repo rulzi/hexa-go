@@ -41,6 +41,7 @@ run:
 	
 lint: build
 	golint -set_exit_status ./...
+	golangci-lint run ./...
 
 test: lint
 	go test ./... -v -covermode=count -coverprofile=coverage.out

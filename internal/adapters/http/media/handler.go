@@ -12,23 +12,27 @@ import (
 	domainmedia "github.com/rulzi/hexa-go/internal/domain/media"
 )
 
-// UseCase interfaces for dependency injection and testing
+// CreateMediaUseCase is the interface for the create media use case
 type CreateMediaUseCase interface {
 	Execute(ctx context.Context, filename string, file io.Reader) (*dto.MediaResponse, error)
 }
 
+// GetMediaUseCase is the interface for the get media use case
 type GetMediaUseCase interface {
 	Execute(ctx context.Context, id int64) (*dto.MediaResponse, error)
 }
 
+// ListMediaUseCase is the interface for the list media use case
 type ListMediaUseCase interface {
 	Execute(ctx context.Context, limit, offset int) (*dto.ListMediaResponse, error)
 }
 
+// UpdateMediaUseCase is the interface for the update media use case
 type UpdateMediaUseCase interface {
 	Execute(ctx context.Context, id int64, filename string, file io.Reader) (*dto.MediaResponse, error)
 }
 
+// DeleteMediaUseCase is the interface for the delete media use case
 type DeleteMediaUseCase interface {
 	Execute(ctx context.Context, id int64) error
 }

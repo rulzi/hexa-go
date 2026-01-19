@@ -10,23 +10,27 @@ import (
 	domainarticle "github.com/rulzi/hexa-go/internal/domain/article"
 )
 
-// UseCase interfaces for dependency injection and testing
+// CreateArticleUseCase is the interface for the create article use case
 type CreateArticleUseCase interface {
 	Execute(ctx context.Context, req dto.CreateArticleRequest) (*dto.ArticleResponse, error)
 }
 
+// GetArticleUseCase is the interface for the get article use case
 type GetArticleUseCase interface {
 	Execute(ctx context.Context, id int64) (*dto.ArticleResponse, error)
 }
 
+// ListArticlesUseCase is the interface for the list articles use case
 type ListArticlesUseCase interface {
 	Execute(ctx context.Context, limit, offset int) (*dto.ListArticlesResponse, error)
 }
 
+// UpdateArticleUseCase is the interface for the update article use case
 type UpdateArticleUseCase interface {
 	Execute(ctx context.Context, id int64, req dto.UpdateArticleRequest) (*dto.ArticleResponse, error)
 }
 
+// DeleteArticleUseCase is the interface for the delete article use case
 type DeleteArticleUseCase interface {
 	Execute(ctx context.Context, id int64) error
 }

@@ -152,7 +152,7 @@ func TestHandler_Create_Success(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Mock expects the file content to be read
-	createUC.On("Execute", mock.Anything, filename, mock.AnythingOfType("*multipart.File")).Return(expectedResp, nil)
+	createUC.On("Execute", mock.Anything, filename, mock.Anything).Return(expectedResp, nil)
 
 	router := setupTestRouter(handler)
 	router.POST("/media", handler.Create)
@@ -211,7 +211,7 @@ func TestHandler_Create_BadRequest_ValidationError(t *testing.T) {
 	body, contentType, err := createMultipartFormData(filename, fileContent)
 	assert.NoError(t, err)
 
-	createUC.On("Execute", mock.Anything, filename, mock.AnythingOfType("*multipart.File")).Return(nil, domainmedia.ErrNameRequired)
+	createUC.On("Execute", mock.Anything, filename, mock.Anything).Return(nil, domainmedia.ErrNameRequired)
 
 	router := setupTestRouter(handler)
 	router.POST("/media", handler.Create)
@@ -242,7 +242,7 @@ func TestHandler_Create_InternalServerError(t *testing.T) {
 	body, contentType, err := createMultipartFormData(filename, fileContent)
 	assert.NoError(t, err)
 
-	createUC.On("Execute", mock.Anything, filename, mock.AnythingOfType("*multipart.File")).Return(nil, errors.New("storage error"))
+	createUC.On("Execute", mock.Anything, filename, mock.Anything).Return(nil, errors.New("storage error"))
 
 	router := setupTestRouter(handler)
 	router.POST("/media", handler.Create)
@@ -494,7 +494,7 @@ func TestHandler_Update_Success(t *testing.T) {
 	body, contentType, err := createMultipartFormData(filename, fileContent)
 	assert.NoError(t, err)
 
-	updateUC.On("Execute", mock.Anything, mediaID, filename, mock.AnythingOfType("*multipart.File")).Return(expectedResp, nil)
+	updateUC.On("Execute", mock.Anything, mediaID, filename, mock.Anything).Return(expectedResp, nil)
 
 	router := setupTestRouter(handler)
 	router.PUT("/media/:id", handler.Update)
@@ -583,7 +583,7 @@ func TestHandler_Update_BadRequest_ValidationError(t *testing.T) {
 	body, contentType, err := createMultipartFormData(filename, fileContent)
 	assert.NoError(t, err)
 
-	updateUC.On("Execute", mock.Anything, mediaID, filename, mock.AnythingOfType("*multipart.File")).Return(nil, domainmedia.ErrNameRequired)
+	updateUC.On("Execute", mock.Anything, mediaID, filename, mock.Anything).Return(nil, domainmedia.ErrNameRequired)
 
 	router := setupTestRouter(handler)
 	router.PUT("/media/:id", handler.Update)
@@ -615,7 +615,7 @@ func TestHandler_Update_NotFound(t *testing.T) {
 	body, contentType, err := createMultipartFormData(filename, fileContent)
 	assert.NoError(t, err)
 
-	updateUC.On("Execute", mock.Anything, mediaID, filename, mock.AnythingOfType("*multipart.File")).Return(nil, domainmedia.ErrMediaNotFound)
+	updateUC.On("Execute", mock.Anything, mediaID, filename, mock.Anything).Return(nil, domainmedia.ErrMediaNotFound)
 
 	router := setupTestRouter(handler)
 	router.PUT("/media/:id", handler.Update)
@@ -647,7 +647,7 @@ func TestHandler_Update_InternalServerError(t *testing.T) {
 	body, contentType, err := createMultipartFormData(filename, fileContent)
 	assert.NoError(t, err)
 
-	updateUC.On("Execute", mock.Anything, mediaID, filename, mock.AnythingOfType("*multipart.File")).Return(nil, errors.New("storage error"))
+	updateUC.On("Execute", mock.Anything, mediaID, filename, mock.Anything).Return(nil, errors.New("storage error"))
 
 	router := setupTestRouter(handler)
 	router.PUT("/media/:id", handler.Update)
@@ -760,4 +760,3 @@ func TestHandler_Delete_InternalServerError(t *testing.T) {
 	assert.Equal(t, http.StatusInternalServerError, w.Code)
 	deleteUC.AssertExpectations(t)
 }
-

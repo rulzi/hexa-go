@@ -10,27 +10,32 @@ import (
 	domainuser "github.com/rulzi/hexa-go/internal/domain/user"
 )
 
-// UseCase interfaces for dependency injection and testing
+// CreateUserUseCase is the interface for the create user use case
 type CreateUserUseCase interface {
 	Execute(ctx context.Context, req dto.CreateUserRequest) (*dto.UserResponse, error)
 }
 
+// GetUserUseCase is the interface for the get user use case
 type GetUserUseCase interface {
 	Execute(ctx context.Context, id int64) (*dto.UserResponse, error)
 }
 
+// ListUsersUseCase is the interface for the list users use case
 type ListUsersUseCase interface {
 	Execute(ctx context.Context, limit, offset int) (*dto.ListUsersResponse, error)
 }
 
+// UpdateUserUseCase is the interface for the update user use case
 type UpdateUserUseCase interface {
 	Execute(ctx context.Context, id int64, req dto.UpdateUserRequest) (*dto.UserResponse, error)
 }
 
+// DeleteUserUseCase is the interface for the delete user use case
 type DeleteUserUseCase interface {
 	Execute(ctx context.Context, id int64) error
 }
 
+// LoginUseCase is the interface for the login use case
 type LoginUseCase interface {
 	Execute(ctx context.Context, req dto.LoginRequest) (*dto.LoginResponse, error)
 }

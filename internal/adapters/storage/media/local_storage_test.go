@@ -244,7 +244,11 @@ func TestLocalStorage_Get_Success(t *testing.T) {
 	reader, err := storage.Get(ctx, path)
 	assert.NoError(t, err)
 	assert.NotNil(t, reader)
-	defer reader.Close()
+	defer func() {
+		if err := reader.Close(); err != nil {
+			t.Fatalf("Failed to close reader: %v", err)
+		}
+	}()
 
 	// Read content
 	readContent, err := io.ReadAll(reader)
@@ -283,7 +287,11 @@ func TestLocalStorage_Get_WithNestedPath(t *testing.T) {
 	reader, err := storage.Get(ctx, path)
 	assert.NoError(t, err)
 	assert.NotNil(t, reader)
-	defer reader.Close()
+	defer func() {
+		if err := reader.Close(); err != nil {
+			t.Fatalf("Failed to close reader: %v", err)
+		}
+	}()
 
 	// Verify content
 	readContent, err := io.ReadAll(reader)
@@ -307,7 +315,11 @@ func TestLocalStorage_RoundTrip(t *testing.T) {
 	// Get
 	reader, err := storage.Get(ctx, path)
 	assert.NoError(t, err)
-	defer reader.Close()
+	defer func() {
+		if err := reader.Close(); err != nil {
+			t.Fatalf("Failed to close reader: %v", err)
+		}
+	}()
 
 	// Verify content
 	readContent, err := io.ReadAll(reader)
