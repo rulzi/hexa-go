@@ -3,7 +3,7 @@ package media
 import (
 	"database/sql"
 
-	mediadb "github.com/rulzi/hexa-go/internal/adapters/db/media"
+	mediadb "github.com/rulzi/hexa-go/internal/adapters/repository/media"
 	httpmedia "github.com/rulzi/hexa-go/internal/adapters/http/media"
 	mediastorage "github.com/rulzi/hexa-go/internal/adapters/storage/media"
 	"github.com/rulzi/hexa-go/internal/application/media/usecase"

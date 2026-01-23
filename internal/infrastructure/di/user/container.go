@@ -4,7 +4,7 @@ import (
 	"database/sql"
 
 	authadapter "github.com/rulzi/hexa-go/internal/adapters/auth"
-	userdb "github.com/rulzi/hexa-go/internal/adapters/db/user"
+	userdb "github.com/rulzi/hexa-go/internal/adapters/repository/user"
 	userexternal "github.com/rulzi/hexa-go/internal/adapters/external/user"
 	httpuser "github.com/rulzi/hexa-go/internal/adapters/http/user"
 	"github.com/rulzi/hexa-go/internal/application/user/usecase"

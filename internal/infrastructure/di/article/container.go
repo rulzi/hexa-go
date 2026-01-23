@@ -6,7 +6,7 @@ import (
 
 	"github.com/redis/go-redis/v9"
 	articlecache "github.com/rulzi/hexa-go/internal/adapters/cache/article"
-	articledb "github.com/rulzi/hexa-go/internal/adapters/db/article"
+	articledb "github.com/rulzi/hexa-go/internal/adapters/repository/article"
 	httparticle "github.com/rulzi/hexa-go/internal/adapters/http/article"
 	"github.com/rulzi/hexa-go/internal/application/article/usecase"
 	domainarticle "github.com/rulzi/hexa-go/internal/domain/article"
