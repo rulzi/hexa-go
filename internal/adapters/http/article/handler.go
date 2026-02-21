@@ -10,8 +10,8 @@ import (
 	domainarticle "github.com/rulzi/hexa-go/internal/domain/article"
 )
 
-// ArticleUseCase is the interface for article operations
-type ArticleUseCase interface {
+// UseCase is the interface for article operations
+type UseCase interface {
 	Create(ctx context.Context, req dto.CreateArticleRequest) (*dto.ArticleResponse, error)
 	Get(ctx context.Context, id int64) (*dto.ArticleResponse, error)
 	List(ctx context.Context, limit, offset int) (*dto.ListArticlesResponse, error)
@@ -21,11 +21,11 @@ type ArticleUseCase interface {
 
 // Handler handles HTTP requests for articles
 type Handler struct {
-	articleUseCase ArticleUseCase
+	articleUseCase UseCase
 }
 
 // NewHandler creates a new Handler
-func NewHandler(articleUseCase ArticleUseCase) *Handler {
+func NewHandler(articleUseCase UseCase) *Handler {
 	return &Handler{
 		articleUseCase: articleUseCase,
 	}

@@ -12,15 +12,11 @@ import (
 
 // Container holds all media domain dependencies
 type Container struct {
-	Repo          domainmedia.Repository
-	Storage       domainmedia.Storage
-	Service       *domainmedia.Service
-	CreateUseCase *usecase.CreateMediaUseCase
-	GetUseCase    *usecase.GetMediaUseCase
-	ListUseCase   *usecase.ListMediaUseCase
-	UpdateUseCase *usecase.UpdateMediaUseCase
-	DeleteUseCase *usecase.DeleteMediaUseCase
-	Handler       *httpmedia.Handler
+	Repo      domainmedia.Repository
+	Storage   domainmedia.Storage
+	Service   *domainmedia.Service
+	MediaUC   *usecase.MediaUseCase
+	Handler   *httpmedia.Handler
 }
 
 // NewContainer creates a new media domain container
@@ -37,31 +33,17 @@ func NewContainer(database *sql.DB, storageBasePath string, baseURL string) (*Co
 	// Initialize domain service
 	mediaService := domainmedia.NewService(mediaRepo)
 
-	// Initialize use cases (application layer)
-	createMediaUseCase := usecase.NewCreateMediaUseCase(mediaRepo, mediaService, storage, baseURL)
-	getMediaUseCase := usecase.NewGetMediaUseCase(mediaRepo, baseURL)
-	listMediaUseCase := usecase.NewListMediaUseCase(mediaRepo, baseURL)
-	updateMediaUseCase := usecase.NewUpdateMediaUseCase(mediaRepo, mediaService, storage, baseURL)
-	deleteMediaUseCase := usecase.NewDeleteMediaUseCase(mediaRepo, storage)
+	// Initialize use case (application layer)
+	mediaUseCase := usecase.NewMediaUseCase(mediaRepo, mediaService, storage, baseURL)
 
 	// Initialize HTTP handler (driving adapter)
-	mediaHandler := httpmedia.NewHandler(
-		createMediaUseCase,
-		getMediaUseCase,
-		listMediaUseCase,
-		updateMediaUseCase,
-		deleteMediaUseCase,
-	)
+	mediaHandler := httpmedia.NewHandler(mediaUseCase)
 
 	return &Container{
-		Repo:          mediaRepo,
-		Storage:       storage,
-		Service:       mediaService,
-		CreateUseCase: createMediaUseCase,
-		GetUseCase:    getMediaUseCase,
-		ListUseCase:   listMediaUseCase,
-		UpdateUseCase: updateMediaUseCase,
-		DeleteUseCase: deleteMediaUseCase,
-		Handler:       mediaHandler,
+		Repo:    mediaRepo,
+		Storage: storage,
+		Service: mediaService,
+		MediaUC: mediaUseCase,
+		Handler: mediaHandler,
 	}, nil
 }

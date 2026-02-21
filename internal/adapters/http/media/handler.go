@@ -12,67 +12,35 @@ import (
 	domainmedia "github.com/rulzi/hexa-go/internal/domain/media"
 )
 
-// CreateMediaUseCase is the interface for the create media use case
-type CreateMediaUseCase interface {
-	Execute(ctx context.Context, filename string, file io.Reader) (*dto.MediaResponse, error)
-}
-
-// GetMediaUseCase is the interface for the get media use case
-type GetMediaUseCase interface {
-	Execute(ctx context.Context, id int64) (*dto.MediaResponse, error)
-}
-
-// ListMediaUseCase is the interface for the list media use case
-type ListMediaUseCase interface {
-	Execute(ctx context.Context, limit, offset int) (*dto.ListMediaResponse, error)
-}
-
-// UpdateMediaUseCase is the interface for the update media use case
-type UpdateMediaUseCase interface {
-	Execute(ctx context.Context, id int64, filename string, file io.Reader) (*dto.MediaResponse, error)
-}
-
-// DeleteMediaUseCase is the interface for the delete media use case
-type DeleteMediaUseCase interface {
-	Execute(ctx context.Context, id int64) error
+// UseCase is the interface for media operations
+type UseCase interface {
+	Create(ctx context.Context, filename string, file io.Reader) (*dto.MediaResponse, error)
+	Get(ctx context.Context, id int64) (*dto.MediaResponse, error)
+	List(ctx context.Context, limit, offset int) (*dto.ListMediaResponse, error)
+	Update(ctx context.Context, id int64, filename string, file io.Reader) (*dto.MediaResponse, error)
+	Delete(ctx context.Context, id int64) error
 }
 
 // Handler handles HTTP requests for media
 type Handler struct {
-	createUseCase CreateMediaUseCase
-	getUseCase    GetMediaUseCase
-	listUseCase   ListMediaUseCase
-	updateUseCase UpdateMediaUseCase
-	deleteUseCase DeleteMediaUseCase
+	mediaUseCase UseCase
 }
 
 // NewHandler creates a new Handler
-func NewHandler(
-	createUseCase CreateMediaUseCase,
-	getUseCase GetMediaUseCase,
-	listUseCase ListMediaUseCase,
-	updateUseCase UpdateMediaUseCase,
-	deleteUseCase DeleteMediaUseCase,
-) *Handler {
+func NewHandler(mediaUseCase UseCase) *Handler {
 	return &Handler{
-		createUseCase: createUseCase,
-		getUseCase:    getUseCase,
-		listUseCase:   listUseCase,
-		updateUseCase: updateUseCase,
-		deleteUseCase: deleteUseCase,
+		mediaUseCase: mediaUseCase,
 	}
 }
 
 // Create handles POST /media (multipart/form-data with file field)
 func (h *Handler) Create(c *gin.Context) {
-	// Get file from form
 	file, err := c.FormFile("file")
 	if err != nil {
 		response.ErrorResponseBadRequest(c, "file is required")
 		return
 	}
 
-	// Open file
 	src, err := file.Open()
 	if err != nil {
 		response.ErrorResponseBadRequest(c, "failed to open file")
@@ -84,8 +52,7 @@ func (h *Handler) Create(c *gin.Context) {
 		}
 	}()
 
-	// Execute use case
-	resp, err := h.createUseCase.Execute(c.Request.Context(), file.Filename, src)
+	resp, err := h.mediaUseCase.Create(c.Request.Context(), file.Filename, src)
 	if err != nil {
 		if err == domainmedia.ErrNameRequired || err == domainmedia.ErrPathRequired {
 			response.ErrorResponseBadRequest(c, err.Error())
@@ -106,7 +73,7 @@ func (h *Handler) Get(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.getUseCase.Execute(c.Request.Context(), id)
+	resp, err := h.mediaUseCase.Get(c.Request.Context(), id)
 	if err != nil {
 		if err == domainmedia.ErrMediaNotFound {
 			response.ErrorResponseNotFound(c, err.Error())
@@ -124,7 +91,7 @@ func (h *Handler) List(c *gin.Context) {
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
 	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
 
-	resp, err := h.listUseCase.Execute(c.Request.Context(), limit, offset)
+	resp, err := h.mediaUseCase.List(c.Request.Context(), limit, offset)
 	if err != nil {
 		response.ErrorResponseInternalServerError(c, err.Error())
 		return
@@ -141,14 +108,12 @@ func (h *Handler) Update(c *gin.Context) {
 		return
 	}
 
-	// Get file from form
 	file, err := c.FormFile("file")
 	if err != nil {
 		response.ErrorResponseBadRequest(c, "file is required")
 		return
 	}
 
-	// Open file
 	src, err := file.Open()
 	if err != nil {
 		response.ErrorResponseBadRequest(c, "failed to open file")
@@ -160,7 +125,7 @@ func (h *Handler) Update(c *gin.Context) {
 		}
 	}()
 
-	resp, err := h.updateUseCase.Execute(c.Request.Context(), id, file.Filename, src)
+	resp, err := h.mediaUseCase.Update(c.Request.Context(), id, file.Filename, src)
 	if err != nil {
 		switch err {
 		case domainmedia.ErrMediaNotFound:
@@ -184,7 +149,7 @@ func (h *Handler) Delete(c *gin.Context) {
 		return
 	}
 
-	err = h.deleteUseCase.Execute(c.Request.Context(), id)
+	err = h.mediaUseCase.Delete(c.Request.Context(), id)
 	if err != nil {
 		if err == domainmedia.ErrMediaNotFound {
 			response.ErrorResponseNotFound(c, err.Error())

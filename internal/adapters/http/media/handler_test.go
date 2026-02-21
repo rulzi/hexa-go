@@ -19,12 +19,12 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-// mockCreateMediaUseCase is a mock implementation of CreateMediaUseCase
-type mockCreateMediaUseCase struct {
+// mockMediaUseCase is a mock implementation of MediaUseCase
+type mockMediaUseCase struct {
 	mock.Mock
 }
 
-func (m *mockCreateMediaUseCase) Execute(ctx context.Context, filename string, file io.Reader) (*dto.MediaResponse, error) {
+func (m *mockMediaUseCase) Create(ctx context.Context, filename string, file io.Reader) (*dto.MediaResponse, error) {
 	args := m.Called(ctx, filename, file)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -32,12 +32,7 @@ func (m *mockCreateMediaUseCase) Execute(ctx context.Context, filename string, f
 	return args.Get(0).(*dto.MediaResponse), args.Error(1)
 }
 
-// mockGetMediaUseCase is a mock implementation of GetMediaUseCase
-type mockGetMediaUseCase struct {
-	mock.Mock
-}
-
-func (m *mockGetMediaUseCase) Execute(ctx context.Context, id int64) (*dto.MediaResponse, error) {
+func (m *mockMediaUseCase) Get(ctx context.Context, id int64) (*dto.MediaResponse, error) {
 	args := m.Called(ctx, id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -45,12 +40,7 @@ func (m *mockGetMediaUseCase) Execute(ctx context.Context, id int64) (*dto.Media
 	return args.Get(0).(*dto.MediaResponse), args.Error(1)
 }
 
-// mockListMediaUseCase is a mock implementation of ListMediaUseCase
-type mockListMediaUseCase struct {
-	mock.Mock
-}
-
-func (m *mockListMediaUseCase) Execute(ctx context.Context, limit, offset int) (*dto.ListMediaResponse, error) {
+func (m *mockMediaUseCase) List(ctx context.Context, limit, offset int) (*dto.ListMediaResponse, error) {
 	args := m.Called(ctx, limit, offset)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -58,12 +48,7 @@ func (m *mockListMediaUseCase) Execute(ctx context.Context, limit, offset int) (
 	return args.Get(0).(*dto.ListMediaResponse), args.Error(1)
 }
 
-// mockUpdateMediaUseCase is a mock implementation of UpdateMediaUseCase
-type mockUpdateMediaUseCase struct {
-	mock.Mock
-}
-
-func (m *mockUpdateMediaUseCase) Execute(ctx context.Context, id int64, filename string, file io.Reader) (*dto.MediaResponse, error) {
+func (m *mockMediaUseCase) Update(ctx context.Context, id int64, filename string, file io.Reader) (*dto.MediaResponse, error) {
 	args := m.Called(ctx, id, filename, file)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -71,12 +56,7 @@ func (m *mockUpdateMediaUseCase) Execute(ctx context.Context, id int64, filename
 	return args.Get(0).(*dto.MediaResponse), args.Error(1)
 }
 
-// mockDeleteMediaUseCase is a mock implementation of DeleteMediaUseCase
-type mockDeleteMediaUseCase struct {
-	mock.Mock
-}
-
-func (m *mockDeleteMediaUseCase) Execute(ctx context.Context, id int64) error {
+func (m *mockMediaUseCase) Delete(ctx context.Context, id int64) error {
 	args := m.Called(ctx, id)
 	return args.Error(0)
 }
@@ -111,30 +91,15 @@ func createMultipartFormData(filename, content string) (*bytes.Buffer, string, e
 }
 
 func TestNewHandler(t *testing.T) {
-	createUC := &mockCreateMediaUseCase{}
-	getUC := &mockGetMediaUseCase{}
-	listUC := &mockListMediaUseCase{}
-	updateUC := &mockUpdateMediaUseCase{}
-	deleteUC := &mockDeleteMediaUseCase{}
-
-	handler := NewHandler(createUC, getUC, listUC, updateUC, deleteUC)
-
+	uc := &mockMediaUseCase{}
+	handler := NewHandler(uc)
 	assert.NotNil(t, handler)
-	assert.Equal(t, createUC, handler.createUseCase)
-	assert.Equal(t, getUC, handler.getUseCase)
-	assert.Equal(t, listUC, handler.listUseCase)
-	assert.Equal(t, updateUC, handler.updateUseCase)
-	assert.Equal(t, deleteUC, handler.deleteUseCase)
+	assert.Equal(t, uc, handler.mediaUseCase)
 }
 
 func TestHandler_Create_Success(t *testing.T) {
-	createUC := &mockCreateMediaUseCase{}
-	getUC := &mockGetMediaUseCase{}
-	listUC := &mockListMediaUseCase{}
-	updateUC := &mockUpdateMediaUseCase{}
-	deleteUC := &mockDeleteMediaUseCase{}
-
-	handler := NewHandler(createUC, getUC, listUC, updateUC, deleteUC)
+	uc := &mockMediaUseCase{}
+	handler := NewHandler(uc)
 
 	filename := "test.jpg"
 	fileContent := "test file content"
@@ -152,7 +117,7 @@ func TestHandler_Create_Success(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Mock expects the file content to be read
-	createUC.On("Execute", mock.Anything, filename, mock.Anything).Return(expectedResp, nil)
+	uc.On("Create", mock.Anything, filename, mock.Anything).Return(expectedResp, nil)
 
 	router := setupTestRouter(handler)
 	router.POST("/media", handler.Create)
@@ -164,7 +129,7 @@ func TestHandler_Create_Success(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusCreated, w.Code)
-	createUC.AssertExpectations(t)
+	uc.AssertExpectations(t)
 
 	var response map[string]interface{}
 	err = json.Unmarshal(w.Body.Bytes(), &response)
@@ -174,13 +139,8 @@ func TestHandler_Create_Success(t *testing.T) {
 }
 
 func TestHandler_Create_BadRequest_NoFile(t *testing.T) {
-	createUC := &mockCreateMediaUseCase{}
-	getUC := &mockGetMediaUseCase{}
-	listUC := &mockListMediaUseCase{}
-	updateUC := &mockUpdateMediaUseCase{}
-	deleteUC := &mockDeleteMediaUseCase{}
-
-	handler := NewHandler(createUC, getUC, listUC, updateUC, deleteUC)
+	uc := &mockMediaUseCase{}
+	handler := NewHandler(uc)
 
 	router := setupTestRouter(handler)
 	router.POST("/media", handler.Create)
@@ -192,17 +152,12 @@ func TestHandler_Create_BadRequest_NoFile(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
-	createUC.AssertNotCalled(t, "Execute")
+	uc.AssertNotCalled(t, "Create")
 }
 
 func TestHandler_Create_BadRequest_ValidationError(t *testing.T) {
-	createUC := &mockCreateMediaUseCase{}
-	getUC := &mockGetMediaUseCase{}
-	listUC := &mockListMediaUseCase{}
-	updateUC := &mockUpdateMediaUseCase{}
-	deleteUC := &mockDeleteMediaUseCase{}
-
-	handler := NewHandler(createUC, getUC, listUC, updateUC, deleteUC)
+	uc := &mockMediaUseCase{}
+	handler := NewHandler(uc)
 
 	filename := "test.jpg"
 	fileContent := "test file content"
@@ -211,7 +166,7 @@ func TestHandler_Create_BadRequest_ValidationError(t *testing.T) {
 	body, contentType, err := createMultipartFormData(filename, fileContent)
 	assert.NoError(t, err)
 
-	createUC.On("Execute", mock.Anything, filename, mock.Anything).Return(nil, domainmedia.ErrNameRequired)
+	uc.On("Create", mock.Anything, filename, mock.Anything).Return(nil, domainmedia.ErrNameRequired)
 
 	router := setupTestRouter(handler)
 	router.POST("/media", handler.Create)
@@ -223,17 +178,12 @@ func TestHandler_Create_BadRequest_ValidationError(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
-	createUC.AssertExpectations(t)
+	uc.AssertExpectations(t)
 }
 
 func TestHandler_Create_InternalServerError(t *testing.T) {
-	createUC := &mockCreateMediaUseCase{}
-	getUC := &mockGetMediaUseCase{}
-	listUC := &mockListMediaUseCase{}
-	updateUC := &mockUpdateMediaUseCase{}
-	deleteUC := &mockDeleteMediaUseCase{}
-
-	handler := NewHandler(createUC, getUC, listUC, updateUC, deleteUC)
+	uc := &mockMediaUseCase{}
+	handler := NewHandler(uc)
 
 	filename := "test.jpg"
 	fileContent := "test file content"
@@ -242,7 +192,7 @@ func TestHandler_Create_InternalServerError(t *testing.T) {
 	body, contentType, err := createMultipartFormData(filename, fileContent)
 	assert.NoError(t, err)
 
-	createUC.On("Execute", mock.Anything, filename, mock.Anything).Return(nil, errors.New("storage error"))
+	uc.On("Create", mock.Anything, filename, mock.Anything).Return(nil, errors.New("storage error"))
 
 	router := setupTestRouter(handler)
 	router.POST("/media", handler.Create)
@@ -254,17 +204,12 @@ func TestHandler_Create_InternalServerError(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusInternalServerError, w.Code)
-	createUC.AssertExpectations(t)
+	uc.AssertExpectations(t)
 }
 
 func TestHandler_Get_Success(t *testing.T) {
-	createUC := &mockCreateMediaUseCase{}
-	getUC := &mockGetMediaUseCase{}
-	listUC := &mockListMediaUseCase{}
-	updateUC := &mockUpdateMediaUseCase{}
-	deleteUC := &mockDeleteMediaUseCase{}
-
-	handler := NewHandler(createUC, getUC, listUC, updateUC, deleteUC)
+	uc := &mockMediaUseCase{}
+	handler := NewHandler(uc)
 
 	mediaID := int64(1)
 	expectedResp := &dto.MediaResponse{
@@ -276,7 +221,7 @@ func TestHandler_Get_Success(t *testing.T) {
 		UpdatedAt: time.Now(),
 	}
 
-	getUC.On("Execute", mock.Anything, mediaID).Return(expectedResp, nil)
+	uc.On("Get", mock.Anything, mediaID).Return(expectedResp, nil)
 
 	router := setupTestRouter(handler)
 	router.GET("/media/:id", handler.Get)
@@ -287,7 +232,7 @@ func TestHandler_Get_Success(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusOK, w.Code)
-	getUC.AssertExpectations(t)
+	uc.AssertExpectations(t)
 
 	var response map[string]interface{}
 	err := json.Unmarshal(w.Body.Bytes(), &response)
@@ -297,13 +242,8 @@ func TestHandler_Get_Success(t *testing.T) {
 }
 
 func TestHandler_Get_BadRequest_InvalidID(t *testing.T) {
-	createUC := &mockCreateMediaUseCase{}
-	getUC := &mockGetMediaUseCase{}
-	listUC := &mockListMediaUseCase{}
-	updateUC := &mockUpdateMediaUseCase{}
-	deleteUC := &mockDeleteMediaUseCase{}
-
-	handler := NewHandler(createUC, getUC, listUC, updateUC, deleteUC)
+	uc := &mockMediaUseCase{}
+	handler := NewHandler(uc)
 
 	router := setupTestRouter(handler)
 	router.GET("/media/:id", handler.Get)
@@ -314,20 +254,15 @@ func TestHandler_Get_BadRequest_InvalidID(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
-	getUC.AssertNotCalled(t, "Execute")
+	uc.AssertNotCalled(t, "Get")
 }
 
 func TestHandler_Get_NotFound(t *testing.T) {
-	createUC := &mockCreateMediaUseCase{}
-	getUC := &mockGetMediaUseCase{}
-	listUC := &mockListMediaUseCase{}
-	updateUC := &mockUpdateMediaUseCase{}
-	deleteUC := &mockDeleteMediaUseCase{}
-
-	handler := NewHandler(createUC, getUC, listUC, updateUC, deleteUC)
+	uc := &mockMediaUseCase{}
+	handler := NewHandler(uc)
 
 	mediaID := int64(999)
-	getUC.On("Execute", mock.Anything, mediaID).Return(nil, domainmedia.ErrMediaNotFound)
+	uc.On("Get", mock.Anything, mediaID).Return(nil, domainmedia.ErrMediaNotFound)
 
 	router := setupTestRouter(handler)
 	router.GET("/media/:id", handler.Get)
@@ -338,20 +273,15 @@ func TestHandler_Get_NotFound(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusNotFound, w.Code)
-	getUC.AssertExpectations(t)
+	uc.AssertExpectations(t)
 }
 
 func TestHandler_Get_InternalServerError(t *testing.T) {
-	createUC := &mockCreateMediaUseCase{}
-	getUC := &mockGetMediaUseCase{}
-	listUC := &mockListMediaUseCase{}
-	updateUC := &mockUpdateMediaUseCase{}
-	deleteUC := &mockDeleteMediaUseCase{}
-
-	handler := NewHandler(createUC, getUC, listUC, updateUC, deleteUC)
+	uc := &mockMediaUseCase{}
+	handler := NewHandler(uc)
 
 	mediaID := int64(1)
-	getUC.On("Execute", mock.Anything, mediaID).Return(nil, errors.New("database error"))
+	uc.On("Get", mock.Anything, mediaID).Return(nil, errors.New("database error"))
 
 	router := setupTestRouter(handler)
 	router.GET("/media/:id", handler.Get)
@@ -362,17 +292,12 @@ func TestHandler_Get_InternalServerError(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusInternalServerError, w.Code)
-	getUC.AssertExpectations(t)
+	uc.AssertExpectations(t)
 }
 
 func TestHandler_List_Success(t *testing.T) {
-	createUC := &mockCreateMediaUseCase{}
-	getUC := &mockGetMediaUseCase{}
-	listUC := &mockListMediaUseCase{}
-	updateUC := &mockUpdateMediaUseCase{}
-	deleteUC := &mockDeleteMediaUseCase{}
-
-	handler := NewHandler(createUC, getUC, listUC, updateUC, deleteUC)
+	uc := &mockMediaUseCase{}
+	handler := NewHandler(uc)
 
 	limit := 10
 	offset := 0
@@ -392,7 +317,7 @@ func TestHandler_List_Success(t *testing.T) {
 		Offset: offset,
 	}
 
-	listUC.On("Execute", mock.Anything, limit, offset).Return(expectedResp, nil)
+	uc.On("List", mock.Anything, limit, offset).Return(expectedResp, nil)
 
 	router := setupTestRouter(handler)
 	router.GET("/media", handler.List)
@@ -403,7 +328,7 @@ func TestHandler_List_Success(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusOK, w.Code)
-	listUC.AssertExpectations(t)
+	uc.AssertExpectations(t)
 
 	var response map[string]interface{}
 	err := json.Unmarshal(w.Body.Bytes(), &response)
@@ -413,13 +338,8 @@ func TestHandler_List_Success(t *testing.T) {
 }
 
 func TestHandler_List_WithQueryParams(t *testing.T) {
-	createUC := &mockCreateMediaUseCase{}
-	getUC := &mockGetMediaUseCase{}
-	listUC := &mockListMediaUseCase{}
-	updateUC := &mockUpdateMediaUseCase{}
-	deleteUC := &mockDeleteMediaUseCase{}
-
-	handler := NewHandler(createUC, getUC, listUC, updateUC, deleteUC)
+	uc := &mockMediaUseCase{}
+	handler := NewHandler(uc)
 
 	limit := 20
 	offset := 10
@@ -430,7 +350,7 @@ func TestHandler_List_WithQueryParams(t *testing.T) {
 		Offset: offset,
 	}
 
-	listUC.On("Execute", mock.Anything, limit, offset).Return(expectedResp, nil)
+	uc.On("List", mock.Anything, limit, offset).Return(expectedResp, nil)
 
 	router := setupTestRouter(handler)
 	router.GET("/media", handler.List)
@@ -441,21 +361,16 @@ func TestHandler_List_WithQueryParams(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusOK, w.Code)
-	listUC.AssertExpectations(t)
+	uc.AssertExpectations(t)
 }
 
 func TestHandler_List_InternalServerError(t *testing.T) {
-	createUC := &mockCreateMediaUseCase{}
-	getUC := &mockGetMediaUseCase{}
-	listUC := &mockListMediaUseCase{}
-	updateUC := &mockUpdateMediaUseCase{}
-	deleteUC := &mockDeleteMediaUseCase{}
-
-	handler := NewHandler(createUC, getUC, listUC, updateUC, deleteUC)
+	uc := &mockMediaUseCase{}
+	handler := NewHandler(uc)
 
 	limit := 10
 	offset := 0
-	listUC.On("Execute", mock.Anything, limit, offset).Return(nil, errors.New("database error"))
+	uc.On("List", mock.Anything, limit, offset).Return(nil, errors.New("database error"))
 
 	router := setupTestRouter(handler)
 	router.GET("/media", handler.List)
@@ -466,17 +381,12 @@ func TestHandler_List_InternalServerError(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusInternalServerError, w.Code)
-	listUC.AssertExpectations(t)
+	uc.AssertExpectations(t)
 }
 
 func TestHandler_Update_Success(t *testing.T) {
-	createUC := &mockCreateMediaUseCase{}
-	getUC := &mockGetMediaUseCase{}
-	listUC := &mockListMediaUseCase{}
-	updateUC := &mockUpdateMediaUseCase{}
-	deleteUC := &mockDeleteMediaUseCase{}
-
-	handler := NewHandler(createUC, getUC, listUC, updateUC, deleteUC)
+	uc := &mockMediaUseCase{}
+	handler := NewHandler(uc)
 
 	mediaID := int64(1)
 	filename := "updated.jpg"
@@ -494,7 +404,7 @@ func TestHandler_Update_Success(t *testing.T) {
 	body, contentType, err := createMultipartFormData(filename, fileContent)
 	assert.NoError(t, err)
 
-	updateUC.On("Execute", mock.Anything, mediaID, filename, mock.Anything).Return(expectedResp, nil)
+	uc.On("Update", mock.Anything, mediaID, filename, mock.Anything).Return(expectedResp, nil)
 
 	router := setupTestRouter(handler)
 	router.PUT("/media/:id", handler.Update)
@@ -506,7 +416,7 @@ func TestHandler_Update_Success(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusOK, w.Code)
-	updateUC.AssertExpectations(t)
+	uc.AssertExpectations(t)
 
 	var response map[string]interface{}
 	err = json.Unmarshal(w.Body.Bytes(), &response)
@@ -516,13 +426,8 @@ func TestHandler_Update_Success(t *testing.T) {
 }
 
 func TestHandler_Update_BadRequest_InvalidID(t *testing.T) {
-	createUC := &mockCreateMediaUseCase{}
-	getUC := &mockGetMediaUseCase{}
-	listUC := &mockListMediaUseCase{}
-	updateUC := &mockUpdateMediaUseCase{}
-	deleteUC := &mockDeleteMediaUseCase{}
-
-	handler := NewHandler(createUC, getUC, listUC, updateUC, deleteUC)
+	uc := &mockMediaUseCase{}
+	handler := NewHandler(uc)
 
 	filename := "updated.jpg"
 	fileContent := "updated file content"
@@ -541,17 +446,12 @@ func TestHandler_Update_BadRequest_InvalidID(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
-	updateUC.AssertNotCalled(t, "Execute")
+	uc.AssertNotCalled(t, "Update")
 }
 
 func TestHandler_Update_BadRequest_NoFile(t *testing.T) {
-	createUC := &mockCreateMediaUseCase{}
-	getUC := &mockGetMediaUseCase{}
-	listUC := &mockListMediaUseCase{}
-	updateUC := &mockUpdateMediaUseCase{}
-	deleteUC := &mockDeleteMediaUseCase{}
-
-	handler := NewHandler(createUC, getUC, listUC, updateUC, deleteUC)
+	uc := &mockMediaUseCase{}
+	handler := NewHandler(uc)
 
 	router := setupTestRouter(handler)
 	router.PUT("/media/:id", handler.Update)
@@ -563,17 +463,12 @@ func TestHandler_Update_BadRequest_NoFile(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
-	updateUC.AssertNotCalled(t, "Execute")
+	uc.AssertNotCalled(t, "Update")
 }
 
 func TestHandler_Update_BadRequest_ValidationError(t *testing.T) {
-	createUC := &mockCreateMediaUseCase{}
-	getUC := &mockGetMediaUseCase{}
-	listUC := &mockListMediaUseCase{}
-	updateUC := &mockUpdateMediaUseCase{}
-	deleteUC := &mockDeleteMediaUseCase{}
-
-	handler := NewHandler(createUC, getUC, listUC, updateUC, deleteUC)
+	uc := &mockMediaUseCase{}
+	handler := NewHandler(uc)
 
 	mediaID := int64(1)
 	filename := "updated.jpg"
@@ -583,7 +478,7 @@ func TestHandler_Update_BadRequest_ValidationError(t *testing.T) {
 	body, contentType, err := createMultipartFormData(filename, fileContent)
 	assert.NoError(t, err)
 
-	updateUC.On("Execute", mock.Anything, mediaID, filename, mock.Anything).Return(nil, domainmedia.ErrNameRequired)
+	uc.On("Update", mock.Anything, mediaID, filename, mock.Anything).Return(nil, domainmedia.ErrNameRequired)
 
 	router := setupTestRouter(handler)
 	router.PUT("/media/:id", handler.Update)
@@ -595,17 +490,12 @@ func TestHandler_Update_BadRequest_ValidationError(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
-	updateUC.AssertExpectations(t)
+	uc.AssertExpectations(t)
 }
 
 func TestHandler_Update_NotFound(t *testing.T) {
-	createUC := &mockCreateMediaUseCase{}
-	getUC := &mockGetMediaUseCase{}
-	listUC := &mockListMediaUseCase{}
-	updateUC := &mockUpdateMediaUseCase{}
-	deleteUC := &mockDeleteMediaUseCase{}
-
-	handler := NewHandler(createUC, getUC, listUC, updateUC, deleteUC)
+	uc := &mockMediaUseCase{}
+	handler := NewHandler(uc)
 
 	mediaID := int64(999)
 	filename := "updated.jpg"
@@ -615,7 +505,7 @@ func TestHandler_Update_NotFound(t *testing.T) {
 	body, contentType, err := createMultipartFormData(filename, fileContent)
 	assert.NoError(t, err)
 
-	updateUC.On("Execute", mock.Anything, mediaID, filename, mock.Anything).Return(nil, domainmedia.ErrMediaNotFound)
+	uc.On("Update", mock.Anything, mediaID, filename, mock.Anything).Return(nil, domainmedia.ErrMediaNotFound)
 
 	router := setupTestRouter(handler)
 	router.PUT("/media/:id", handler.Update)
@@ -627,17 +517,12 @@ func TestHandler_Update_NotFound(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusNotFound, w.Code)
-	updateUC.AssertExpectations(t)
+	uc.AssertExpectations(t)
 }
 
 func TestHandler_Update_InternalServerError(t *testing.T) {
-	createUC := &mockCreateMediaUseCase{}
-	getUC := &mockGetMediaUseCase{}
-	listUC := &mockListMediaUseCase{}
-	updateUC := &mockUpdateMediaUseCase{}
-	deleteUC := &mockDeleteMediaUseCase{}
-
-	handler := NewHandler(createUC, getUC, listUC, updateUC, deleteUC)
+	uc := &mockMediaUseCase{}
+	handler := NewHandler(uc)
 
 	mediaID := int64(1)
 	filename := "updated.jpg"
@@ -647,7 +532,7 @@ func TestHandler_Update_InternalServerError(t *testing.T) {
 	body, contentType, err := createMultipartFormData(filename, fileContent)
 	assert.NoError(t, err)
 
-	updateUC.On("Execute", mock.Anything, mediaID, filename, mock.Anything).Return(nil, errors.New("storage error"))
+	uc.On("Update", mock.Anything, mediaID, filename, mock.Anything).Return(nil, errors.New("storage error"))
 
 	router := setupTestRouter(handler)
 	router.PUT("/media/:id", handler.Update)
@@ -659,20 +544,15 @@ func TestHandler_Update_InternalServerError(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusInternalServerError, w.Code)
-	updateUC.AssertExpectations(t)
+	uc.AssertExpectations(t)
 }
 
 func TestHandler_Delete_Success(t *testing.T) {
-	createUC := &mockCreateMediaUseCase{}
-	getUC := &mockGetMediaUseCase{}
-	listUC := &mockListMediaUseCase{}
-	updateUC := &mockUpdateMediaUseCase{}
-	deleteUC := &mockDeleteMediaUseCase{}
-
-	handler := NewHandler(createUC, getUC, listUC, updateUC, deleteUC)
+	uc := &mockMediaUseCase{}
+	handler := NewHandler(uc)
 
 	mediaID := int64(1)
-	deleteUC.On("Execute", mock.Anything, mediaID).Return(nil)
+	uc.On("Delete", mock.Anything, mediaID).Return(nil)
 
 	router := setupTestRouter(handler)
 	router.DELETE("/media/:id", handler.Delete)
@@ -683,7 +563,7 @@ func TestHandler_Delete_Success(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusOK, w.Code)
-	deleteUC.AssertExpectations(t)
+	uc.AssertExpectations(t)
 
 	var response map[string]interface{}
 	err := json.Unmarshal(w.Body.Bytes(), &response)
@@ -693,13 +573,8 @@ func TestHandler_Delete_Success(t *testing.T) {
 }
 
 func TestHandler_Delete_BadRequest_InvalidID(t *testing.T) {
-	createUC := &mockCreateMediaUseCase{}
-	getUC := &mockGetMediaUseCase{}
-	listUC := &mockListMediaUseCase{}
-	updateUC := &mockUpdateMediaUseCase{}
-	deleteUC := &mockDeleteMediaUseCase{}
-
-	handler := NewHandler(createUC, getUC, listUC, updateUC, deleteUC)
+	uc := &mockMediaUseCase{}
+	handler := NewHandler(uc)
 
 	router := setupTestRouter(handler)
 	router.DELETE("/media/:id", handler.Delete)
@@ -710,20 +585,15 @@ func TestHandler_Delete_BadRequest_InvalidID(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
-	deleteUC.AssertNotCalled(t, "Execute")
+	uc.AssertNotCalled(t, "Delete")
 }
 
 func TestHandler_Delete_NotFound(t *testing.T) {
-	createUC := &mockCreateMediaUseCase{}
-	getUC := &mockGetMediaUseCase{}
-	listUC := &mockListMediaUseCase{}
-	updateUC := &mockUpdateMediaUseCase{}
-	deleteUC := &mockDeleteMediaUseCase{}
-
-	handler := NewHandler(createUC, getUC, listUC, updateUC, deleteUC)
+	uc := &mockMediaUseCase{}
+	handler := NewHandler(uc)
 
 	mediaID := int64(999)
-	deleteUC.On("Execute", mock.Anything, mediaID).Return(domainmedia.ErrMediaNotFound)
+	uc.On("Delete", mock.Anything, mediaID).Return(domainmedia.ErrMediaNotFound)
 
 	router := setupTestRouter(handler)
 	router.DELETE("/media/:id", handler.Delete)
@@ -734,20 +604,15 @@ func TestHandler_Delete_NotFound(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusNotFound, w.Code)
-	deleteUC.AssertExpectations(t)
+	uc.AssertExpectations(t)
 }
 
 func TestHandler_Delete_InternalServerError(t *testing.T) {
-	createUC := &mockCreateMediaUseCase{}
-	getUC := &mockGetMediaUseCase{}
-	listUC := &mockListMediaUseCase{}
-	updateUC := &mockUpdateMediaUseCase{}
-	deleteUC := &mockDeleteMediaUseCase{}
-
-	handler := NewHandler(createUC, getUC, listUC, updateUC, deleteUC)
+	uc := &mockMediaUseCase{}
+	handler := NewHandler(uc)
 
 	mediaID := int64(1)
-	deleteUC.On("Execute", mock.Anything, mediaID).Return(errors.New("database error"))
+	uc.On("Delete", mock.Anything, mediaID).Return(errors.New("database error"))
 
 	router := setupTestRouter(handler)
 	router.DELETE("/media/:id", handler.Delete)
@@ -758,5 +623,5 @@ func TestHandler_Delete_InternalServerError(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusInternalServerError, w.Code)
-	deleteUC.AssertExpectations(t)
+	uc.AssertExpectations(t)
 }
