@@ -10,54 +10,24 @@ import (
 	domainarticle "github.com/rulzi/hexa-go/internal/domain/article"
 )
 
-// CreateArticleUseCase is the interface for the create article use case
-type CreateArticleUseCase interface {
-	Execute(ctx context.Context, req dto.CreateArticleRequest) (*dto.ArticleResponse, error)
-}
-
-// GetArticleUseCase is the interface for the get article use case
-type GetArticleUseCase interface {
-	Execute(ctx context.Context, id int64) (*dto.ArticleResponse, error)
-}
-
-// ListArticlesUseCase is the interface for the list articles use case
-type ListArticlesUseCase interface {
-	Execute(ctx context.Context, limit, offset int) (*dto.ListArticlesResponse, error)
-}
-
-// UpdateArticleUseCase is the interface for the update article use case
-type UpdateArticleUseCase interface {
-	Execute(ctx context.Context, id int64, req dto.UpdateArticleRequest) (*dto.ArticleResponse, error)
-}
-
-// DeleteArticleUseCase is the interface for the delete article use case
-type DeleteArticleUseCase interface {
-	Execute(ctx context.Context, id int64) error
+// ArticleUseCase is the interface for article operations
+type ArticleUseCase interface {
+	Create(ctx context.Context, req dto.CreateArticleRequest) (*dto.ArticleResponse, error)
+	Get(ctx context.Context, id int64) (*dto.ArticleResponse, error)
+	List(ctx context.Context, limit, offset int) (*dto.ListArticlesResponse, error)
+	Update(ctx context.Context, id int64, req dto.UpdateArticleRequest) (*dto.ArticleResponse, error)
+	Delete(ctx context.Context, id int64) error
 }
 
 // Handler handles HTTP requests for articles
 type Handler struct {
-	createUseCase CreateArticleUseCase
-	getUseCase    GetArticleUseCase
-	listUseCase   ListArticlesUseCase
-	updateUseCase UpdateArticleUseCase
-	deleteUseCase DeleteArticleUseCase
+	articleUseCase ArticleUseCase
 }
 
 // NewHandler creates a new Handler
-func NewHandler(
-	createUseCase CreateArticleUseCase,
-	getUseCase GetArticleUseCase,
-	listUseCase ListArticlesUseCase,
-	updateUseCase UpdateArticleUseCase,
-	deleteUseCase DeleteArticleUseCase,
-) *Handler {
+func NewHandler(articleUseCase ArticleUseCase) *Handler {
 	return &Handler{
-		createUseCase: createUseCase,
-		getUseCase:    getUseCase,
-		listUseCase:   listUseCase,
-		updateUseCase: updateUseCase,
-		deleteUseCase: deleteUseCase,
+		articleUseCase: articleUseCase,
 	}
 }
 
@@ -69,7 +39,7 @@ func (h *Handler) Create(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.createUseCase.Execute(c.Request.Context(), req)
+	resp, err := h.articleUseCase.Create(c.Request.Context(), req)
 	if err != nil {
 		response.ErrorResponseInternalServerError(c, err.Error())
 		return
@@ -86,7 +56,7 @@ func (h *Handler) Get(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.getUseCase.Execute(c.Request.Context(), id)
+	resp, err := h.articleUseCase.Get(c.Request.Context(), id)
 	if err != nil {
 		if err == domainarticle.ErrArticleNotFound {
 			response.ErrorResponseNotFound(c, err.Error())
@@ -104,7 +74,7 @@ func (h *Handler) List(c *gin.Context) {
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
 	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
 
-	resp, err := h.listUseCase.Execute(c.Request.Context(), limit, offset)
+	resp, err := h.articleUseCase.List(c.Request.Context(), limit, offset)
 	if err != nil {
 		response.ErrorResponseInternalServerError(c, err.Error())
 		return
@@ -127,7 +97,7 @@ func (h *Handler) Update(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.updateUseCase.Execute(c.Request.Context(), id, req)
+	resp, err := h.articleUseCase.Update(c.Request.Context(), id, req)
 	if err != nil {
 		if err == domainarticle.ErrArticleNotFound {
 			response.ErrorResponseNotFound(c, err.Error())
@@ -148,7 +118,7 @@ func (h *Handler) Delete(c *gin.Context) {
 		return
 	}
 
-	err = h.deleteUseCase.Execute(c.Request.Context(), id)
+	err = h.articleUseCase.Delete(c.Request.Context(), id)
 	if err != nil {
 		if err == domainarticle.ErrArticleNotFound {
 			response.ErrorResponseNotFound(c, err.Error())

@@ -17,12 +17,12 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-// mockCreateArticleUseCase is a mock implementation of CreateArticleUseCase
-type mockCreateArticleUseCase struct {
+// mockArticleUseCase is a mock implementation of ArticleUseCase
+type mockArticleUseCase struct {
 	mock.Mock
 }
 
-func (m *mockCreateArticleUseCase) Execute(ctx context.Context, req dto.CreateArticleRequest) (*dto.ArticleResponse, error) {
+func (m *mockArticleUseCase) Create(ctx context.Context, req dto.CreateArticleRequest) (*dto.ArticleResponse, error) {
 	args := m.Called(ctx, req)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -30,12 +30,7 @@ func (m *mockCreateArticleUseCase) Execute(ctx context.Context, req dto.CreateAr
 	return args.Get(0).(*dto.ArticleResponse), args.Error(1)
 }
 
-// mockGetArticleUseCase is a mock implementation of GetArticleUseCase
-type mockGetArticleUseCase struct {
-	mock.Mock
-}
-
-func (m *mockGetArticleUseCase) Execute(ctx context.Context, id int64) (*dto.ArticleResponse, error) {
+func (m *mockArticleUseCase) Get(ctx context.Context, id int64) (*dto.ArticleResponse, error) {
 	args := m.Called(ctx, id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -43,12 +38,7 @@ func (m *mockGetArticleUseCase) Execute(ctx context.Context, id int64) (*dto.Art
 	return args.Get(0).(*dto.ArticleResponse), args.Error(1)
 }
 
-// mockListArticlesUseCase is a mock implementation of ListArticlesUseCase
-type mockListArticlesUseCase struct {
-	mock.Mock
-}
-
-func (m *mockListArticlesUseCase) Execute(ctx context.Context, limit, offset int) (*dto.ListArticlesResponse, error) {
+func (m *mockArticleUseCase) List(ctx context.Context, limit, offset int) (*dto.ListArticlesResponse, error) {
 	args := m.Called(ctx, limit, offset)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -56,12 +46,7 @@ func (m *mockListArticlesUseCase) Execute(ctx context.Context, limit, offset int
 	return args.Get(0).(*dto.ListArticlesResponse), args.Error(1)
 }
 
-// mockUpdateArticleUseCase is a mock implementation of UpdateArticleUseCase
-type mockUpdateArticleUseCase struct {
-	mock.Mock
-}
-
-func (m *mockUpdateArticleUseCase) Execute(ctx context.Context, id int64, req dto.UpdateArticleRequest) (*dto.ArticleResponse, error) {
+func (m *mockArticleUseCase) Update(ctx context.Context, id int64, req dto.UpdateArticleRequest) (*dto.ArticleResponse, error) {
 	args := m.Called(ctx, id, req)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -69,12 +54,7 @@ func (m *mockUpdateArticleUseCase) Execute(ctx context.Context, id int64, req dt
 	return args.Get(0).(*dto.ArticleResponse), args.Error(1)
 }
 
-// mockDeleteArticleUseCase is a mock implementation of DeleteArticleUseCase
-type mockDeleteArticleUseCase struct {
-	mock.Mock
-}
-
-func (m *mockDeleteArticleUseCase) Execute(ctx context.Context, id int64) error {
+func (m *mockArticleUseCase) Delete(ctx context.Context, id int64) error {
 	args := m.Called(ctx, id)
 	return args.Error(0)
 }
@@ -86,30 +66,15 @@ func setupTestRouter(handler *Handler) *gin.Engine {
 }
 
 func TestNewHandler(t *testing.T) {
-	createUC := &mockCreateArticleUseCase{}
-	getUC := &mockGetArticleUseCase{}
-	listUC := &mockListArticlesUseCase{}
-	updateUC := &mockUpdateArticleUseCase{}
-	deleteUC := &mockDeleteArticleUseCase{}
-
-	handler := NewHandler(createUC, getUC, listUC, updateUC, deleteUC)
-
+	uc := &mockArticleUseCase{}
+	handler := NewHandler(uc)
 	assert.NotNil(t, handler)
-	assert.Equal(t, createUC, handler.createUseCase)
-	assert.Equal(t, getUC, handler.getUseCase)
-	assert.Equal(t, listUC, handler.listUseCase)
-	assert.Equal(t, updateUC, handler.updateUseCase)
-	assert.Equal(t, deleteUC, handler.deleteUseCase)
+	assert.Equal(t, uc, handler.articleUseCase)
 }
 
 func TestHandler_Create_Success(t *testing.T) {
-	createUC := &mockCreateArticleUseCase{}
-	getUC := &mockGetArticleUseCase{}
-	listUC := &mockListArticlesUseCase{}
-	updateUC := &mockUpdateArticleUseCase{}
-	deleteUC := &mockDeleteArticleUseCase{}
-
-	handler := NewHandler(createUC, getUC, listUC, updateUC, deleteUC)
+	uc := &mockArticleUseCase{}
+	handler := NewHandler(uc)
 
 	reqBody := dto.CreateArticleRequest{
 		Title:    "Test Article",
@@ -126,7 +91,7 @@ func TestHandler_Create_Success(t *testing.T) {
 		UpdatedAt: time.Now(),
 	}
 
-	createUC.On("Execute", mock.Anything, reqBody).Return(expectedResp, nil)
+	uc.On("Create", mock.Anything, reqBody).Return(expectedResp, nil)
 
 	router := setupTestRouter(handler)
 	router.POST("/articles", handler.Create)
@@ -139,7 +104,7 @@ func TestHandler_Create_Success(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusCreated, w.Code)
-	createUC.AssertExpectations(t)
+	uc.AssertExpectations(t)
 
 	var response map[string]interface{}
 	err := json.Unmarshal(w.Body.Bytes(), &response)
@@ -149,13 +114,8 @@ func TestHandler_Create_Success(t *testing.T) {
 }
 
 func TestHandler_Create_BadRequest_InvalidJSON(t *testing.T) {
-	createUC := &mockCreateArticleUseCase{}
-	getUC := &mockGetArticleUseCase{}
-	listUC := &mockListArticlesUseCase{}
-	updateUC := &mockUpdateArticleUseCase{}
-	deleteUC := &mockDeleteArticleUseCase{}
-
-	handler := NewHandler(createUC, getUC, listUC, updateUC, deleteUC)
+	uc := &mockArticleUseCase{}
+	handler := NewHandler(uc)
 
 	router := setupTestRouter(handler)
 	router.POST("/articles", handler.Create)
@@ -167,17 +127,12 @@ func TestHandler_Create_BadRequest_InvalidJSON(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
-	createUC.AssertNotCalled(t, "Execute")
+	uc.AssertNotCalled(t, "Create")
 }
 
 func TestHandler_Create_BadRequest_MissingFields(t *testing.T) {
-	createUC := &mockCreateArticleUseCase{}
-	getUC := &mockGetArticleUseCase{}
-	listUC := &mockListArticlesUseCase{}
-	updateUC := &mockUpdateArticleUseCase{}
-	deleteUC := &mockDeleteArticleUseCase{}
-
-	handler := NewHandler(createUC, getUC, listUC, updateUC, deleteUC)
+	uc := &mockArticleUseCase{}
+	handler := NewHandler(uc)
 
 	reqBody := map[string]interface{}{
 		"title": "Test Article",
@@ -195,17 +150,12 @@ func TestHandler_Create_BadRequest_MissingFields(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
-	createUC.AssertNotCalled(t, "Execute")
+	uc.AssertNotCalled(t, "Create")
 }
 
 func TestHandler_Create_InternalServerError(t *testing.T) {
-	createUC := &mockCreateArticleUseCase{}
-	getUC := &mockGetArticleUseCase{}
-	listUC := &mockListArticlesUseCase{}
-	updateUC := &mockUpdateArticleUseCase{}
-	deleteUC := &mockDeleteArticleUseCase{}
-
-	handler := NewHandler(createUC, getUC, listUC, updateUC, deleteUC)
+	uc := &mockArticleUseCase{}
+	handler := NewHandler(uc)
 
 	reqBody := dto.CreateArticleRequest{
 		Title:    "Test Article",
@@ -213,7 +163,7 @@ func TestHandler_Create_InternalServerError(t *testing.T) {
 		AuthorID: 1,
 	}
 
-	createUC.On("Execute", mock.Anything, reqBody).Return(nil, errors.New("database error"))
+	uc.On("Create", mock.Anything, reqBody).Return(nil, errors.New("database error"))
 
 	router := setupTestRouter(handler)
 	router.POST("/articles", handler.Create)
@@ -226,17 +176,12 @@ func TestHandler_Create_InternalServerError(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusInternalServerError, w.Code)
-	createUC.AssertExpectations(t)
+	uc.AssertExpectations(t)
 }
 
 func TestHandler_Get_Success(t *testing.T) {
-	createUC := &mockCreateArticleUseCase{}
-	getUC := &mockGetArticleUseCase{}
-	listUC := &mockListArticlesUseCase{}
-	updateUC := &mockUpdateArticleUseCase{}
-	deleteUC := &mockDeleteArticleUseCase{}
-
-	handler := NewHandler(createUC, getUC, listUC, updateUC, deleteUC)
+	uc := &mockArticleUseCase{}
+	handler := NewHandler(uc)
 
 	articleID := int64(1)
 	expectedResp := &dto.ArticleResponse{
@@ -248,7 +193,7 @@ func TestHandler_Get_Success(t *testing.T) {
 		UpdatedAt: time.Now(),
 	}
 
-	getUC.On("Execute", mock.Anything, articleID).Return(expectedResp, nil)
+	uc.On("Get", mock.Anything, articleID).Return(expectedResp, nil)
 
 	router := setupTestRouter(handler)
 	router.GET("/articles/:id", handler.Get)
@@ -259,7 +204,7 @@ func TestHandler_Get_Success(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusOK, w.Code)
-	getUC.AssertExpectations(t)
+	uc.AssertExpectations(t)
 
 	var response map[string]interface{}
 	err := json.Unmarshal(w.Body.Bytes(), &response)
@@ -269,13 +214,8 @@ func TestHandler_Get_Success(t *testing.T) {
 }
 
 func TestHandler_Get_BadRequest_InvalidID(t *testing.T) {
-	createUC := &mockCreateArticleUseCase{}
-	getUC := &mockGetArticleUseCase{}
-	listUC := &mockListArticlesUseCase{}
-	updateUC := &mockUpdateArticleUseCase{}
-	deleteUC := &mockDeleteArticleUseCase{}
-
-	handler := NewHandler(createUC, getUC, listUC, updateUC, deleteUC)
+	uc := &mockArticleUseCase{}
+	handler := NewHandler(uc)
 
 	router := setupTestRouter(handler)
 	router.GET("/articles/:id", handler.Get)
@@ -286,20 +226,15 @@ func TestHandler_Get_BadRequest_InvalidID(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
-	getUC.AssertNotCalled(t, "Execute")
+	uc.AssertNotCalled(t, "Get")
 }
 
 func TestHandler_Get_NotFound(t *testing.T) {
-	createUC := &mockCreateArticleUseCase{}
-	getUC := &mockGetArticleUseCase{}
-	listUC := &mockListArticlesUseCase{}
-	updateUC := &mockUpdateArticleUseCase{}
-	deleteUC := &mockDeleteArticleUseCase{}
-
-	handler := NewHandler(createUC, getUC, listUC, updateUC, deleteUC)
+	uc := &mockArticleUseCase{}
+	handler := NewHandler(uc)
 
 	articleID := int64(999)
-	getUC.On("Execute", mock.Anything, articleID).Return(nil, domainarticle.ErrArticleNotFound)
+	uc.On("Get", mock.Anything, articleID).Return(nil, domainarticle.ErrArticleNotFound)
 
 	router := setupTestRouter(handler)
 	router.GET("/articles/:id", handler.Get)
@@ -310,20 +245,15 @@ func TestHandler_Get_NotFound(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusNotFound, w.Code)
-	getUC.AssertExpectations(t)
+	uc.AssertExpectations(t)
 }
 
 func TestHandler_Get_InternalServerError(t *testing.T) {
-	createUC := &mockCreateArticleUseCase{}
-	getUC := &mockGetArticleUseCase{}
-	listUC := &mockListArticlesUseCase{}
-	updateUC := &mockUpdateArticleUseCase{}
-	deleteUC := &mockDeleteArticleUseCase{}
-
-	handler := NewHandler(createUC, getUC, listUC, updateUC, deleteUC)
+	uc := &mockArticleUseCase{}
+	handler := NewHandler(uc)
 
 	articleID := int64(1)
-	getUC.On("Execute", mock.Anything, articleID).Return(nil, errors.New("database error"))
+	uc.On("Get", mock.Anything, articleID).Return(nil, errors.New("database error"))
 
 	router := setupTestRouter(handler)
 	router.GET("/articles/:id", handler.Get)
@@ -334,17 +264,12 @@ func TestHandler_Get_InternalServerError(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusInternalServerError, w.Code)
-	getUC.AssertExpectations(t)
+	uc.AssertExpectations(t)
 }
 
 func TestHandler_List_Success(t *testing.T) {
-	createUC := &mockCreateArticleUseCase{}
-	getUC := &mockGetArticleUseCase{}
-	listUC := &mockListArticlesUseCase{}
-	updateUC := &mockUpdateArticleUseCase{}
-	deleteUC := &mockDeleteArticleUseCase{}
-
-	handler := NewHandler(createUC, getUC, listUC, updateUC, deleteUC)
+	uc := &mockArticleUseCase{}
+	handler := NewHandler(uc)
 
 	limit := 10
 	offset := 0
@@ -364,7 +289,7 @@ func TestHandler_List_Success(t *testing.T) {
 		Offset: offset,
 	}
 
-	listUC.On("Execute", mock.Anything, limit, offset).Return(expectedResp, nil)
+	uc.On("List", mock.Anything, limit, offset).Return(expectedResp, nil)
 
 	router := setupTestRouter(handler)
 	router.GET("/articles", handler.List)
@@ -375,7 +300,7 @@ func TestHandler_List_Success(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusOK, w.Code)
-	listUC.AssertExpectations(t)
+	uc.AssertExpectations(t)
 
 	var response map[string]interface{}
 	err := json.Unmarshal(w.Body.Bytes(), &response)
@@ -385,13 +310,8 @@ func TestHandler_List_Success(t *testing.T) {
 }
 
 func TestHandler_List_WithQueryParams(t *testing.T) {
-	createUC := &mockCreateArticleUseCase{}
-	getUC := &mockGetArticleUseCase{}
-	listUC := &mockListArticlesUseCase{}
-	updateUC := &mockUpdateArticleUseCase{}
-	deleteUC := &mockDeleteArticleUseCase{}
-
-	handler := NewHandler(createUC, getUC, listUC, updateUC, deleteUC)
+	uc := &mockArticleUseCase{}
+	handler := NewHandler(uc)
 
 	limit := 20
 	offset := 10
@@ -402,7 +322,7 @@ func TestHandler_List_WithQueryParams(t *testing.T) {
 		Offset:   offset,
 	}
 
-	listUC.On("Execute", mock.Anything, limit, offset).Return(expectedResp, nil)
+	uc.On("List", mock.Anything, limit, offset).Return(expectedResp, nil)
 
 	router := setupTestRouter(handler)
 	router.GET("/articles", handler.List)
@@ -413,21 +333,16 @@ func TestHandler_List_WithQueryParams(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusOK, w.Code)
-	listUC.AssertExpectations(t)
+	uc.AssertExpectations(t)
 }
 
 func TestHandler_List_InternalServerError(t *testing.T) {
-	createUC := &mockCreateArticleUseCase{}
-	getUC := &mockGetArticleUseCase{}
-	listUC := &mockListArticlesUseCase{}
-	updateUC := &mockUpdateArticleUseCase{}
-	deleteUC := &mockDeleteArticleUseCase{}
-
-	handler := NewHandler(createUC, getUC, listUC, updateUC, deleteUC)
+	uc := &mockArticleUseCase{}
+	handler := NewHandler(uc)
 
 	limit := 10
 	offset := 0
-	listUC.On("Execute", mock.Anything, limit, offset).Return(nil, errors.New("database error"))
+	uc.On("List", mock.Anything, limit, offset).Return(nil, errors.New("database error"))
 
 	router := setupTestRouter(handler)
 	router.GET("/articles", handler.List)
@@ -438,17 +353,12 @@ func TestHandler_List_InternalServerError(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusInternalServerError, w.Code)
-	listUC.AssertExpectations(t)
+	uc.AssertExpectations(t)
 }
 
 func TestHandler_Update_Success(t *testing.T) {
-	createUC := &mockCreateArticleUseCase{}
-	getUC := &mockGetArticleUseCase{}
-	listUC := &mockListArticlesUseCase{}
-	updateUC := &mockUpdateArticleUseCase{}
-	deleteUC := &mockDeleteArticleUseCase{}
-
-	handler := NewHandler(createUC, getUC, listUC, updateUC, deleteUC)
+	uc := &mockArticleUseCase{}
+	handler := NewHandler(uc)
 
 	articleID := int64(1)
 	reqBody := dto.UpdateArticleRequest{
@@ -465,7 +375,7 @@ func TestHandler_Update_Success(t *testing.T) {
 		UpdatedAt: time.Now(),
 	}
 
-	updateUC.On("Execute", mock.Anything, articleID, reqBody).Return(expectedResp, nil)
+	uc.On("Update", mock.Anything, articleID, reqBody).Return(expectedResp, nil)
 
 	router := setupTestRouter(handler)
 	router.PUT("/articles/:id", handler.Update)
@@ -478,7 +388,7 @@ func TestHandler_Update_Success(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusOK, w.Code)
-	updateUC.AssertExpectations(t)
+	uc.AssertExpectations(t)
 
 	var response map[string]interface{}
 	err := json.Unmarshal(w.Body.Bytes(), &response)
@@ -488,13 +398,8 @@ func TestHandler_Update_Success(t *testing.T) {
 }
 
 func TestHandler_Update_BadRequest_InvalidID(t *testing.T) {
-	createUC := &mockCreateArticleUseCase{}
-	getUC := &mockGetArticleUseCase{}
-	listUC := &mockListArticlesUseCase{}
-	updateUC := &mockUpdateArticleUseCase{}
-	deleteUC := &mockDeleteArticleUseCase{}
-
-	handler := NewHandler(createUC, getUC, listUC, updateUC, deleteUC)
+	uc := &mockArticleUseCase{}
+	handler := NewHandler(uc)
 
 	reqBody := dto.UpdateArticleRequest{
 		Title:   "Updated Article",
@@ -512,17 +417,12 @@ func TestHandler_Update_BadRequest_InvalidID(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
-	updateUC.AssertNotCalled(t, "Execute")
+	uc.AssertNotCalled(t, "Update")
 }
 
 func TestHandler_Update_BadRequest_InvalidJSON(t *testing.T) {
-	createUC := &mockCreateArticleUseCase{}
-	getUC := &mockGetArticleUseCase{}
-	listUC := &mockListArticlesUseCase{}
-	updateUC := &mockUpdateArticleUseCase{}
-	deleteUC := &mockDeleteArticleUseCase{}
-
-	handler := NewHandler(createUC, getUC, listUC, updateUC, deleteUC)
+	uc := &mockArticleUseCase{}
+	handler := NewHandler(uc)
 
 	router := setupTestRouter(handler)
 	router.PUT("/articles/:id", handler.Update)
@@ -534,17 +434,12 @@ func TestHandler_Update_BadRequest_InvalidJSON(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
-	updateUC.AssertNotCalled(t, "Execute")
+	uc.AssertNotCalled(t, "Update")
 }
 
 func TestHandler_Update_BadRequest_MissingFields(t *testing.T) {
-	createUC := &mockCreateArticleUseCase{}
-	getUC := &mockGetArticleUseCase{}
-	listUC := &mockListArticlesUseCase{}
-	updateUC := &mockUpdateArticleUseCase{}
-	deleteUC := &mockDeleteArticleUseCase{}
-
-	handler := NewHandler(createUC, getUC, listUC, updateUC, deleteUC)
+	uc := &mockArticleUseCase{}
+	handler := NewHandler(uc)
 
 	reqBody := map[string]interface{}{
 		"title": "Updated Article",
@@ -562,17 +457,12 @@ func TestHandler_Update_BadRequest_MissingFields(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
-	updateUC.AssertNotCalled(t, "Execute")
+	uc.AssertNotCalled(t, "Update")
 }
 
 func TestHandler_Update_NotFound(t *testing.T) {
-	createUC := &mockCreateArticleUseCase{}
-	getUC := &mockGetArticleUseCase{}
-	listUC := &mockListArticlesUseCase{}
-	updateUC := &mockUpdateArticleUseCase{}
-	deleteUC := &mockDeleteArticleUseCase{}
-
-	handler := NewHandler(createUC, getUC, listUC, updateUC, deleteUC)
+	uc := &mockArticleUseCase{}
+	handler := NewHandler(uc)
 
 	articleID := int64(999)
 	reqBody := dto.UpdateArticleRequest{
@@ -580,7 +470,7 @@ func TestHandler_Update_NotFound(t *testing.T) {
 		Content: "Updated Content",
 	}
 
-	updateUC.On("Execute", mock.Anything, articleID, reqBody).Return(nil, domainarticle.ErrArticleNotFound)
+	uc.On("Update", mock.Anything, articleID, reqBody).Return(nil, domainarticle.ErrArticleNotFound)
 
 	router := setupTestRouter(handler)
 	router.PUT("/articles/:id", handler.Update)
@@ -593,17 +483,12 @@ func TestHandler_Update_NotFound(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusNotFound, w.Code)
-	updateUC.AssertExpectations(t)
+	uc.AssertExpectations(t)
 }
 
 func TestHandler_Update_InternalServerError(t *testing.T) {
-	createUC := &mockCreateArticleUseCase{}
-	getUC := &mockGetArticleUseCase{}
-	listUC := &mockListArticlesUseCase{}
-	updateUC := &mockUpdateArticleUseCase{}
-	deleteUC := &mockDeleteArticleUseCase{}
-
-	handler := NewHandler(createUC, getUC, listUC, updateUC, deleteUC)
+	uc := &mockArticleUseCase{}
+	handler := NewHandler(uc)
 
 	articleID := int64(1)
 	reqBody := dto.UpdateArticleRequest{
@@ -611,7 +496,7 @@ func TestHandler_Update_InternalServerError(t *testing.T) {
 		Content: "Updated Content",
 	}
 
-	updateUC.On("Execute", mock.Anything, articleID, reqBody).Return(nil, errors.New("database error"))
+	uc.On("Update", mock.Anything, articleID, reqBody).Return(nil, errors.New("database error"))
 
 	router := setupTestRouter(handler)
 	router.PUT("/articles/:id", handler.Update)
@@ -624,20 +509,15 @@ func TestHandler_Update_InternalServerError(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusInternalServerError, w.Code)
-	updateUC.AssertExpectations(t)
+	uc.AssertExpectations(t)
 }
 
 func TestHandler_Delete_Success(t *testing.T) {
-	createUC := &mockCreateArticleUseCase{}
-	getUC := &mockGetArticleUseCase{}
-	listUC := &mockListArticlesUseCase{}
-	updateUC := &mockUpdateArticleUseCase{}
-	deleteUC := &mockDeleteArticleUseCase{}
-
-	handler := NewHandler(createUC, getUC, listUC, updateUC, deleteUC)
+	uc := &mockArticleUseCase{}
+	handler := NewHandler(uc)
 
 	articleID := int64(1)
-	deleteUC.On("Execute", mock.Anything, articleID).Return(nil)
+	uc.On("Delete", mock.Anything, articleID).Return(nil)
 
 	router := setupTestRouter(handler)
 	router.DELETE("/articles/:id", handler.Delete)
@@ -648,7 +528,7 @@ func TestHandler_Delete_Success(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusOK, w.Code)
-	deleteUC.AssertExpectations(t)
+	uc.AssertExpectations(t)
 
 	var response map[string]interface{}
 	err := json.Unmarshal(w.Body.Bytes(), &response)
@@ -658,13 +538,8 @@ func TestHandler_Delete_Success(t *testing.T) {
 }
 
 func TestHandler_Delete_BadRequest_InvalidID(t *testing.T) {
-	createUC := &mockCreateArticleUseCase{}
-	getUC := &mockGetArticleUseCase{}
-	listUC := &mockListArticlesUseCase{}
-	updateUC := &mockUpdateArticleUseCase{}
-	deleteUC := &mockDeleteArticleUseCase{}
-
-	handler := NewHandler(createUC, getUC, listUC, updateUC, deleteUC)
+	uc := &mockArticleUseCase{}
+	handler := NewHandler(uc)
 
 	router := setupTestRouter(handler)
 	router.DELETE("/articles/:id", handler.Delete)
@@ -675,20 +550,15 @@ func TestHandler_Delete_BadRequest_InvalidID(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
-	deleteUC.AssertNotCalled(t, "Execute")
+	uc.AssertNotCalled(t, "Delete")
 }
 
 func TestHandler_Delete_NotFound(t *testing.T) {
-	createUC := &mockCreateArticleUseCase{}
-	getUC := &mockGetArticleUseCase{}
-	listUC := &mockListArticlesUseCase{}
-	updateUC := &mockUpdateArticleUseCase{}
-	deleteUC := &mockDeleteArticleUseCase{}
-
-	handler := NewHandler(createUC, getUC, listUC, updateUC, deleteUC)
+	uc := &mockArticleUseCase{}
+	handler := NewHandler(uc)
 
 	articleID := int64(999)
-	deleteUC.On("Execute", mock.Anything, articleID).Return(domainarticle.ErrArticleNotFound)
+	uc.On("Delete", mock.Anything, articleID).Return(domainarticle.ErrArticleNotFound)
 
 	router := setupTestRouter(handler)
 	router.DELETE("/articles/:id", handler.Delete)
@@ -699,20 +569,15 @@ func TestHandler_Delete_NotFound(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusNotFound, w.Code)
-	deleteUC.AssertExpectations(t)
+	uc.AssertExpectations(t)
 }
 
 func TestHandler_Delete_InternalServerError(t *testing.T) {
-	createUC := &mockCreateArticleUseCase{}
-	getUC := &mockGetArticleUseCase{}
-	listUC := &mockListArticlesUseCase{}
-	updateUC := &mockUpdateArticleUseCase{}
-	deleteUC := &mockDeleteArticleUseCase{}
-
-	handler := NewHandler(createUC, getUC, listUC, updateUC, deleteUC)
+	uc := &mockArticleUseCase{}
+	handler := NewHandler(uc)
 
 	articleID := int64(1)
-	deleteUC.On("Execute", mock.Anything, articleID).Return(errors.New("database error"))
+	uc.On("Delete", mock.Anything, articleID).Return(errors.New("database error"))
 
 	router := setupTestRouter(handler)
 	router.DELETE("/articles/:id", handler.Delete)
@@ -723,6 +588,6 @@ func TestHandler_Delete_InternalServerError(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusInternalServerError, w.Code)
-	deleteUC.AssertExpectations(t)
+	uc.AssertExpectations(t)
 }
 

@@ -14,14 +14,10 @@ import (
 
 // Container holds all article domain dependencies
 type Container struct {
-	Repo          domainarticle.Repository
-	Service       *domainarticle.Service
-	CreateUseCase *usecase.CreateArticleUseCase
-	GetUseCase    *usecase.GetArticleUseCase
-	ListUseCase   *usecase.ListArticlesUseCase
-	UpdateUseCase *usecase.UpdateArticleUseCase
-	DeleteUseCase *usecase.DeleteArticleUseCase
-	Handler       *httparticle.Handler
+	Repo        domainarticle.Repository
+	Service     *domainarticle.Service
+	ArticleUC   *usecase.ArticleUseCase
+	Handler     *httparticle.Handler
 }
 
 // NewContainer creates a new article domain container
@@ -41,30 +37,16 @@ func NewContainer(database *sql.DB, redisClient *redis.Client) *Container {
 	// Initialize domain service
 	articleService := domainarticle.NewService(articleRepo)
 
-	// Initialize use cases (application layer)
-	createArticleUseCase := usecase.NewCreateArticleUseCase(articleRepo, articleService, domainCache)
-	getArticleUseCase := usecase.NewGetArticleUseCase(articleRepo, domainCache)
-	listArticlesUseCase := usecase.NewListArticlesUseCase(articleRepo, domainCache, dtoCache)
-	updateArticleUseCase := usecase.NewUpdateArticleUseCase(articleRepo, articleService, domainCache, dtoCache)
-	deleteArticleUseCase := usecase.NewDeleteArticleUseCase(articleRepo, domainCache, dtoCache)
+	// Initialize use case (application layer)
+	articleUseCase := usecase.NewArticleUseCase(articleRepo, articleService, domainCache, dtoCache)
 
 	// Initialize HTTP handler (driving adapter)
-	articleHandler := httparticle.NewHandler(
-		createArticleUseCase,
-		getArticleUseCase,
-		listArticlesUseCase,
-		updateArticleUseCase,
-		deleteArticleUseCase,
-	)
+	articleHandler := httparticle.NewHandler(articleUseCase)
 
 	return &Container{
-		Repo:          articleRepo,
-		Service:       articleService,
-		CreateUseCase: createArticleUseCase,
-		GetUseCase:    getArticleUseCase,
-		ListUseCase:   listArticlesUseCase,
-		UpdateUseCase: updateArticleUseCase,
-		DeleteUseCase: deleteArticleUseCase,
-		Handler:       articleHandler,
+		Repo:      articleRepo,
+		Service:   articleService,
+		ArticleUC: articleUseCase,
+		Handler:   articleHandler,
 	}
 }
