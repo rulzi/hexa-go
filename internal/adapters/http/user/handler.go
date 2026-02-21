@@ -10,62 +10,25 @@ import (
 	domainuser "github.com/rulzi/hexa-go/internal/domain/user"
 )
 
-// CreateUserUseCase is the interface for the create user use case
-type CreateUserUseCase interface {
-	Execute(ctx context.Context, req dto.CreateUserRequest) (*dto.UserResponse, error)
-}
-
-// GetUserUseCase is the interface for the get user use case
-type GetUserUseCase interface {
-	Execute(ctx context.Context, id int64) (*dto.UserResponse, error)
-}
-
-// ListUsersUseCase is the interface for the list users use case
-type ListUsersUseCase interface {
-	Execute(ctx context.Context, limit, offset int) (*dto.ListUsersResponse, error)
-}
-
-// UpdateUserUseCase is the interface for the update user use case
-type UpdateUserUseCase interface {
-	Execute(ctx context.Context, id int64, req dto.UpdateUserRequest) (*dto.UserResponse, error)
-}
-
-// DeleteUserUseCase is the interface for the delete user use case
-type DeleteUserUseCase interface {
-	Execute(ctx context.Context, id int64) error
-}
-
-// LoginUseCase is the interface for the login use case
-type LoginUseCase interface {
-	Execute(ctx context.Context, req dto.LoginRequest) (*dto.LoginResponse, error)
+// UseCase is the interface for user operations
+type UseCase interface {
+	Create(ctx context.Context, req dto.CreateUserRequest) (*dto.UserResponse, error)
+	Get(ctx context.Context, id int64) (*dto.UserResponse, error)
+	List(ctx context.Context, limit, offset int) (*dto.ListUsersResponse, error)
+	Update(ctx context.Context, id int64, req dto.UpdateUserRequest) (*dto.UserResponse, error)
+	Delete(ctx context.Context, id int64) error
+	Login(ctx context.Context, req dto.LoginRequest) (*dto.LoginResponse, error)
 }
 
 // Handler handles HTTP requests for users
 type Handler struct {
-	createUseCase CreateUserUseCase
-	getUseCase    GetUserUseCase
-	listUseCase   ListUsersUseCase
-	updateUseCase UpdateUserUseCase
-	deleteUseCase DeleteUserUseCase
-	loginUseCase  LoginUseCase
+	userUseCase UseCase
 }
 
 // NewHandler creates a new Handler
-func NewHandler(
-	createUseCase CreateUserUseCase,
-	getUseCase GetUserUseCase,
-	listUseCase ListUsersUseCase,
-	updateUseCase UpdateUserUseCase,
-	deleteUseCase DeleteUserUseCase,
-	loginUseCase LoginUseCase,
-) *Handler {
+func NewHandler(userUseCase UseCase) *Handler {
 	return &Handler{
-		createUseCase: createUseCase,
-		getUseCase:    getUseCase,
-		listUseCase:   listUseCase,
-		updateUseCase: updateUseCase,
-		deleteUseCase: deleteUseCase,
-		loginUseCase:  loginUseCase,
+		userUseCase: userUseCase,
 	}
 }
 
@@ -77,7 +40,7 @@ func (h *Handler) Create(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.createUseCase.Execute(c.Request.Context(), req)
+	resp, err := h.userUseCase.Create(c.Request.Context(), req)
 	if err != nil {
 		if err == domainuser.ErrEmailExists {
 			response.ErrorResponseConflict(c, err.Error())
@@ -98,7 +61,7 @@ func (h *Handler) Get(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.getUseCase.Execute(c.Request.Context(), id)
+	resp, err := h.userUseCase.Get(c.Request.Context(), id)
 	if err != nil {
 		if err == domainuser.ErrUserNotFound {
 			response.ErrorResponseNotFound(c, err.Error())
@@ -116,7 +79,7 @@ func (h *Handler) List(c *gin.Context) {
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
 	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
 
-	resp, err := h.listUseCase.Execute(c.Request.Context(), limit, offset)
+	resp, err := h.userUseCase.List(c.Request.Context(), limit, offset)
 	if err != nil {
 		response.ErrorResponseInternalServerError(c, err.Error())
 		return
@@ -139,7 +102,7 @@ func (h *Handler) Update(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.updateUseCase.Execute(c.Request.Context(), id, req)
+	resp, err := h.userUseCase.Update(c.Request.Context(), id, req)
 	if err != nil {
 		switch err {
 		case domainuser.ErrUserNotFound:
@@ -163,7 +126,7 @@ func (h *Handler) Delete(c *gin.Context) {
 		return
 	}
 
-	err = h.deleteUseCase.Execute(c.Request.Context(), id)
+	err = h.userUseCase.Delete(c.Request.Context(), id)
 	if err != nil {
 		if err == domainuser.ErrUserNotFound {
 			response.ErrorResponseNotFound(c, err.Error())
@@ -184,7 +147,7 @@ func (h *Handler) Register(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.createUseCase.Execute(c.Request.Context(), req)
+	resp, err := h.userUseCase.Create(c.Request.Context(), req)
 	if err != nil {
 		if err == domainuser.ErrEmailExists {
 			response.ErrorResponseConflict(c, err.Error())
@@ -205,7 +168,7 @@ func (h *Handler) Login(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.loginUseCase.Execute(c.Request.Context(), req)
+	resp, err := h.userUseCase.Login(c.Request.Context(), req)
 	if err != nil {
 		if err == domainuser.ErrInvalidCredentials {
 			response.ErrorResponseUnauthorized(c, err.Error())

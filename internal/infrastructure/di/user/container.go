@@ -13,19 +13,14 @@ import (
 
 // Container holds all user domain dependencies
 type Container struct {
-	Repo              domainuser.Repository
-	Service           *domainuser.Service
-	TokenGen          domainuser.TokenGenerator
-	TokenValidator    domainuser.TokenValidator
-	PasswordHasher    domainuser.PasswordHasher
+	Repo                domainuser.Repository
+	Service             *domainuser.Service
+	TokenGen            domainuser.TokenGenerator
+	TokenValidator      domainuser.TokenValidator
+	PasswordHasher      domainuser.PasswordHasher
 	NotificationService domainuser.NotificationService
-	CreateUseCase     *usecase.CreateUserUseCase
-	GetUseCase        *usecase.GetUserUseCase
-	ListUseCase       *usecase.ListUsersUseCase
-	UpdateUseCase     *usecase.UpdateUserUseCase
-	DeleteUseCase     *usecase.DeleteUserUseCase
-	LoginUseCase      *usecase.LoginUseCase
-	Handler           *httpuser.Handler
+	UserUC              *usecase.UserUseCase
+	Handler             *httpuser.Handler
 }
 
 // NewContainer creates a new user domain container
@@ -43,23 +38,11 @@ func NewContainer(database *sql.DB, jwtSecret string, jwtExpiration int) *Contai
 	// Initialize external service adapter
 	notificationService := userexternal.NewEmailSenderImpl()
 
-	// Initialize use cases (application layer)
-	createUseCase := usecase.NewCreateUserUseCase(userRepo, passwordHasher, notificationService)
-	getUseCase := usecase.NewGetUserUseCase(userRepo)
-	listUseCase := usecase.NewListUsersUseCase(userRepo)
-	updateUseCase := usecase.NewUpdateUserUseCase(userRepo, passwordHasher)
-	deleteUseCase := usecase.NewDeleteUserUseCase(userRepo)
-	loginUseCase := usecase.NewLoginUseCase(userRepo, passwordHasher, jwtAdapter)
+	// Initialize use case (application layer)
+	userUseCase := usecase.NewUserUseCase(userRepo, passwordHasher, notificationService, jwtAdapter)
 
 	// Initialize HTTP handler (driving adapter)
-	userHandler := httpuser.NewHandler(
-		createUseCase,
-		getUseCase,
-		listUseCase,
-		updateUseCase,
-		deleteUseCase,
-		loginUseCase,
-	)
+	userHandler := httpuser.NewHandler(userUseCase)
 
 	return &Container{
 		Repo:                userRepo,
@@ -68,12 +51,7 @@ func NewContainer(database *sql.DB, jwtSecret string, jwtExpiration int) *Contai
 		TokenValidator:      jwtAdapter,
 		PasswordHasher:      passwordHasher,
 		NotificationService: notificationService,
-		CreateUseCase:       createUseCase,
-		GetUseCase:          getUseCase,
-		ListUseCase:         listUseCase,
-		UpdateUseCase:       updateUseCase,
-		DeleteUseCase:       deleteUseCase,
-		LoginUseCase:        loginUseCase,
+		UserUC:              userUseCase,
 		Handler:             userHandler,
 	}
 }
