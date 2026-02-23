@@ -16,9 +16,29 @@ func main() {
 	// Load configuration
 	cfg := config.Load()
 
-	// Initialize logger
-	appLogger := logger.NewSimpleLogger()
+	// Initialize logger with file support
+	appLogger, err := logger.NewLogger(logger.LoggerConfig{
+		Level:         cfg.Logger.Level,
+		Format:        cfg.Logger.Format,
+		FilePath:      cfg.Logger.FilePath,
+		EnableFile:    cfg.Logger.EnableFile,
+		EnableConsole: cfg.Logger.EnableConsole,
+		ReportCaller:  cfg.Logger.ReportCaller,
+	})
+	if err != nil {
+		fmt.Printf("Failed to initialize logger: %v\n", err)
+		return
+	}
+	defer appLogger.Close()
+
 	appLogger.Info("Starting application...")
+	appLogger.InfoWithFields("Application configuration loaded", map[string]interface{}{
+		"log_level":      cfg.Logger.Level,
+		"log_format":     cfg.Logger.Format,
+		"log_file":       cfg.Logger.FilePath,
+		"enable_file":    cfg.Logger.EnableFile,
+		"enable_console": cfg.Logger.EnableConsole,
+	})
 
 	// Connect to database
 	db, err := database.NewMySQLConnection(cfg.Database.GetDSN())

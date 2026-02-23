@@ -14,6 +14,7 @@ type Config struct {
 	Redis    RedisConfig
 	JWT      JWTConfig
 	Storage  StorageConfig
+	Logger   LoggerConfig
 }
 
 // ServerConfig holds server configuration
@@ -52,6 +53,16 @@ type StorageConfig struct {
 	BaseURL  string
 }
 
+// LoggerConfig holds logger configuration
+type LoggerConfig struct {
+	Level         string // debug, info, warn, error
+	Format        string // text, json
+	FilePath      string // path to log file
+	ReportCaller  bool
+	EnableFile    bool
+	EnableConsole bool
+}
+
 // Load loads configuration from environment variables
 func Load() *Config {
 	// Load .env file (ignore error if file doesn't exist)
@@ -82,6 +93,14 @@ func Load() *Config {
 		Storage: StorageConfig{
 			BasePath: getEnv("STORAGE_BASE_PATH", "./storage"),
 			BaseURL:  getEnv("STORAGE_BASE_URL", "http://localhost:8080"),
+		},
+		Logger: LoggerConfig{
+			Level:         getEnv("LOG_LEVEL", "info"),
+			Format:        getEnv("LOG_FORMAT", "text"),
+			FilePath:      getEnv("LOG_FILE_PATH", "./logs/app.log"),
+			EnableFile:    getEnvBool("LOG_ENABLE_FILE", true),
+			EnableConsole: getEnvBool("LOG_ENABLE_CONSOLE", true),
+			ReportCaller:  getEnvBool("LOG_REPORT_CALLER", false),
 		},
 	}
 }
