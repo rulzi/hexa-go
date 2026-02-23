@@ -3,11 +3,12 @@ package media
 import (
 	"database/sql"
 
-	mediadb "github.com/rulzi/hexa-go/internal/adapters/repository/media"
 	httpmedia "github.com/rulzi/hexa-go/internal/adapters/http/media"
+	mediadb "github.com/rulzi/hexa-go/internal/adapters/repository/media"
 	mediastorage "github.com/rulzi/hexa-go/internal/adapters/storage/media"
 	"github.com/rulzi/hexa-go/internal/application/media/usecase"
 	domainmedia "github.com/rulzi/hexa-go/internal/domain/media"
+	"github.com/rulzi/hexa-go/internal/infrastructure/logger"
 )
 
 // Container holds all media domain dependencies
@@ -20,7 +21,7 @@ type Container struct {
 }
 
 // NewContainer creates a new media domain container
-func NewContainer(database *sql.DB, storageBasePath string, baseURL string) (*Container, error) {
+func NewContainer(database *sql.DB, appLogger logger.Logger, storageBasePath string, baseURL string) (*Container, error) {
 	// Initialize repository (driven adapter)
 	mediaRepo := mediadb.NewMySQLRepository(database)
 
@@ -37,7 +38,7 @@ func NewContainer(database *sql.DB, storageBasePath string, baseURL string) (*Co
 	mediaUseCase := usecase.NewMediaUseCase(mediaRepo, mediaService, storage, baseURL)
 
 	// Initialize HTTP handler (driving adapter)
-	mediaHandler := httpmedia.NewHandler(mediaUseCase)
+	mediaHandler := httpmedia.NewHandler(mediaUseCase, appLogger)
 
 	return &Container{
 		Repo:    mediaRepo,

@@ -3,13 +3,13 @@ package media
 import (
 	"context"
 	"io"
-	"log"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/rulzi/hexa-go/internal/adapters/http/response"
 	"github.com/rulzi/hexa-go/internal/application/media/dto"
 	domainmedia "github.com/rulzi/hexa-go/internal/domain/media"
+	"github.com/rulzi/hexa-go/internal/infrastructure/logger"
 )
 
 // UseCase is the interface for media operations
@@ -24,12 +24,14 @@ type UseCase interface {
 // Handler handles HTTP requests for media
 type Handler struct {
 	mediaUseCase UseCase
+	logger       logger.Logger
 }
 
 // NewHandler creates a new Handler
-func NewHandler(mediaUseCase UseCase) *Handler {
+func NewHandler(mediaUseCase UseCase, appLogger logger.Logger) *Handler {
 	return &Handler{
 		mediaUseCase: mediaUseCase,
+		logger:       appLogger,
 	}
 }
 
@@ -48,20 +50,23 @@ func (h *Handler) Create(c *gin.Context) {
 	}
 	defer func() {
 		if err := src.Close(); err != nil {
-			log.Printf("Failed to close file: %v", err)
+			h.logger.WarnWithFields("failed to close file after create", map[string]interface{}{"error": err.Error()})
 		}
 	}()
 
 	resp, err := h.mediaUseCase.Create(c.Request.Context(), file.Filename, src)
 	if err != nil {
 		if err == domainmedia.ErrNameRequired || err == domainmedia.ErrPathRequired {
+			h.logger.DebugWithFields("media create bad request", map[string]interface{}{"error": err.Error()})
 			response.ErrorResponseBadRequest(c, err.Error())
 		} else {
+			h.logger.ErrorWithFields("media create failed", map[string]interface{}{"error": err.Error()})
 			response.ErrorResponseInternalServerError(c, err.Error())
 		}
 		return
 	}
 
+	h.logger.InfoWithFields("media created", map[string]interface{}{"media_id": resp.ID, "filename": file.Filename})
 	response.SuccessResponseCreated(c, "Media created successfully", resp)
 }
 
@@ -76,8 +81,10 @@ func (h *Handler) Get(c *gin.Context) {
 	resp, err := h.mediaUseCase.Get(c.Request.Context(), id)
 	if err != nil {
 		if err == domainmedia.ErrMediaNotFound {
+			h.logger.DebugWithFields("media not found", map[string]interface{}{"media_id": id})
 			response.ErrorResponseNotFound(c, err.Error())
 		} else {
+			h.logger.ErrorWithFields("media get failed", map[string]interface{}{"media_id": id, "error": err.Error()})
 			response.ErrorResponseInternalServerError(c, err.Error())
 		}
 		return
@@ -93,6 +100,7 @@ func (h *Handler) List(c *gin.Context) {
 
 	resp, err := h.mediaUseCase.List(c.Request.Context(), limit, offset)
 	if err != nil {
+		h.logger.ErrorWithFields("media list failed", map[string]interface{}{"error": err.Error()})
 		response.ErrorResponseInternalServerError(c, err.Error())
 		return
 	}
@@ -121,7 +129,7 @@ func (h *Handler) Update(c *gin.Context) {
 	}
 	defer func() {
 		if err := src.Close(); err != nil {
-			log.Printf("Failed to close file: %v", err)
+			h.logger.WarnWithFields("failed to close file after update", map[string]interface{}{"error": err.Error()})
 		}
 	}()
 
@@ -129,15 +137,19 @@ func (h *Handler) Update(c *gin.Context) {
 	if err != nil {
 		switch err {
 		case domainmedia.ErrMediaNotFound:
+			h.logger.DebugWithFields("media not found on update", map[string]interface{}{"media_id": id})
 			response.ErrorResponseNotFound(c, err.Error())
 		case domainmedia.ErrNameRequired, domainmedia.ErrPathRequired:
+			h.logger.DebugWithFields("media update bad request", map[string]interface{}{"error": err.Error()})
 			response.ErrorResponseBadRequest(c, err.Error())
 		default:
+			h.logger.ErrorWithFields("media update failed", map[string]interface{}{"media_id": id, "error": err.Error()})
 			response.ErrorResponseInternalServerError(c, err.Error())
 		}
 		return
 	}
 
+	h.logger.InfoWithFields("media updated", map[string]interface{}{"media_id": id, "filename": file.Filename})
 	response.SuccessResponseOK(c, "Media updated successfully", resp)
 }
 
@@ -152,12 +164,15 @@ func (h *Handler) Delete(c *gin.Context) {
 	err = h.mediaUseCase.Delete(c.Request.Context(), id)
 	if err != nil {
 		if err == domainmedia.ErrMediaNotFound {
+			h.logger.DebugWithFields("media not found on delete", map[string]interface{}{"media_id": id})
 			response.ErrorResponseNotFound(c, err.Error())
 		} else {
+			h.logger.ErrorWithFields("media delete failed", map[string]interface{}{"media_id": id, "error": err.Error()})
 			response.ErrorResponseInternalServerError(c, err.Error())
 		}
 		return
 	}
 
+	h.logger.InfoWithFields("media deleted", map[string]interface{}{"media_id": id})
 	response.SuccessResponseOK(c, "Media deleted successfully", nil)
 }

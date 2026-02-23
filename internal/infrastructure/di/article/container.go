@@ -6,10 +6,11 @@ import (
 
 	"github.com/redis/go-redis/v9"
 	articlecache "github.com/rulzi/hexa-go/internal/adapters/cache/article"
-	articledb "github.com/rulzi/hexa-go/internal/adapters/repository/article"
 	httparticle "github.com/rulzi/hexa-go/internal/adapters/http/article"
+	articledb "github.com/rulzi/hexa-go/internal/adapters/repository/article"
 	"github.com/rulzi/hexa-go/internal/application/article/usecase"
 	domainarticle "github.com/rulzi/hexa-go/internal/domain/article"
+	"github.com/rulzi/hexa-go/internal/infrastructure/logger"
 )
 
 // Container holds all article domain dependencies
@@ -21,7 +22,7 @@ type Container struct {
 }
 
 // NewContainer creates a new article domain container
-func NewContainer(database *sql.DB, redisClient *redis.Client) *Container {
+func NewContainer(database *sql.DB, redisClient *redis.Client, appLogger logger.Logger) *Container {
 	// Initialize repository (driven adapter)
 	articleRepo := articledb.NewMySQLRepository(database)
 
@@ -41,7 +42,7 @@ func NewContainer(database *sql.DB, redisClient *redis.Client) *Container {
 	articleUseCase := usecase.NewArticleUseCase(articleRepo, articleService, domainCache, dtoCache)
 
 	// Initialize HTTP handler (driving adapter)
-	articleHandler := httparticle.NewHandler(articleUseCase)
+	articleHandler := httparticle.NewHandler(articleUseCase, appLogger)
 
 	return &Container{
 		Repo:      articleRepo,

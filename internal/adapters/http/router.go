@@ -8,6 +8,7 @@ import (
 	"github.com/rulzi/hexa-go/internal/adapters/http/response"
 	httpuser "github.com/rulzi/hexa-go/internal/adapters/http/user"
 	domainuser "github.com/rulzi/hexa-go/internal/domain/user"
+	"github.com/rulzi/hexa-go/internal/infrastructure/logger"
 )
 
 // Router sets up the HTTP routes
@@ -17,23 +18,25 @@ type Router struct {
 	mediaHandler    *httpmedia.Handler
 	tokenValidator  domainuser.TokenValidator
 	storageBasePath string
+	logger          logger.Logger
 }
 
 // NewRouter creates a new router
-func NewRouter(userHandler *httpuser.Handler, articleHandler *httparticle.Handler, mediaHandler *httpmedia.Handler, tokenValidator domainuser.TokenValidator, storageBasePath string) *Router {
+func NewRouter(userHandler *httpuser.Handler, articleHandler *httparticle.Handler, mediaHandler *httpmedia.Handler, tokenValidator domainuser.TokenValidator, storageBasePath string, appLogger logger.Logger) *Router {
 	return &Router{
 		userHandler:     userHandler,
 		articleHandler:  articleHandler,
 		mediaHandler:    mediaHandler,
 		tokenValidator:  tokenValidator,
 		storageBasePath: storageBasePath,
+		logger:          appLogger,
 	}
 }
 
 // SetupRoutes configures all HTTP routes
 func (r *Router) SetupRoutes(engine *gin.Engine, debug bool) {
 	// Apply default middlewares
-	middleware.SetupDefaultMiddlewares(engine, debug)
+	middleware.SetupDefaultMiddlewares(engine, debug, r.logger)
 
 	api := engine.Group("/api/v1")
 	{

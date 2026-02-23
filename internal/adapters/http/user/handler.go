@@ -8,6 +8,7 @@ import (
 	"github.com/rulzi/hexa-go/internal/adapters/http/response"
 	"github.com/rulzi/hexa-go/internal/application/user/dto"
 	domainuser "github.com/rulzi/hexa-go/internal/domain/user"
+	"github.com/rulzi/hexa-go/internal/infrastructure/logger"
 )
 
 // UseCase is the interface for user operations
@@ -23,12 +24,14 @@ type UseCase interface {
 // Handler handles HTTP requests for users
 type Handler struct {
 	userUseCase UseCase
+	logger      logger.Logger
 }
 
 // NewHandler creates a new Handler
-func NewHandler(userUseCase UseCase) *Handler {
+func NewHandler(userUseCase UseCase, appLogger logger.Logger) *Handler {
 	return &Handler{
 		userUseCase: userUseCase,
+		logger:      appLogger,
 	}
 }
 
@@ -43,13 +46,16 @@ func (h *Handler) Create(c *gin.Context) {
 	resp, err := h.userUseCase.Create(c.Request.Context(), req)
 	if err != nil {
 		if err == domainuser.ErrEmailExists {
+			h.logger.WarnWithFields("user create conflict", map[string]interface{}{"email": req.Email})
 			response.ErrorResponseConflict(c, err.Error())
 		} else {
+			h.logger.ErrorWithFields("user create failed", map[string]interface{}{"error": err.Error()})
 			response.ErrorResponseInternalServerError(c, err.Error())
 		}
 		return
 	}
 
+	h.logger.InfoWithFields("user created", map[string]interface{}{"user_id": resp.ID, "email": resp.Email})
 	response.SuccessResponseCreated(c, "User created successfully", resp)
 }
 
@@ -64,8 +70,10 @@ func (h *Handler) Get(c *gin.Context) {
 	resp, err := h.userUseCase.Get(c.Request.Context(), id)
 	if err != nil {
 		if err == domainuser.ErrUserNotFound {
+			h.logger.DebugWithFields("user not found", map[string]interface{}{"user_id": id})
 			response.ErrorResponseNotFound(c, err.Error())
 		} else {
+			h.logger.ErrorWithFields("user get failed", map[string]interface{}{"user_id": id, "error": err.Error()})
 			response.ErrorResponseInternalServerError(c, err.Error())
 		}
 		return
@@ -81,6 +89,7 @@ func (h *Handler) List(c *gin.Context) {
 
 	resp, err := h.userUseCase.List(c.Request.Context(), limit, offset)
 	if err != nil {
+		h.logger.ErrorWithFields("user list failed", map[string]interface{}{"error": err.Error()})
 		response.ErrorResponseInternalServerError(c, err.Error())
 		return
 	}
@@ -106,15 +115,19 @@ func (h *Handler) Update(c *gin.Context) {
 	if err != nil {
 		switch err {
 		case domainuser.ErrUserNotFound:
+			h.logger.DebugWithFields("user not found on update", map[string]interface{}{"user_id": id})
 			response.ErrorResponseNotFound(c, err.Error())
 		case domainuser.ErrEmailExists:
+			h.logger.WarnWithFields("user update conflict", map[string]interface{}{"user_id": id, "email": req.Email})
 			response.ErrorResponseConflict(c, err.Error())
 		default:
+			h.logger.ErrorWithFields("user update failed", map[string]interface{}{"user_id": id, "error": err.Error()})
 			response.ErrorResponseInternalServerError(c, err.Error())
 		}
 		return
 	}
 
+	h.logger.InfoWithFields("user updated", map[string]interface{}{"user_id": id})
 	response.SuccessResponseOK(c, "User updated successfully", resp)
 }
 
@@ -129,13 +142,16 @@ func (h *Handler) Delete(c *gin.Context) {
 	err = h.userUseCase.Delete(c.Request.Context(), id)
 	if err != nil {
 		if err == domainuser.ErrUserNotFound {
+			h.logger.DebugWithFields("user not found on delete", map[string]interface{}{"user_id": id})
 			response.ErrorResponseNotFound(c, err.Error())
 		} else {
+			h.logger.ErrorWithFields("user delete failed", map[string]interface{}{"user_id": id, "error": err.Error()})
 			response.ErrorResponseInternalServerError(c, err.Error())
 		}
 		return
 	}
 
+	h.logger.InfoWithFields("user deleted", map[string]interface{}{"user_id": id})
 	response.SuccessResponseOK(c, "User deleted successfully", nil)
 }
 
@@ -150,13 +166,16 @@ func (h *Handler) Register(c *gin.Context) {
 	resp, err := h.userUseCase.Create(c.Request.Context(), req)
 	if err != nil {
 		if err == domainuser.ErrEmailExists {
+			h.logger.WarnWithFields("register conflict", map[string]interface{}{"email": req.Email})
 			response.ErrorResponseConflict(c, err.Error())
 		} else {
+			h.logger.ErrorWithFields("register failed", map[string]interface{}{"error": err.Error()})
 			response.ErrorResponseInternalServerError(c, err.Error())
 		}
 		return
 	}
 
+	h.logger.InfoWithFields("user registered", map[string]interface{}{"user_id": resp.ID, "email": resp.Email})
 	response.SuccessResponseCreated(c, "User registered successfully", resp)
 }
 
@@ -171,12 +190,15 @@ func (h *Handler) Login(c *gin.Context) {
 	resp, err := h.userUseCase.Login(c.Request.Context(), req)
 	if err != nil {
 		if err == domainuser.ErrInvalidCredentials {
+			h.logger.WarnWithFields("login failed invalid credentials", map[string]interface{}{"email": req.Email})
 			response.ErrorResponseUnauthorized(c, err.Error())
 		} else {
+			h.logger.ErrorWithFields("login failed", map[string]interface{}{"email": req.Email, "error": err.Error()})
 			response.ErrorResponseInternalServerError(c, err.Error())
 		}
 		return
 	}
 
+	h.logger.InfoWithFields("login successful", map[string]interface{}{"user_id": resp.User.ID, "email": req.Email})
 	response.SuccessResponseOK(c, "Login successful", resp)
 }

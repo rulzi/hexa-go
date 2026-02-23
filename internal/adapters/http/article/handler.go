@@ -8,6 +8,7 @@ import (
 	"github.com/rulzi/hexa-go/internal/adapters/http/response"
 	"github.com/rulzi/hexa-go/internal/application/article/dto"
 	domainarticle "github.com/rulzi/hexa-go/internal/domain/article"
+	"github.com/rulzi/hexa-go/internal/infrastructure/logger"
 )
 
 // UseCase is the interface for article operations
@@ -22,12 +23,14 @@ type UseCase interface {
 // Handler handles HTTP requests for articles
 type Handler struct {
 	articleUseCase UseCase
+	logger         logger.Logger
 }
 
 // NewHandler creates a new Handler
-func NewHandler(articleUseCase UseCase) *Handler {
+func NewHandler(articleUseCase UseCase, appLogger logger.Logger) *Handler {
 	return &Handler{
 		articleUseCase: articleUseCase,
+		logger:         appLogger,
 	}
 }
 
@@ -41,10 +44,12 @@ func (h *Handler) Create(c *gin.Context) {
 
 	resp, err := h.articleUseCase.Create(c.Request.Context(), req)
 	if err != nil {
+		h.logger.ErrorWithFields("article create failed", map[string]interface{}{"error": err.Error()})
 		response.ErrorResponseInternalServerError(c, err.Error())
 		return
 	}
 
+	h.logger.InfoWithFields("article created", map[string]interface{}{"article_id": resp.ID, "title": resp.Title})
 	response.SuccessResponseCreated(c, "Article created successfully", resp)
 }
 
@@ -59,8 +64,10 @@ func (h *Handler) Get(c *gin.Context) {
 	resp, err := h.articleUseCase.Get(c.Request.Context(), id)
 	if err != nil {
 		if err == domainarticle.ErrArticleNotFound {
+			h.logger.DebugWithFields("article not found", map[string]interface{}{"article_id": id})
 			response.ErrorResponseNotFound(c, err.Error())
 		} else {
+			h.logger.ErrorWithFields("article get failed", map[string]interface{}{"article_id": id, "error": err.Error()})
 			response.ErrorResponseInternalServerError(c, err.Error())
 		}
 		return
@@ -76,6 +83,7 @@ func (h *Handler) List(c *gin.Context) {
 
 	resp, err := h.articleUseCase.List(c.Request.Context(), limit, offset)
 	if err != nil {
+		h.logger.ErrorWithFields("article list failed", map[string]interface{}{"error": err.Error()})
 		response.ErrorResponseInternalServerError(c, err.Error())
 		return
 	}
@@ -100,13 +108,16 @@ func (h *Handler) Update(c *gin.Context) {
 	resp, err := h.articleUseCase.Update(c.Request.Context(), id, req)
 	if err != nil {
 		if err == domainarticle.ErrArticleNotFound {
+			h.logger.DebugWithFields("article not found on update", map[string]interface{}{"article_id": id})
 			response.ErrorResponseNotFound(c, err.Error())
 		} else {
+			h.logger.ErrorWithFields("article update failed", map[string]interface{}{"article_id": id, "error": err.Error()})
 			response.ErrorResponseInternalServerError(c, err.Error())
 		}
 		return
 	}
 
+	h.logger.InfoWithFields("article updated", map[string]interface{}{"article_id": id})
 	response.SuccessResponseOK(c, "Article updated successfully", resp)
 }
 
@@ -121,12 +132,15 @@ func (h *Handler) Delete(c *gin.Context) {
 	err = h.articleUseCase.Delete(c.Request.Context(), id)
 	if err != nil {
 		if err == domainarticle.ErrArticleNotFound {
+			h.logger.DebugWithFields("article not found on delete", map[string]interface{}{"article_id": id})
 			response.ErrorResponseNotFound(c, err.Error())
 		} else {
+			h.logger.ErrorWithFields("article delete failed", map[string]interface{}{"article_id": id, "error": err.Error()})
 			response.ErrorResponseInternalServerError(c, err.Error())
 		}
 		return
 	}
 
+	h.logger.InfoWithFields("article deleted", map[string]interface{}{"article_id": id})
 	response.SuccessResponseOK(c, "Article deleted successfully", nil)
 }

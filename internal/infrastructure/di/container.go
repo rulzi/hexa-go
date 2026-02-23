@@ -5,6 +5,7 @@ import (
 
 	"github.com/redis/go-redis/v9"
 	"github.com/rulzi/hexa-go/internal/adapters/http"
+	"github.com/rulzi/hexa-go/internal/infrastructure/logger"
 	diarticle "github.com/rulzi/hexa-go/internal/infrastructure/di/article"
 	dimedia "github.com/rulzi/hexa-go/internal/infrastructure/di/media"
 	diuser "github.com/rulzi/hexa-go/internal/infrastructure/di/user"
@@ -14,6 +15,7 @@ import (
 type Container struct {
 	DB      *sql.DB
 	Redis   *redis.Client
+	Logger  logger.Logger
 	User    *diuser.Container
 	Article *diarticle.Container
 	Media   *dimedia.Container
@@ -21,21 +23,22 @@ type Container struct {
 }
 
 // NewContainer creates a new dependency injection container
-func NewContainer(database *sql.DB, redisClient *redis.Client, jwtSecret string, jwtExpiration int, storageBasePath string, storageBaseURL string) (*Container, error) {
+func NewContainer(database *sql.DB, redisClient *redis.Client, appLogger logger.Logger, jwtSecret string, jwtExpiration int, storageBasePath string, storageBaseURL string) (*Container, error) {
 	// Initialize domain containers
-	userContainer := diuser.NewContainer(database, jwtSecret, jwtExpiration)
-	articleContainer := diarticle.NewContainer(database, redisClient)
-	mediaContainer, err := dimedia.NewContainer(database, storageBasePath, storageBaseURL)
+	userContainer := diuser.NewContainer(database, appLogger, jwtSecret, jwtExpiration)
+	articleContainer := diarticle.NewContainer(database, redisClient, appLogger)
+	mediaContainer, err := dimedia.NewContainer(database, appLogger, storageBasePath, storageBaseURL)
 	if err != nil {
 		return nil, err
 	}
 
 	// Initialize router
-	router := http.NewRouter(userContainer.Handler, articleContainer.Handler, mediaContainer.Handler, userContainer.TokenValidator, storageBasePath)
+	router := http.NewRouter(userContainer.Handler, articleContainer.Handler, mediaContainer.Handler, userContainer.TokenValidator, storageBasePath, appLogger)
 
 	return &Container{
 		DB:      database,
 		Redis:   redisClient,
+		Logger:  appLogger,
 		User:    userContainer,
 		Article: articleContainer,
 		Media:   mediaContainer,

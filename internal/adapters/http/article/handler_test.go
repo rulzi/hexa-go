@@ -13,9 +13,12 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/rulzi/hexa-go/internal/application/article/dto"
 	domainarticle "github.com/rulzi/hexa-go/internal/domain/article"
+	"github.com/rulzi/hexa-go/internal/infrastructure/logger"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
+
+var testLogger logger.Logger = logger.NewSimpleLogger()
 
 // mockArticleUseCase is a mock implementation of ArticleUseCase
 type mockArticleUseCase struct {
@@ -67,14 +70,14 @@ func setupTestRouter(handler *Handler) *gin.Engine {
 
 func TestNewHandler(t *testing.T) {
 	uc := &mockArticleUseCase{}
-	handler := NewHandler(uc)
+	handler := NewHandler(uc, testLogger)
 	assert.NotNil(t, handler)
 	assert.Equal(t, uc, handler.articleUseCase)
 }
 
 func TestHandler_Create_Success(t *testing.T) {
 	uc := &mockArticleUseCase{}
-	handler := NewHandler(uc)
+	handler := NewHandler(uc, testLogger)
 
 	reqBody := dto.CreateArticleRequest{
 		Title:    "Test Article",
@@ -115,7 +118,7 @@ func TestHandler_Create_Success(t *testing.T) {
 
 func TestHandler_Create_BadRequest_InvalidJSON(t *testing.T) {
 	uc := &mockArticleUseCase{}
-	handler := NewHandler(uc)
+	handler := NewHandler(uc, testLogger)
 
 	router := setupTestRouter(handler)
 	router.POST("/articles", handler.Create)
@@ -132,7 +135,7 @@ func TestHandler_Create_BadRequest_InvalidJSON(t *testing.T) {
 
 func TestHandler_Create_BadRequest_MissingFields(t *testing.T) {
 	uc := &mockArticleUseCase{}
-	handler := NewHandler(uc)
+	handler := NewHandler(uc, testLogger)
 
 	reqBody := map[string]interface{}{
 		"title": "Test Article",
@@ -155,7 +158,7 @@ func TestHandler_Create_BadRequest_MissingFields(t *testing.T) {
 
 func TestHandler_Create_InternalServerError(t *testing.T) {
 	uc := &mockArticleUseCase{}
-	handler := NewHandler(uc)
+	handler := NewHandler(uc, testLogger)
 
 	reqBody := dto.CreateArticleRequest{
 		Title:    "Test Article",
@@ -181,7 +184,7 @@ func TestHandler_Create_InternalServerError(t *testing.T) {
 
 func TestHandler_Get_Success(t *testing.T) {
 	uc := &mockArticleUseCase{}
-	handler := NewHandler(uc)
+	handler := NewHandler(uc, testLogger)
 
 	articleID := int64(1)
 	expectedResp := &dto.ArticleResponse{
@@ -215,7 +218,7 @@ func TestHandler_Get_Success(t *testing.T) {
 
 func TestHandler_Get_BadRequest_InvalidID(t *testing.T) {
 	uc := &mockArticleUseCase{}
-	handler := NewHandler(uc)
+	handler := NewHandler(uc, testLogger)
 
 	router := setupTestRouter(handler)
 	router.GET("/articles/:id", handler.Get)
@@ -231,7 +234,7 @@ func TestHandler_Get_BadRequest_InvalidID(t *testing.T) {
 
 func TestHandler_Get_NotFound(t *testing.T) {
 	uc := &mockArticleUseCase{}
-	handler := NewHandler(uc)
+	handler := NewHandler(uc, testLogger)
 
 	articleID := int64(999)
 	uc.On("Get", mock.Anything, articleID).Return(nil, domainarticle.ErrArticleNotFound)
@@ -250,7 +253,7 @@ func TestHandler_Get_NotFound(t *testing.T) {
 
 func TestHandler_Get_InternalServerError(t *testing.T) {
 	uc := &mockArticleUseCase{}
-	handler := NewHandler(uc)
+	handler := NewHandler(uc, testLogger)
 
 	articleID := int64(1)
 	uc.On("Get", mock.Anything, articleID).Return(nil, errors.New("database error"))
@@ -269,7 +272,7 @@ func TestHandler_Get_InternalServerError(t *testing.T) {
 
 func TestHandler_List_Success(t *testing.T) {
 	uc := &mockArticleUseCase{}
-	handler := NewHandler(uc)
+	handler := NewHandler(uc, testLogger)
 
 	limit := 10
 	offset := 0
@@ -311,7 +314,7 @@ func TestHandler_List_Success(t *testing.T) {
 
 func TestHandler_List_WithQueryParams(t *testing.T) {
 	uc := &mockArticleUseCase{}
-	handler := NewHandler(uc)
+	handler := NewHandler(uc, testLogger)
 
 	limit := 20
 	offset := 10
@@ -338,7 +341,7 @@ func TestHandler_List_WithQueryParams(t *testing.T) {
 
 func TestHandler_List_InternalServerError(t *testing.T) {
 	uc := &mockArticleUseCase{}
-	handler := NewHandler(uc)
+	handler := NewHandler(uc, testLogger)
 
 	limit := 10
 	offset := 0
@@ -358,7 +361,7 @@ func TestHandler_List_InternalServerError(t *testing.T) {
 
 func TestHandler_Update_Success(t *testing.T) {
 	uc := &mockArticleUseCase{}
-	handler := NewHandler(uc)
+	handler := NewHandler(uc, testLogger)
 
 	articleID := int64(1)
 	reqBody := dto.UpdateArticleRequest{
@@ -399,7 +402,7 @@ func TestHandler_Update_Success(t *testing.T) {
 
 func TestHandler_Update_BadRequest_InvalidID(t *testing.T) {
 	uc := &mockArticleUseCase{}
-	handler := NewHandler(uc)
+	handler := NewHandler(uc, testLogger)
 
 	reqBody := dto.UpdateArticleRequest{
 		Title:   "Updated Article",
@@ -422,7 +425,7 @@ func TestHandler_Update_BadRequest_InvalidID(t *testing.T) {
 
 func TestHandler_Update_BadRequest_InvalidJSON(t *testing.T) {
 	uc := &mockArticleUseCase{}
-	handler := NewHandler(uc)
+	handler := NewHandler(uc, testLogger)
 
 	router := setupTestRouter(handler)
 	router.PUT("/articles/:id", handler.Update)
@@ -439,7 +442,7 @@ func TestHandler_Update_BadRequest_InvalidJSON(t *testing.T) {
 
 func TestHandler_Update_BadRequest_MissingFields(t *testing.T) {
 	uc := &mockArticleUseCase{}
-	handler := NewHandler(uc)
+	handler := NewHandler(uc, testLogger)
 
 	reqBody := map[string]interface{}{
 		"title": "Updated Article",
@@ -462,7 +465,7 @@ func TestHandler_Update_BadRequest_MissingFields(t *testing.T) {
 
 func TestHandler_Update_NotFound(t *testing.T) {
 	uc := &mockArticleUseCase{}
-	handler := NewHandler(uc)
+	handler := NewHandler(uc, testLogger)
 
 	articleID := int64(999)
 	reqBody := dto.UpdateArticleRequest{
@@ -488,7 +491,7 @@ func TestHandler_Update_NotFound(t *testing.T) {
 
 func TestHandler_Update_InternalServerError(t *testing.T) {
 	uc := &mockArticleUseCase{}
-	handler := NewHandler(uc)
+	handler := NewHandler(uc, testLogger)
 
 	articleID := int64(1)
 	reqBody := dto.UpdateArticleRequest{
@@ -514,7 +517,7 @@ func TestHandler_Update_InternalServerError(t *testing.T) {
 
 func TestHandler_Delete_Success(t *testing.T) {
 	uc := &mockArticleUseCase{}
-	handler := NewHandler(uc)
+	handler := NewHandler(uc, testLogger)
 
 	articleID := int64(1)
 	uc.On("Delete", mock.Anything, articleID).Return(nil)
@@ -539,7 +542,7 @@ func TestHandler_Delete_Success(t *testing.T) {
 
 func TestHandler_Delete_BadRequest_InvalidID(t *testing.T) {
 	uc := &mockArticleUseCase{}
-	handler := NewHandler(uc)
+	handler := NewHandler(uc, testLogger)
 
 	router := setupTestRouter(handler)
 	router.DELETE("/articles/:id", handler.Delete)
@@ -555,7 +558,7 @@ func TestHandler_Delete_BadRequest_InvalidID(t *testing.T) {
 
 func TestHandler_Delete_NotFound(t *testing.T) {
 	uc := &mockArticleUseCase{}
-	handler := NewHandler(uc)
+	handler := NewHandler(uc, testLogger)
 
 	articleID := int64(999)
 	uc.On("Delete", mock.Anything, articleID).Return(domainarticle.ErrArticleNotFound)
@@ -574,7 +577,7 @@ func TestHandler_Delete_NotFound(t *testing.T) {
 
 func TestHandler_Delete_InternalServerError(t *testing.T) {
 	uc := &mockArticleUseCase{}
-	handler := NewHandler(uc)
+	handler := NewHandler(uc, testLogger)
 
 	articleID := int64(1)
 	uc.On("Delete", mock.Anything, articleID).Return(errors.New("database error"))

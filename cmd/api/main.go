@@ -73,7 +73,7 @@ func main() {
 	}
 
 	// Initialize dependency injection container
-	container, err := di.NewContainer(db, redisClient, cfg.JWT.Secret, cfg.JWT.Expiration, cfg.Storage.BasePath, cfg.Storage.BaseURL)
+	container, err := di.NewContainer(db, redisClient, appLogger, cfg.JWT.Secret, cfg.JWT.Expiration, cfg.Storage.BasePath, cfg.Storage.BaseURL)
 	if err != nil {
 		appLogger.Fatal(fmt.Sprintf("Failed to initialize container: %v", err))
 	}

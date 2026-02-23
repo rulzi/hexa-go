@@ -13,9 +13,12 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/rulzi/hexa-go/internal/application/user/dto"
 	domainuser "github.com/rulzi/hexa-go/internal/domain/user"
+	"github.com/rulzi/hexa-go/internal/infrastructure/logger"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
+
+var testLogger logger.Logger = logger.NewSimpleLogger()
 
 // mockUserUseCase is a mock implementation of UserUseCase
 type mockUserUseCase struct {
@@ -75,14 +78,14 @@ func setupTestRouter(handler *Handler) *gin.Engine {
 
 func TestNewHandler(t *testing.T) {
 	uc := &mockUserUseCase{}
-	handler := NewHandler(uc)
+	handler := NewHandler(uc, testLogger)
 	assert.NotNil(t, handler)
 	assert.Equal(t, uc, handler.userUseCase)
 }
 
 func TestHandler_Create_Success(t *testing.T) {
 	uc := &mockUserUseCase{}
-	handler := NewHandler(uc)
+	handler := NewHandler(uc, testLogger)
 
 	reqBody := dto.CreateUserRequest{
 		Name:     "Test User",
@@ -122,7 +125,7 @@ func TestHandler_Create_Success(t *testing.T) {
 
 func TestHandler_Create_BadRequest_InvalidJSON(t *testing.T) {
 	uc := &mockUserUseCase{}
-	handler := NewHandler(uc)
+	handler := NewHandler(uc, testLogger)
 
 	router := setupTestRouter(handler)
 	router.POST("/users", handler.Create)
@@ -139,7 +142,7 @@ func TestHandler_Create_BadRequest_InvalidJSON(t *testing.T) {
 
 func TestHandler_Create_Conflict_EmailExists(t *testing.T) {
 	uc := &mockUserUseCase{}
-	handler := NewHandler(uc)
+	handler := NewHandler(uc, testLogger)
 
 	reqBody := dto.CreateUserRequest{
 		Name:     "Test User",
@@ -165,7 +168,7 @@ func TestHandler_Create_Conflict_EmailExists(t *testing.T) {
 
 func TestHandler_Create_InternalServerError(t *testing.T) {
 	uc := &mockUserUseCase{}
-	handler := NewHandler(uc)
+	handler := NewHandler(uc, testLogger)
 
 	reqBody := dto.CreateUserRequest{
 		Name:     "Test User",
@@ -191,7 +194,7 @@ func TestHandler_Create_InternalServerError(t *testing.T) {
 
 func TestHandler_Get_Success(t *testing.T) {
 	uc := &mockUserUseCase{}
-	handler := NewHandler(uc)
+	handler := NewHandler(uc, testLogger)
 
 	userID := int64(1)
 	expectedResp := &dto.UserResponse{
@@ -224,7 +227,7 @@ func TestHandler_Get_Success(t *testing.T) {
 
 func TestHandler_Get_BadRequest_InvalidID(t *testing.T) {
 	uc := &mockUserUseCase{}
-	handler := NewHandler(uc)
+	handler := NewHandler(uc, testLogger)
 
 	router := setupTestRouter(handler)
 	router.GET("/users/:id", handler.Get)
@@ -240,7 +243,7 @@ func TestHandler_Get_BadRequest_InvalidID(t *testing.T) {
 
 func TestHandler_Get_NotFound(t *testing.T) {
 	uc := &mockUserUseCase{}
-	handler := NewHandler(uc)
+	handler := NewHandler(uc, testLogger)
 
 	userID := int64(999)
 	uc.On("Get", mock.Anything, userID).Return(nil, domainuser.ErrUserNotFound)
@@ -259,7 +262,7 @@ func TestHandler_Get_NotFound(t *testing.T) {
 
 func TestHandler_Get_InternalServerError(t *testing.T) {
 	uc := &mockUserUseCase{}
-	handler := NewHandler(uc)
+	handler := NewHandler(uc, testLogger)
 
 	userID := int64(1)
 	uc.On("Get", mock.Anything, userID).Return(nil, errors.New("database error"))
@@ -278,7 +281,7 @@ func TestHandler_Get_InternalServerError(t *testing.T) {
 
 func TestHandler_List_Success(t *testing.T) {
 	uc := &mockUserUseCase{}
-	handler := NewHandler(uc)
+	handler := NewHandler(uc, testLogger)
 
 	limit := 10
 	offset := 0
@@ -319,7 +322,7 @@ func TestHandler_List_Success(t *testing.T) {
 
 func TestHandler_List_WithQueryParams(t *testing.T) {
 	uc := &mockUserUseCase{}
-	handler := NewHandler(uc)
+	handler := NewHandler(uc, testLogger)
 
 	limit := 20
 	offset := 10
@@ -346,7 +349,7 @@ func TestHandler_List_WithQueryParams(t *testing.T) {
 
 func TestHandler_List_InternalServerError(t *testing.T) {
 	uc := &mockUserUseCase{}
-	handler := NewHandler(uc)
+	handler := NewHandler(uc, testLogger)
 
 	limit := 10
 	offset := 0
@@ -366,7 +369,7 @@ func TestHandler_List_InternalServerError(t *testing.T) {
 
 func TestHandler_Update_Success(t *testing.T) {
 	uc := &mockUserUseCase{}
-	handler := NewHandler(uc)
+	handler := NewHandler(uc, testLogger)
 
 	userID := int64(1)
 	reqBody := dto.UpdateUserRequest{
@@ -407,7 +410,7 @@ func TestHandler_Update_Success(t *testing.T) {
 
 func TestHandler_Update_BadRequest_InvalidID(t *testing.T) {
 	uc := &mockUserUseCase{}
-	handler := NewHandler(uc)
+	handler := NewHandler(uc, testLogger)
 
 	reqBody := dto.UpdateUserRequest{
 		Name:  "Updated User",
@@ -430,7 +433,7 @@ func TestHandler_Update_BadRequest_InvalidID(t *testing.T) {
 
 func TestHandler_Update_BadRequest_InvalidJSON(t *testing.T) {
 	uc := &mockUserUseCase{}
-	handler := NewHandler(uc)
+	handler := NewHandler(uc, testLogger)
 
 	router := setupTestRouter(handler)
 	router.PUT("/users/:id", handler.Update)
@@ -447,7 +450,7 @@ func TestHandler_Update_BadRequest_InvalidJSON(t *testing.T) {
 
 func TestHandler_Update_NotFound(t *testing.T) {
 	uc := &mockUserUseCase{}
-	handler := NewHandler(uc)
+	handler := NewHandler(uc, testLogger)
 
 	userID := int64(999)
 	reqBody := dto.UpdateUserRequest{
@@ -473,7 +476,7 @@ func TestHandler_Update_NotFound(t *testing.T) {
 
 func TestHandler_Update_Conflict_EmailExists(t *testing.T) {
 	uc := &mockUserUseCase{}
-	handler := NewHandler(uc)
+	handler := NewHandler(uc, testLogger)
 
 	userID := int64(1)
 	reqBody := dto.UpdateUserRequest{
@@ -499,7 +502,7 @@ func TestHandler_Update_Conflict_EmailExists(t *testing.T) {
 
 func TestHandler_Update_InternalServerError(t *testing.T) {
 	uc := &mockUserUseCase{}
-	handler := NewHandler(uc)
+	handler := NewHandler(uc, testLogger)
 
 	userID := int64(1)
 	reqBody := dto.UpdateUserRequest{
@@ -525,7 +528,7 @@ func TestHandler_Update_InternalServerError(t *testing.T) {
 
 func TestHandler_Delete_Success(t *testing.T) {
 	uc := &mockUserUseCase{}
-	handler := NewHandler(uc)
+	handler := NewHandler(uc, testLogger)
 
 	userID := int64(1)
 	uc.On("Delete", mock.Anything, userID).Return(nil)
@@ -550,7 +553,7 @@ func TestHandler_Delete_Success(t *testing.T) {
 
 func TestHandler_Delete_BadRequest_InvalidID(t *testing.T) {
 	uc := &mockUserUseCase{}
-	handler := NewHandler(uc)
+	handler := NewHandler(uc, testLogger)
 
 	router := setupTestRouter(handler)
 	router.DELETE("/users/:id", handler.Delete)
@@ -566,7 +569,7 @@ func TestHandler_Delete_BadRequest_InvalidID(t *testing.T) {
 
 func TestHandler_Delete_NotFound(t *testing.T) {
 	uc := &mockUserUseCase{}
-	handler := NewHandler(uc)
+	handler := NewHandler(uc, testLogger)
 
 	userID := int64(999)
 	uc.On("Delete", mock.Anything, userID).Return(domainuser.ErrUserNotFound)
@@ -585,7 +588,7 @@ func TestHandler_Delete_NotFound(t *testing.T) {
 
 func TestHandler_Delete_InternalServerError(t *testing.T) {
 	uc := &mockUserUseCase{}
-	handler := NewHandler(uc)
+	handler := NewHandler(uc, testLogger)
 
 	userID := int64(1)
 	uc.On("Delete", mock.Anything, userID).Return(errors.New("database error"))
@@ -604,7 +607,7 @@ func TestHandler_Delete_InternalServerError(t *testing.T) {
 
 func TestHandler_Register_Success(t *testing.T) {
 	uc := &mockUserUseCase{}
-	handler := NewHandler(uc)
+	handler := NewHandler(uc, testLogger)
 
 	reqBody := dto.CreateUserRequest{
 		Name:     "Test User",
@@ -644,7 +647,7 @@ func TestHandler_Register_Success(t *testing.T) {
 
 func TestHandler_Register_BadRequest_InvalidJSON(t *testing.T) {
 	uc := &mockUserUseCase{}
-	handler := NewHandler(uc)
+	handler := NewHandler(uc, testLogger)
 
 	router := setupTestRouter(handler)
 	router.POST("/users/register", handler.Register)
@@ -661,7 +664,7 @@ func TestHandler_Register_BadRequest_InvalidJSON(t *testing.T) {
 
 func TestHandler_Register_Conflict_EmailExists(t *testing.T) {
 	uc := &mockUserUseCase{}
-	handler := NewHandler(uc)
+	handler := NewHandler(uc, testLogger)
 
 	reqBody := dto.CreateUserRequest{
 		Name:     "Test User",
@@ -687,7 +690,7 @@ func TestHandler_Register_Conflict_EmailExists(t *testing.T) {
 
 func TestHandler_Login_Success(t *testing.T) {
 	uc := &mockUserUseCase{}
-	handler := NewHandler(uc)
+	handler := NewHandler(uc, testLogger)
 
 	reqBody := dto.LoginRequest{
 		Email:    "test@example.com",
@@ -729,7 +732,7 @@ func TestHandler_Login_Success(t *testing.T) {
 
 func TestHandler_Login_BadRequest_InvalidJSON(t *testing.T) {
 	uc := &mockUserUseCase{}
-	handler := NewHandler(uc)
+	handler := NewHandler(uc, testLogger)
 
 	router := setupTestRouter(handler)
 	router.POST("/users/login", handler.Login)
@@ -746,7 +749,7 @@ func TestHandler_Login_BadRequest_InvalidJSON(t *testing.T) {
 
 func TestHandler_Login_Unauthorized_InvalidCredentials(t *testing.T) {
 	uc := &mockUserUseCase{}
-	handler := NewHandler(uc)
+	handler := NewHandler(uc, testLogger)
 
 	reqBody := dto.LoginRequest{
 		Email:    "test@example.com",
@@ -771,7 +774,7 @@ func TestHandler_Login_Unauthorized_InvalidCredentials(t *testing.T) {
 
 func TestHandler_Login_InternalServerError(t *testing.T) {
 	uc := &mockUserUseCase{}
-	handler := NewHandler(uc)
+	handler := NewHandler(uc, testLogger)
 
 	reqBody := dto.LoginRequest{
 		Email:    "test@example.com",

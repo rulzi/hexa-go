@@ -15,9 +15,12 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/rulzi/hexa-go/internal/application/media/dto"
 	domainmedia "github.com/rulzi/hexa-go/internal/domain/media"
+	"github.com/rulzi/hexa-go/internal/infrastructure/logger"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
+
+var testLogger logger.Logger = logger.NewSimpleLogger()
 
 // mockMediaUseCase is a mock implementation of MediaUseCase
 type mockMediaUseCase struct {
@@ -92,14 +95,14 @@ func createMultipartFormData(filename, content string) (*bytes.Buffer, string, e
 
 func TestNewHandler(t *testing.T) {
 	uc := &mockMediaUseCase{}
-	handler := NewHandler(uc)
+	handler := NewHandler(uc, testLogger)
 	assert.NotNil(t, handler)
 	assert.Equal(t, uc, handler.mediaUseCase)
 }
 
 func TestHandler_Create_Success(t *testing.T) {
 	uc := &mockMediaUseCase{}
-	handler := NewHandler(uc)
+	handler := NewHandler(uc, testLogger)
 
 	filename := "test.jpg"
 	fileContent := "test file content"
@@ -140,7 +143,7 @@ func TestHandler_Create_Success(t *testing.T) {
 
 func TestHandler_Create_BadRequest_NoFile(t *testing.T) {
 	uc := &mockMediaUseCase{}
-	handler := NewHandler(uc)
+	handler := NewHandler(uc, testLogger)
 
 	router := setupTestRouter(handler)
 	router.POST("/media", handler.Create)
@@ -157,7 +160,7 @@ func TestHandler_Create_BadRequest_NoFile(t *testing.T) {
 
 func TestHandler_Create_BadRequest_ValidationError(t *testing.T) {
 	uc := &mockMediaUseCase{}
-	handler := NewHandler(uc)
+	handler := NewHandler(uc, testLogger)
 
 	filename := "test.jpg"
 	fileContent := "test file content"
@@ -183,7 +186,7 @@ func TestHandler_Create_BadRequest_ValidationError(t *testing.T) {
 
 func TestHandler_Create_InternalServerError(t *testing.T) {
 	uc := &mockMediaUseCase{}
-	handler := NewHandler(uc)
+	handler := NewHandler(uc, testLogger)
 
 	filename := "test.jpg"
 	fileContent := "test file content"
@@ -209,7 +212,7 @@ func TestHandler_Create_InternalServerError(t *testing.T) {
 
 func TestHandler_Get_Success(t *testing.T) {
 	uc := &mockMediaUseCase{}
-	handler := NewHandler(uc)
+	handler := NewHandler(uc, testLogger)
 
 	mediaID := int64(1)
 	expectedResp := &dto.MediaResponse{
@@ -243,7 +246,7 @@ func TestHandler_Get_Success(t *testing.T) {
 
 func TestHandler_Get_BadRequest_InvalidID(t *testing.T) {
 	uc := &mockMediaUseCase{}
-	handler := NewHandler(uc)
+	handler := NewHandler(uc, testLogger)
 
 	router := setupTestRouter(handler)
 	router.GET("/media/:id", handler.Get)
@@ -259,7 +262,7 @@ func TestHandler_Get_BadRequest_InvalidID(t *testing.T) {
 
 func TestHandler_Get_NotFound(t *testing.T) {
 	uc := &mockMediaUseCase{}
-	handler := NewHandler(uc)
+	handler := NewHandler(uc, testLogger)
 
 	mediaID := int64(999)
 	uc.On("Get", mock.Anything, mediaID).Return(nil, domainmedia.ErrMediaNotFound)
@@ -278,7 +281,7 @@ func TestHandler_Get_NotFound(t *testing.T) {
 
 func TestHandler_Get_InternalServerError(t *testing.T) {
 	uc := &mockMediaUseCase{}
-	handler := NewHandler(uc)
+	handler := NewHandler(uc, testLogger)
 
 	mediaID := int64(1)
 	uc.On("Get", mock.Anything, mediaID).Return(nil, errors.New("database error"))
@@ -297,7 +300,7 @@ func TestHandler_Get_InternalServerError(t *testing.T) {
 
 func TestHandler_List_Success(t *testing.T) {
 	uc := &mockMediaUseCase{}
-	handler := NewHandler(uc)
+	handler := NewHandler(uc, testLogger)
 
 	limit := 10
 	offset := 0
@@ -339,7 +342,7 @@ func TestHandler_List_Success(t *testing.T) {
 
 func TestHandler_List_WithQueryParams(t *testing.T) {
 	uc := &mockMediaUseCase{}
-	handler := NewHandler(uc)
+	handler := NewHandler(uc, testLogger)
 
 	limit := 20
 	offset := 10
@@ -366,7 +369,7 @@ func TestHandler_List_WithQueryParams(t *testing.T) {
 
 func TestHandler_List_InternalServerError(t *testing.T) {
 	uc := &mockMediaUseCase{}
-	handler := NewHandler(uc)
+	handler := NewHandler(uc, testLogger)
 
 	limit := 10
 	offset := 0
@@ -386,7 +389,7 @@ func TestHandler_List_InternalServerError(t *testing.T) {
 
 func TestHandler_Update_Success(t *testing.T) {
 	uc := &mockMediaUseCase{}
-	handler := NewHandler(uc)
+	handler := NewHandler(uc, testLogger)
 
 	mediaID := int64(1)
 	filename := "updated.jpg"
@@ -427,7 +430,7 @@ func TestHandler_Update_Success(t *testing.T) {
 
 func TestHandler_Update_BadRequest_InvalidID(t *testing.T) {
 	uc := &mockMediaUseCase{}
-	handler := NewHandler(uc)
+	handler := NewHandler(uc, testLogger)
 
 	filename := "updated.jpg"
 	fileContent := "updated file content"
@@ -451,7 +454,7 @@ func TestHandler_Update_BadRequest_InvalidID(t *testing.T) {
 
 func TestHandler_Update_BadRequest_NoFile(t *testing.T) {
 	uc := &mockMediaUseCase{}
-	handler := NewHandler(uc)
+	handler := NewHandler(uc, testLogger)
 
 	router := setupTestRouter(handler)
 	router.PUT("/media/:id", handler.Update)
@@ -468,7 +471,7 @@ func TestHandler_Update_BadRequest_NoFile(t *testing.T) {
 
 func TestHandler_Update_BadRequest_ValidationError(t *testing.T) {
 	uc := &mockMediaUseCase{}
-	handler := NewHandler(uc)
+	handler := NewHandler(uc, testLogger)
 
 	mediaID := int64(1)
 	filename := "updated.jpg"
@@ -495,7 +498,7 @@ func TestHandler_Update_BadRequest_ValidationError(t *testing.T) {
 
 func TestHandler_Update_NotFound(t *testing.T) {
 	uc := &mockMediaUseCase{}
-	handler := NewHandler(uc)
+	handler := NewHandler(uc, testLogger)
 
 	mediaID := int64(999)
 	filename := "updated.jpg"
@@ -522,7 +525,7 @@ func TestHandler_Update_NotFound(t *testing.T) {
 
 func TestHandler_Update_InternalServerError(t *testing.T) {
 	uc := &mockMediaUseCase{}
-	handler := NewHandler(uc)
+	handler := NewHandler(uc, testLogger)
 
 	mediaID := int64(1)
 	filename := "updated.jpg"
@@ -549,7 +552,7 @@ func TestHandler_Update_InternalServerError(t *testing.T) {
 
 func TestHandler_Delete_Success(t *testing.T) {
 	uc := &mockMediaUseCase{}
-	handler := NewHandler(uc)
+	handler := NewHandler(uc, testLogger)
 
 	mediaID := int64(1)
 	uc.On("Delete", mock.Anything, mediaID).Return(nil)
@@ -574,7 +577,7 @@ func TestHandler_Delete_Success(t *testing.T) {
 
 func TestHandler_Delete_BadRequest_InvalidID(t *testing.T) {
 	uc := &mockMediaUseCase{}
-	handler := NewHandler(uc)
+	handler := NewHandler(uc, testLogger)
 
 	router := setupTestRouter(handler)
 	router.DELETE("/media/:id", handler.Delete)
@@ -590,7 +593,7 @@ func TestHandler_Delete_BadRequest_InvalidID(t *testing.T) {
 
 func TestHandler_Delete_NotFound(t *testing.T) {
 	uc := &mockMediaUseCase{}
-	handler := NewHandler(uc)
+	handler := NewHandler(uc, testLogger)
 
 	mediaID := int64(999)
 	uc.On("Delete", mock.Anything, mediaID).Return(domainmedia.ErrMediaNotFound)
@@ -609,7 +612,7 @@ func TestHandler_Delete_NotFound(t *testing.T) {
 
 func TestHandler_Delete_InternalServerError(t *testing.T) {
 	uc := &mockMediaUseCase{}
-	handler := NewHandler(uc)
+	handler := NewHandler(uc, testLogger)
 
 	mediaID := int64(1)
 	uc.On("Delete", mock.Anything, mediaID).Return(errors.New("database error"))
