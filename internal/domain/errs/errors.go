@@ -19,12 +19,15 @@ type NotFoundError struct {
 	cause   error
 }
 
+// NewNotFound returns a NotFoundError with the given code and message.
 func NewNotFound(code, message string) *NotFoundError {
 	return &NotFoundError{code: code, message: message}
 }
 
 func (e *NotFoundError) Error() string { return e.message }
-func (e *NotFoundError) Code() string  { return e.code }
+
+// Code returns the machine-readable error code.
+func (e *NotFoundError) Code() string { return e.code }
 func (e *NotFoundError) Unwrap() error { return e.cause }
 
 // ValidationError indicates invalid input or business rule violation.
@@ -35,16 +38,22 @@ type ValidationError struct {
 	cause   error
 }
 
+// NewValidation returns a ValidationError with the given code and message.
 func NewValidation(code, message string) *ValidationError {
 	return &ValidationError{code: code, message: message}
 }
 
+// NewValidationField returns a ValidationError tied to a specific input field.
 func NewValidationField(code, message, field string) *ValidationError {
 	return &ValidationError{code: code, message: message, field: field}
 }
 
 func (e *ValidationError) Error() string { return e.message }
-func (e *ValidationError) Code() string  { return e.code }
+
+// Code returns the machine-readable error code.
+func (e *ValidationError) Code() string { return e.code }
+
+// Field returns the input field associated with the validation error.
 func (e *ValidationError) Field() string { return e.field }
 func (e *ValidationError) Unwrap() error { return e.cause }
 
@@ -55,12 +64,15 @@ type ConflictError struct {
 	cause   error
 }
 
+// NewConflict returns a ConflictError with the given code and message.
 func NewConflict(code, message string) *ConflictError {
 	return &ConflictError{code: code, message: message}
 }
 
 func (e *ConflictError) Error() string { return e.message }
-func (e *ConflictError) Code() string  { return e.code }
+
+// Code returns the machine-readable error code.
+func (e *ConflictError) Code() string { return e.code }
 func (e *ConflictError) Unwrap() error { return e.cause }
 
 // UnauthorizedError indicates authentication or authorization failure.
@@ -70,12 +82,15 @@ type UnauthorizedError struct {
 	cause   error
 }
 
+// NewUnauthorized returns an UnauthorizedError with the given code and message.
 func NewUnauthorized(code, message string) *UnauthorizedError {
 	return &UnauthorizedError{code: code, message: message}
 }
 
 func (e *UnauthorizedError) Error() string { return e.message }
-func (e *UnauthorizedError) Code() string  { return e.code }
+
+// Code returns the machine-readable error code.
+func (e *UnauthorizedError) Code() string { return e.code }
 func (e *UnauthorizedError) Unwrap() error { return e.cause }
 
 // IsNotFound reports whether err is a NotFoundError (including wrapped).

@@ -8,7 +8,9 @@ import (
 )
 
 var (
-	ErrInvalidFilename     = errors.New("invalid filename")
+	// ErrInvalidFilename is returned when a filename is empty or unsafe.
+	ErrInvalidFilename = errors.New("invalid filename")
+	// ErrExtensionNotAllowed is returned when the file extension is missing or not permitted.
 	ErrExtensionNotAllowed = errors.New("file extension not allowed")
 
 	allowedExtensions = map[string]struct{}{

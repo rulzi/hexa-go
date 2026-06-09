@@ -26,7 +26,7 @@ func main() {
 	}
 
 	// Initialize logger with file support
-	appLogger, err := logger.NewLogger(logger.LoggerConfig{
+	appLogger, err := logger.NewLogger(logger.Config{
 		Level:         cfg.Logger.Level,
 		Format:        cfg.Logger.Format,
 		FilePath:      cfg.Logger.FilePath,

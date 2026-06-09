@@ -30,8 +30,8 @@ type LogrusLogger struct {
 	file   *os.File
 }
 
-// LoggerConfig holds logger configuration
-type LoggerConfig struct {
+// Config holds logger configuration.
+type Config struct {
 	Level         string // debug, info, warn, error
 	Format        string // text, json
 	FilePath      string // path to log file
@@ -41,7 +41,7 @@ type LoggerConfig struct {
 }
 
 // NewLogger creates a new LogrusLogger with configuration
-func NewLogger(config LoggerConfig) (*LogrusLogger, error) {
+func NewLogger(config Config) (*LogrusLogger, error) {
 	log := logrus.New()
 
 	// Set log level
@@ -107,7 +107,7 @@ func NewLogger(config LoggerConfig) (*LogrusLogger, error) {
 
 // NewSimpleLogger creates a new LogrusLogger with default configuration
 func NewSimpleLogger() *LogrusLogger {
-	logger, _ := NewLogger(LoggerConfig{
+	logger, _ := NewLogger(Config{
 		Level:         "info",
 		Format:        "text",
 		EnableConsole: true,

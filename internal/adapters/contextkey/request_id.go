@@ -4,6 +4,7 @@ import "context"
 
 type requestIDKey struct{}
 
+// RequestIDHeader is the HTTP header name used to propagate request IDs.
 const RequestIDHeader = "X-Request-ID"
 
 // WithRequestID returns a context with the given request ID.

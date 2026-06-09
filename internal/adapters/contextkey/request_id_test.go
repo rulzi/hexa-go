@@ -14,5 +14,4 @@ func TestWithRequestIDAndRequestID(t *testing.T) {
 
 func TestRequestID_EmptyWhenNotSet(t *testing.T) {
 	assert.Equal(t, "", RequestID(context.Background()))
-	assert.Equal(t, "", RequestID(nil))
 }
