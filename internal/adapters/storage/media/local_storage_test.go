@@ -110,9 +110,8 @@ func TestLocalStorageAdapter_Save_GeneratesUniqueFilename(t *testing.T) {
 	file1 := strings.NewReader("content1")
 	file2 := strings.NewReader("content2")
 
-	// Save same filename twice
+	// Save same filename twice in quick succession
 	path1, err1 := storage.Save(ctx, filename, file1)
-	time.Sleep(1 * time.Second) // Ensure different timestamp
 	path2, err2 := storage.Save(ctx, filename, file2)
 
 	assert.NoError(t, err1)

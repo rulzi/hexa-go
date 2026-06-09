@@ -16,6 +16,14 @@ func TestGenerateStoragePath_SanitizesTraversal(t *testing.T) {
 	assert.True(t, strings.HasSuffix(path, ".jpg"))
 }
 
+func TestGenerateStoragePath_UniqueForSameFilename(t *testing.T) {
+	path1, err := generateStoragePath("photo.jpg")
+	require.NoError(t, err)
+	path2, err := generateStoragePath("photo.jpg")
+	require.NoError(t, err)
+	assert.NotEqual(t, path1, path2)
+}
+
 func TestGenerateStoragePath_RejectsDangerousExtension(t *testing.T) {
 	_, err := generateStoragePath("shell.php")
 	assert.ErrorIs(t, err, ErrExtensionNotAllowed)

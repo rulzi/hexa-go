@@ -14,13 +14,12 @@ func generateStoragePath(filename string) (string, error) {
 		return "", err
 	}
 
-	timestamp := time.Now().Unix()
+	now := time.Now()
 	ext := filepath.Ext(safeName)
 	nameWithoutExt := strings.TrimSuffix(safeName, ext)
 
-	now := time.Now()
 	return fmt.Sprintf("%d/%02d/%02d/%s_%d%s",
 		now.Year(), now.Month(), now.Day(),
-		nameWithoutExt, timestamp, ext,
+		nameWithoutExt, now.UnixNano(), ext,
 	), nil
 }
