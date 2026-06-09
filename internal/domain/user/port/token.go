@@ -1,5 +1,7 @@
 package port
 
+//go:generate mockgen -destination=mocks/mock_token_generator.go -package=mocks github.com/rulzi/hexa-go/internal/domain/user/port TokenGenerator
+
 // TokenClaims represents the claims extracted from a token.
 type TokenClaims struct {
 	UserID int64
