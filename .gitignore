@@ -45,3 +45,6 @@ Thumbs.db
 storage/*
 
 hexa-go
+
+# Log files
+*.log
