@@ -57,7 +57,7 @@ services:
     #   - db_password
     #   - jwt_secret
     volumes:
-      - storage_data:/app/storage
+      - storage_data:/home/app/storage
     networks:
       - hexa-network
     depends_on:

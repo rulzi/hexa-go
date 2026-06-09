@@ -25,13 +25,17 @@ FROM alpine:latest
 # Install ca-certificates for HTTPS requests
 RUN apk --no-cache add ca-certificates tzdata
 
-WORKDIR /root/
+RUN addgroup -S app && adduser -S app -G app
+
+WORKDIR /home/app
 
 # Copy the binary from builder stage
-COPY --from=builder /app/main .
+COPY --from=builder --chown=app:app /app/main .
 
 # Create storage directory
-RUN mkdir -p /root/storage
+RUN mkdir -p /home/app/storage && chown -R app:app /home/app/storage
+
+USER app
 
 # Expose port
 EXPOSE 8080
