@@ -1,12 +1,12 @@
-package article
+package entity
 
 import domainerrs "github.com/rulzi/hexa-go/internal/domain/errs"
 
 const (
-	CodeArticleNotFound   = "ARTICLE_NOT_FOUND"
-	CodeTitleRequired     = "ARTICLE_TITLE_REQUIRED"
-	CodeContentRequired   = "ARTICLE_CONTENT_REQUIRED"
-	CodeAuthorIDRequired  = "ARTICLE_AUTHOR_ID_REQUIRED"
+	CodeArticleNotFound  = "ARTICLE_NOT_FOUND"
+	CodeTitleRequired    = "ARTICLE_TITLE_REQUIRED"
+	CodeContentRequired  = "ARTICLE_CONTENT_REQUIRED"
+	CodeAuthorIDRequired = "ARTICLE_AUTHOR_ID_REQUIRED"
 )
 
 func NewArticleNotFound() error {

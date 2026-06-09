@@ -6,22 +6,24 @@ import (
 	"time"
 
 	"github.com/rulzi/hexa-go/internal/application/media/dto"
-	domainmedia "github.com/rulzi/hexa-go/internal/domain/media"
+	mediaentity "github.com/rulzi/hexa-go/internal/domain/media/entity"
+	mediaport "github.com/rulzi/hexa-go/internal/domain/media/port"
+	mediaservice "github.com/rulzi/hexa-go/internal/domain/media/service"
 )
 
 // MediaUseCase handles all media operations (create, get, list, update, delete)
 type MediaUseCase struct {
-	mediaRepo    domainmedia.Repository
-	mediaService *domainmedia.Service
-	storage      domainmedia.Storage
+	mediaRepo    mediaport.Repository
+	mediaService *mediaservice.Service
+	storage      mediaport.Storage
 	baseURL      string
 }
 
 // NewMediaUseCase creates a new MediaUseCase
 func NewMediaUseCase(
-	mediaRepo domainmedia.Repository,
-	mediaService *domainmedia.Service,
-	storage domainmedia.Storage,
+	mediaRepo mediaport.Repository,
+	mediaService *mediaservice.Service,
+	storage mediaport.Storage,
 	baseURL string,
 ) *MediaUseCase {
 	return &MediaUseCase{
@@ -39,7 +41,7 @@ func (uc *MediaUseCase) Create(ctx context.Context, filename string, file io.Rea
 		return nil, err
 	}
 
-	newMedia := &domainmedia.Media{
+	newMedia := &mediaentity.Media{
 		Name:      filename,
 		Path:      storagePath,
 		CreatedAt: time.Now(),
@@ -75,7 +77,7 @@ func (uc *MediaUseCase) Get(ctx context.Context, id int64) (*dto.MediaResponse, 
 	}
 
 	if mediaEntity == nil {
-		return nil, domainmedia.NewMediaNotFound()
+		return nil, mediaentity.NewMediaNotFound()
 	}
 
 	return &dto.MediaResponse{
@@ -135,7 +137,7 @@ func (uc *MediaUseCase) Update(ctx context.Context, id int64, filename string, f
 	}
 
 	if existingMedia == nil {
-		return nil, domainmedia.NewMediaNotFound()
+		return nil, mediaentity.NewMediaNotFound()
 	}
 
 	oldPath := existingMedia.Path
@@ -180,7 +182,7 @@ func (uc *MediaUseCase) Delete(ctx context.Context, id int64) error {
 	}
 
 	if existingMedia == nil {
-		return domainmedia.NewMediaNotFound()
+		return mediaentity.NewMediaNotFound()
 	}
 
 	if err := uc.storage.Delete(ctx, existingMedia.Path); err != nil {

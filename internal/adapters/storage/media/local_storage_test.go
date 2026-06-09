@@ -9,7 +9,8 @@ import (
 	"testing"
 	"time"
 
-	domainmedia "github.com/rulzi/hexa-go/internal/domain/media"
+	mediaentity "github.com/rulzi/hexa-go/internal/domain/media/entity"
+	mediaport "github.com/rulzi/hexa-go/internal/domain/media/port"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -266,7 +267,7 @@ func TestLocalStorageAdapter_Get_FileNotFound(t *testing.T) {
 	reader, err := storage.Get(ctx, "nonexistent/file.jpg")
 
 	assert.Error(t, err)
-	assert.True(t, domainmedia.IsMediaNotFound(err))
+	assert.True(t, mediaentity.IsMediaNotFound(err))
 	assert.Nil(t, reader)
 }
 
@@ -333,7 +334,7 @@ func TestLocalStorageAdapter_RoundTrip(t *testing.T) {
 	// Verify deleted
 	_, err = storage.Get(ctx, path)
 	assert.Error(t, err)
-	assert.True(t, domainmedia.IsMediaNotFound(err))
+	assert.True(t, mediaentity.IsMediaNotFound(err))
 }
 
 func TestLocalStorageAdapter_ImplementsInterface(t *testing.T) {
@@ -341,8 +342,8 @@ func TestLocalStorageAdapter_ImplementsInterface(t *testing.T) {
 	storage, err := NewLocalStorageAdapter(tmpDir)
 	assert.NoError(t, err)
 
-	// Verify that LocalStorageAdapter implements domainmedia.StoragePort interface
-	var _ domainmedia.StoragePort = storage
+	// Verify that LocalStorageAdapter implements mediaport.StoragePort interface
+	var _ mediaport.StoragePort = storage
 }
 
 func TestLocalStorageAdapter_Save_ReturnsRelativePath(t *testing.T) {

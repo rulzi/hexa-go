@@ -1,39 +1,40 @@
-package article
+package service
 
 import (
 	"context"
 	"testing"
 
+	"github.com/rulzi/hexa-go/internal/domain/article/entity"
+	"github.com/rulzi/hexa-go/internal/domain/article/port"
 	"github.com/stretchr/testify/assert"
 )
 
-// mockRepository is a mock implementation of Repository for testing
 type mockRepository struct {
-	createFunc        func(ctx context.Context, article *Article) (*Article, error)
-	getByIDFunc       func(ctx context.Context, id int64) (*Article, error)
-	updateFunc        func(ctx context.Context, article *Article) (*Article, error)
+	createFunc        func(ctx context.Context, article *entity.Article) (*entity.Article, error)
+	getByIDFunc       func(ctx context.Context, id int64) (*entity.Article, error)
+	updateFunc        func(ctx context.Context, article *entity.Article) (*entity.Article, error)
 	deleteFunc        func(ctx context.Context, id int64) error
-	listFunc          func(ctx context.Context, limit, offset int) ([]*Article, error)
-	listByAuthorFunc  func(ctx context.Context, authorID int64, limit, offset int) ([]*Article, error)
+	listFunc          func(ctx context.Context, limit, offset int) ([]*entity.Article, error)
+	listByAuthorFunc  func(ctx context.Context, authorID int64, limit, offset int) ([]*entity.Article, error)
 	countFunc         func(ctx context.Context) (int64, error)
 	countByAuthorFunc func(ctx context.Context, authorID int64) (int64, error)
 }
 
-func (m *mockRepository) Create(ctx context.Context, article *Article) (*Article, error) {
+func (m *mockRepository) Create(ctx context.Context, article *entity.Article) (*entity.Article, error) {
 	if m.createFunc != nil {
 		return m.createFunc(ctx, article)
 	}
 	return nil, nil
 }
 
-func (m *mockRepository) GetByID(ctx context.Context, id int64) (*Article, error) {
+func (m *mockRepository) GetByID(ctx context.Context, id int64) (*entity.Article, error) {
 	if m.getByIDFunc != nil {
 		return m.getByIDFunc(ctx, id)
 	}
 	return nil, nil
 }
 
-func (m *mockRepository) Update(ctx context.Context, article *Article) (*Article, error) {
+func (m *mockRepository) Update(ctx context.Context, article *entity.Article) (*entity.Article, error) {
 	if m.updateFunc != nil {
 		return m.updateFunc(ctx, article)
 	}
@@ -47,14 +48,14 @@ func (m *mockRepository) Delete(ctx context.Context, id int64) error {
 	return nil
 }
 
-func (m *mockRepository) List(ctx context.Context, limit, offset int) ([]*Article, error) {
+func (m *mockRepository) List(ctx context.Context, limit, offset int) ([]*entity.Article, error) {
 	if m.listFunc != nil {
 		return m.listFunc(ctx, limit, offset)
 	}
 	return nil, nil
 }
 
-func (m *mockRepository) ListByAuthor(ctx context.Context, authorID int64, limit, offset int) ([]*Article, error) {
+func (m *mockRepository) ListByAuthor(ctx context.Context, authorID int64, limit, offset int) ([]*entity.Article, error) {
 	if m.listByAuthorFunc != nil {
 		return m.listByAuthorFunc(ctx, authorID, limit, offset)
 	}
@@ -78,7 +79,7 @@ func (m *mockRepository) CountByAuthor(ctx context.Context, authorID int64) (int
 func TestNewService(t *testing.T) {
 	tests := []struct {
 		name string
-		repo Repository
+		repo port.Repository
 	}{
 		{
 			name: "create service with repository",
@@ -92,9 +93,9 @@ func TestNewService(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			service := NewService(tt.repo)
-			assert.NotNil(t, service)
-			assert.Equal(t, tt.repo, service.repo)
+			svc := NewService(tt.repo)
+			assert.NotNil(t, svc)
+			assert.Equal(t, tt.repo, svc.repo)
 		})
 	}
 }

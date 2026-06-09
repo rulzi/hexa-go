@@ -4,7 +4,7 @@ import (
 	"context"
 	"io"
 
-	domainmedia "github.com/rulzi/hexa-go/internal/domain/media"
+	mediaentity "github.com/rulzi/hexa-go/internal/domain/media/entity"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -13,28 +13,28 @@ type mockMediaRepository struct {
 	mock.Mock
 }
 
-func (m *mockMediaRepository) Create(ctx context.Context, media *domainmedia.Media) (*domainmedia.Media, error) {
+func (m *mockMediaRepository) Create(ctx context.Context, media *mediaentity.Media) (*mediaentity.Media, error) {
 	args := m.Called(ctx, media)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*domainmedia.Media), args.Error(1)
+	return args.Get(0).(*mediaentity.Media), args.Error(1)
 }
 
-func (m *mockMediaRepository) GetByID(ctx context.Context, id int64) (*domainmedia.Media, error) {
+func (m *mockMediaRepository) GetByID(ctx context.Context, id int64) (*mediaentity.Media, error) {
 	args := m.Called(ctx, id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*domainmedia.Media), args.Error(1)
+	return args.Get(0).(*mediaentity.Media), args.Error(1)
 }
 
-func (m *mockMediaRepository) Update(ctx context.Context, media *domainmedia.Media) (*domainmedia.Media, error) {
+func (m *mockMediaRepository) Update(ctx context.Context, media *mediaentity.Media) (*mediaentity.Media, error) {
 	args := m.Called(ctx, media)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*domainmedia.Media), args.Error(1)
+	return args.Get(0).(*mediaentity.Media), args.Error(1)
 }
 
 func (m *mockMediaRepository) Delete(ctx context.Context, id int64) error {
@@ -42,12 +42,12 @@ func (m *mockMediaRepository) Delete(ctx context.Context, id int64) error {
 	return args.Error(0)
 }
 
-func (m *mockMediaRepository) List(ctx context.Context, limit, offset int) ([]*domainmedia.Media, error) {
+func (m *mockMediaRepository) List(ctx context.Context, limit, offset int) ([]*mediaentity.Media, error) {
 	args := m.Called(ctx, limit, offset)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).([]*domainmedia.Media), args.Error(1)
+	return args.Get(0).([]*mediaentity.Media), args.Error(1)
 }
 
 func (m *mockMediaRepository) Count(ctx context.Context) (int64, error) {

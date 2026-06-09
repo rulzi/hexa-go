@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	domainmedia "github.com/rulzi/hexa-go/internal/domain/media"
+	mediaentity "github.com/rulzi/hexa-go/internal/domain/media/entity"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -32,14 +32,14 @@ func TestNewMySQLRepository(t *testing.T) {
 func TestMySQLRepository_Create(t *testing.T) {
 	tests := []struct {
 		name    string
-		media   *domainmedia.Media
+		media   *mediaentity.Media
 		setup   func(mock sqlmock.Sqlmock)
 		wantErr bool
-		check   func(t *testing.T, media *domainmedia.Media)
+		check   func(t *testing.T, media *mediaentity.Media)
 	}{
 		{
 			name: "success create media",
-			media: &domainmedia.Media{
+			media: &mediaentity.Media{
 				Name:      "test-image.jpg",
 				Path:      "/storage/2025/12/19/test-image.jpg",
 				CreatedAt: time.Now(),
@@ -51,7 +51,7 @@ func TestMySQLRepository_Create(t *testing.T) {
 					WillReturnResult(sqlmock.NewResult(1, 1))
 			},
 			wantErr: false,
-			check: func(t *testing.T, media *domainmedia.Media) {
+			check: func(t *testing.T, media *mediaentity.Media) {
 				assert.Equal(t, int64(1), media.ID)
 				assert.Equal(t, "test-image.jpg", media.Name)
 				assert.Equal(t, "/storage/2025/12/19/test-image.jpg", media.Path)
@@ -59,7 +59,7 @@ func TestMySQLRepository_Create(t *testing.T) {
 		},
 		{
 			name: "error on database exec",
-			media: &domainmedia.Media{
+			media: &mediaentity.Media{
 				Name:      "test-image.jpg",
 				Path:      "/storage/2025/12/19/test-image.jpg",
 				CreatedAt: time.Now(),
@@ -74,7 +74,7 @@ func TestMySQLRepository_Create(t *testing.T) {
 		},
 		{
 			name: "error on last insert id",
-			media: &domainmedia.Media{
+			media: &mediaentity.Media{
 				Name:      "test-image.jpg",
 				Path:      "/storage/2025/12/19/test-image.jpg",
 				CreatedAt: time.Now(),
@@ -129,7 +129,7 @@ func TestMySQLRepository_GetByID(t *testing.T) {
 		id      int64
 		setup   func(mock sqlmock.Sqlmock)
 		wantErr bool
-		check   func(t *testing.T, media *domainmedia.Media)
+		check   func(t *testing.T, media *mediaentity.Media)
 	}{
 		{
 			name: "success get media by id",
@@ -142,7 +142,7 @@ func TestMySQLRepository_GetByID(t *testing.T) {
 					WillReturnRows(rows)
 			},
 			wantErr: false,
-			check: func(t *testing.T, media *domainmedia.Media) {
+			check: func(t *testing.T, media *mediaentity.Media) {
 				assert.Equal(t, int64(1), media.ID)
 				assert.Equal(t, "test-image.jpg", media.Name)
 				assert.Equal(t, "/storage/2025/12/19/test-image.jpg", media.Path)
@@ -157,7 +157,7 @@ func TestMySQLRepository_GetByID(t *testing.T) {
 					WillReturnError(sql.ErrNoRows)
 			},
 			wantErr: true,
-			check: func(t *testing.T, media *domainmedia.Media) {
+			check: func(t *testing.T, media *mediaentity.Media) {
 				assert.Nil(t, media)
 			},
 		},
@@ -194,7 +194,7 @@ func TestMySQLRepository_GetByID(t *testing.T) {
 			if tt.wantErr {
 				assert.Error(t, err)
 				if tt.name == "media not found" {
-					assert.True(t, domainmedia.IsMediaNotFound(err))
+					assert.True(t, mediaentity.IsMediaNotFound(err))
 				}
 				if tt.check != nil {
 					tt.check(t, result)
@@ -217,14 +217,14 @@ func TestMySQLRepository_GetByID(t *testing.T) {
 func TestMySQLRepository_Update(t *testing.T) {
 	tests := []struct {
 		name    string
-		media   *domainmedia.Media
+		media   *mediaentity.Media
 		setup   func(mock sqlmock.Sqlmock)
 		wantErr bool
-		check   func(t *testing.T, media *domainmedia.Media)
+		check   func(t *testing.T, media *mediaentity.Media)
 	}{
 		{
 			name: "success update media",
-			media: &domainmedia.Media{
+			media: &mediaentity.Media{
 				ID:        1,
 				Name:      "updated-image.jpg",
 				Path:      "/storage/2025/12/19/updated-image.jpg",
@@ -236,7 +236,7 @@ func TestMySQLRepository_Update(t *testing.T) {
 					WillReturnResult(sqlmock.NewResult(0, 1))
 			},
 			wantErr: false,
-			check: func(t *testing.T, media *domainmedia.Media) {
+			check: func(t *testing.T, media *mediaentity.Media) {
 				assert.Equal(t, int64(1), media.ID)
 				assert.Equal(t, "updated-image.jpg", media.Name)
 				assert.Equal(t, "/storage/2025/12/19/updated-image.jpg", media.Path)
@@ -244,7 +244,7 @@ func TestMySQLRepository_Update(t *testing.T) {
 		},
 		{
 			name: "error on database exec",
-			media: &domainmedia.Media{
+			media: &mediaentity.Media{
 				ID:        1,
 				Name:      "updated-image.jpg",
 				Path:      "/storage/2025/12/19/updated-image.jpg",
@@ -363,7 +363,7 @@ func TestMySQLRepository_Delete(t *testing.T) {
 			if tt.wantErr {
 				assert.Error(t, err)
 				if tt.name == "media not found" {
-					assert.True(t, domainmedia.IsMediaNotFound(err))
+					assert.True(t, mediaentity.IsMediaNotFound(err))
 				}
 			} else {
 				assert.NoError(t, err)
@@ -381,7 +381,7 @@ func TestMySQLRepository_List(t *testing.T) {
 		offset  int
 		setup   func(mock sqlmock.Sqlmock)
 		wantErr bool
-		check   func(t *testing.T, mediaList []*domainmedia.Media)
+		check   func(t *testing.T, mediaList []*mediaentity.Media)
 	}{
 		{
 			name:   "success list media",
@@ -396,7 +396,7 @@ func TestMySQLRepository_List(t *testing.T) {
 					WillReturnRows(rows)
 			},
 			wantErr: false,
-			check: func(t *testing.T, mediaList []*domainmedia.Media) {
+			check: func(t *testing.T, mediaList []*mediaentity.Media) {
 				assert.Len(t, mediaList, 2)
 				assert.Equal(t, int64(1), mediaList[0].ID)
 				assert.Equal(t, "image1.jpg", mediaList[0].Name)
@@ -417,9 +417,9 @@ func TestMySQLRepository_List(t *testing.T) {
 					WillReturnRows(rows)
 			},
 			wantErr: false,
-			check: func(t *testing.T, mediaList []*domainmedia.Media) {
+			check: func(t *testing.T, mediaList []*mediaentity.Media) {
 				if mediaList == nil {
-					mediaList = []*domainmedia.Media{}
+					mediaList = []*mediaentity.Media{}
 				}
 				assert.Len(t, mediaList, 0)
 			},
@@ -489,7 +489,7 @@ func TestMySQLRepository_List(t *testing.T) {
 				assert.NoError(t, err)
 				// For empty results, result might be nil or empty slice, both are acceptable
 				if result == nil && tt.name == "success list media empty result" {
-					result = []*domainmedia.Media{}
+					result = []*mediaentity.Media{}
 				}
 				if tt.check != nil {
 					tt.check(t, result)

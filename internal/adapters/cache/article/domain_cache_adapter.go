@@ -4,8 +4,11 @@ import (
 	"context"
 
 	"github.com/rulzi/hexa-go/internal/application/article/dto"
-	domainarticle "github.com/rulzi/hexa-go/internal/domain/article"
+	articleentity "github.com/rulzi/hexa-go/internal/domain/article/entity"
+	articleport "github.com/rulzi/hexa-go/internal/domain/article/port"
 )
+
+var _ articleport.Cache = (*DomainCacheAdapter)(nil)
 
 // DomainCacheAdapter adapts the DTO-based cache to domain cache port
 type DomainCacheAdapter struct {
@@ -19,8 +22,8 @@ func NewDomainCacheAdapter(dtoCache *RedisCache) *DomainCacheAdapter {
 	}
 }
 
-// Get implements domainarticle.Cache interface
-func (a *DomainCacheAdapter) Get(ctx context.Context, id int64) (*domainarticle.Article, error) {
+// Get implements articleport.Cache interface
+func (a *DomainCacheAdapter) Get(ctx context.Context, id int64) (*articleentity.Article, error) {
 	dtoResp, err := a.dtoCache.GetArticle(ctx, id)
 	if err != nil {
 		return nil, err
@@ -29,7 +32,7 @@ func (a *DomainCacheAdapter) Get(ctx context.Context, id int64) (*domainarticle.
 		return nil, nil
 	}
 
-	return &domainarticle.Article{
+	return &articleentity.Article{
 		ID:        dtoResp.ID,
 		Title:     dtoResp.Title,
 		Content:   dtoResp.Content,
@@ -39,8 +42,8 @@ func (a *DomainCacheAdapter) Get(ctx context.Context, id int64) (*domainarticle.
 	}, nil
 }
 
-// Set implements domainarticle.Cache interface
-func (a *DomainCacheAdapter) Set(ctx context.Context, id int64, article *domainarticle.Article) error {
+// Set implements articleport.Cache interface
+func (a *DomainCacheAdapter) Set(ctx context.Context, id int64, article *articleentity.Article) error {
 	dtoResp := &dto.ArticleResponse{
 		ID:        article.ID,
 		Title:     article.Title,
@@ -52,12 +55,12 @@ func (a *DomainCacheAdapter) Set(ctx context.Context, id int64, article *domaina
 	return a.dtoCache.SetArticle(ctx, id, dtoResp)
 }
 
-// Delete implements domainarticle.Cache interface
+// Delete implements articleport.Cache interface
 func (a *DomainCacheAdapter) Delete(ctx context.Context, id int64) error {
 	return a.dtoCache.DeleteArticle(ctx, id)
 }
 
-// InvalidateList implements domainarticle.Cache interface
+// InvalidateList implements articleport.Cache interface
 func (a *DomainCacheAdapter) InvalidateList(ctx context.Context) error {
 	return a.dtoCache.InvalidateArticleList(ctx)
 }

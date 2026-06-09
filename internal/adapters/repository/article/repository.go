@@ -5,8 +5,11 @@ import (
 	"database/sql"
 	"log"
 
-	domainarticle "github.com/rulzi/hexa-go/internal/domain/article"
+	articleentity "github.com/rulzi/hexa-go/internal/domain/article/entity"
+	articleport "github.com/rulzi/hexa-go/internal/domain/article/port"
 )
+
+var _ articleport.Repository = (*MySQLRepository)(nil)
 
 // MySQLRepository is the MySQL implementation of article.Repository (driven adapter)
 type MySQLRepository struct {
@@ -19,7 +22,7 @@ func NewMySQLRepository(db *sql.DB) *MySQLRepository {
 }
 
 // Create creates a new article
-func (r *MySQLRepository) Create(ctx context.Context, a *domainarticle.Article) (*domainarticle.Article, error) {
+func (r *MySQLRepository) Create(ctx context.Context, a *articleentity.Article) (*articleentity.Article, error) {
 	query := `
 		INSERT INTO articles (title, content, author_id, created_at, updated_at)
 		VALUES (?, ?, ?, ?, ?)
@@ -40,14 +43,14 @@ func (r *MySQLRepository) Create(ctx context.Context, a *domainarticle.Article) 
 }
 
 // GetByID retrieves an article by ID
-func (r *MySQLRepository) GetByID(ctx context.Context, id int64) (*domainarticle.Article, error) {
+func (r *MySQLRepository) GetByID(ctx context.Context, id int64) (*articleentity.Article, error) {
 	query := `
 		SELECT id, title, content, author_id, created_at, updated_at
 		FROM articles
 		WHERE id = ?
 	`
 
-	a := &domainarticle.Article{}
+	a := &articleentity.Article{}
 	err := r.db.QueryRowContext(ctx, query, id).Scan(
 		&a.ID,
 		&a.Title,
@@ -58,7 +61,7 @@ func (r *MySQLRepository) GetByID(ctx context.Context, id int64) (*domainarticle
 	)
 
 	if err == sql.ErrNoRows {
-		return nil, domainarticle.NewArticleNotFound()
+		return nil, articleentity.NewArticleNotFound()
 	}
 	if err != nil {
 		return nil, err
@@ -68,7 +71,7 @@ func (r *MySQLRepository) GetByID(ctx context.Context, id int64) (*domainarticle
 }
 
 // Update updates an existing article
-func (r *MySQLRepository) Update(ctx context.Context, a *domainarticle.Article) (*domainarticle.Article, error) {
+func (r *MySQLRepository) Update(ctx context.Context, a *articleentity.Article) (*articleentity.Article, error) {
 	query := `
 		UPDATE articles
 		SET title = ?, content = ?, updated_at = ?
@@ -98,14 +101,14 @@ func (r *MySQLRepository) Delete(ctx context.Context, id int64) error {
 	}
 
 	if rowsAffected == 0 {
-		return domainarticle.NewArticleNotFound()
+		return articleentity.NewArticleNotFound()
 	}
 
 	return nil
 }
 
 // List retrieves all articles with pagination
-func (r *MySQLRepository) List(ctx context.Context, limit, offset int) ([]*domainarticle.Article, error) {
+func (r *MySQLRepository) List(ctx context.Context, limit, offset int) ([]*articleentity.Article, error) {
 	query := `
 		SELECT id, title, content, author_id, created_at, updated_at
 		FROM articles
@@ -123,9 +126,9 @@ func (r *MySQLRepository) List(ctx context.Context, limit, offset int) ([]*domai
 		}
 	}()
 
-	var articles []*domainarticle.Article
+	var articles []*articleentity.Article
 	for rows.Next() {
-		a := &domainarticle.Article{}
+		a := &articleentity.Article{}
 		err := rows.Scan(
 			&a.ID,
 			&a.Title,
@@ -148,7 +151,7 @@ func (r *MySQLRepository) List(ctx context.Context, limit, offset int) ([]*domai
 }
 
 // ListByAuthor retrieves articles by author ID with pagination
-func (r *MySQLRepository) ListByAuthor(ctx context.Context, authorID int64, limit, offset int) ([]*domainarticle.Article, error) {
+func (r *MySQLRepository) ListByAuthor(ctx context.Context, authorID int64, limit, offset int) ([]*articleentity.Article, error) {
 	query := `
 		SELECT id, title, content, author_id, created_at, updated_at
 		FROM articles
@@ -167,9 +170,9 @@ func (r *MySQLRepository) ListByAuthor(ctx context.Context, authorID int64, limi
 		}
 	}()
 
-	var articles []*domainarticle.Article
+	var articles []*articleentity.Article
 	for rows.Next() {
-		a := &domainarticle.Article{}
+		a := &articleentity.Article{}
 		err := rows.Scan(
 			&a.ID,
 			&a.Title,

@@ -1,37 +1,38 @@
-package media
+package service
 
 import (
 	"context"
 	"testing"
 
+	"github.com/rulzi/hexa-go/internal/domain/media/entity"
+	"github.com/rulzi/hexa-go/internal/domain/media/port"
 	"github.com/stretchr/testify/assert"
 )
 
-// mockRepository is a mock implementation of Repository for testing
 type mockRepository struct {
-	createFunc  func(ctx context.Context, media *Media) (*Media, error)
-	getByIDFunc func(ctx context.Context, id int64) (*Media, error)
-	updateFunc  func(ctx context.Context, media *Media) (*Media, error)
+	createFunc  func(ctx context.Context, media *entity.Media) (*entity.Media, error)
+	getByIDFunc func(ctx context.Context, id int64) (*entity.Media, error)
+	updateFunc  func(ctx context.Context, media *entity.Media) (*entity.Media, error)
 	deleteFunc  func(ctx context.Context, id int64) error
-	listFunc    func(ctx context.Context, limit, offset int) ([]*Media, error)
+	listFunc    func(ctx context.Context, limit, offset int) ([]*entity.Media, error)
 	countFunc   func(ctx context.Context) (int64, error)
 }
 
-func (m *mockRepository) Create(ctx context.Context, media *Media) (*Media, error) {
+func (m *mockRepository) Create(ctx context.Context, media *entity.Media) (*entity.Media, error) {
 	if m.createFunc != nil {
 		return m.createFunc(ctx, media)
 	}
 	return nil, nil
 }
 
-func (m *mockRepository) GetByID(ctx context.Context, id int64) (*Media, error) {
+func (m *mockRepository) GetByID(ctx context.Context, id int64) (*entity.Media, error) {
 	if m.getByIDFunc != nil {
 		return m.getByIDFunc(ctx, id)
 	}
 	return nil, nil
 }
 
-func (m *mockRepository) Update(ctx context.Context, media *Media) (*Media, error) {
+func (m *mockRepository) Update(ctx context.Context, media *entity.Media) (*entity.Media, error) {
 	if m.updateFunc != nil {
 		return m.updateFunc(ctx, media)
 	}
@@ -45,7 +46,7 @@ func (m *mockRepository) Delete(ctx context.Context, id int64) error {
 	return nil
 }
 
-func (m *mockRepository) List(ctx context.Context, limit, offset int) ([]*Media, error) {
+func (m *mockRepository) List(ctx context.Context, limit, offset int) ([]*entity.Media, error) {
 	if m.listFunc != nil {
 		return m.listFunc(ctx, limit, offset)
 	}
@@ -62,7 +63,7 @@ func (m *mockRepository) Count(ctx context.Context) (int64, error) {
 func TestNewService(t *testing.T) {
 	tests := []struct {
 		name string
-		repo Repository
+		repo port.Repository
 	}{
 		{
 			name: "create service with repository",
@@ -76,10 +77,9 @@ func TestNewService(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			service := NewService(tt.repo)
-			assert.NotNil(t, service)
-			assert.Equal(t, tt.repo, service.repo)
+			svc := NewService(tt.repo)
+			assert.NotNil(t, svc)
+			assert.Equal(t, tt.repo, svc.repo)
 		})
 	}
 }
-

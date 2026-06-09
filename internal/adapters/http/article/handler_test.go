@@ -12,7 +12,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/rulzi/hexa-go/internal/application/article/dto"
-	domainarticle "github.com/rulzi/hexa-go/internal/domain/article"
+	articleentity "github.com/rulzi/hexa-go/internal/domain/article/entity"
 	"github.com/rulzi/hexa-go/internal/infrastructure/logger"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -237,7 +237,7 @@ func TestHandler_Get_NotFound(t *testing.T) {
 	handler := NewHandler(uc, testLogger)
 
 	articleID := int64(999)
-	uc.On("Get", mock.Anything, articleID).Return(nil, domainarticle.NewArticleNotFound())
+	uc.On("Get", mock.Anything, articleID).Return(nil, articleentity.NewArticleNotFound())
 
 	router := setupTestRouter(handler)
 	router.GET("/articles/:id", handler.Get)
@@ -473,7 +473,7 @@ func TestHandler_Update_NotFound(t *testing.T) {
 		Content: "Updated Content",
 	}
 
-	uc.On("Update", mock.Anything, articleID, reqBody).Return(nil, domainarticle.NewArticleNotFound())
+	uc.On("Update", mock.Anything, articleID, reqBody).Return(nil, articleentity.NewArticleNotFound())
 
 	router := setupTestRouter(handler)
 	router.PUT("/articles/:id", handler.Update)
@@ -561,7 +561,7 @@ func TestHandler_Delete_NotFound(t *testing.T) {
 	handler := NewHandler(uc, testLogger)
 
 	articleID := int64(999)
-	uc.On("Delete", mock.Anything, articleID).Return(domainarticle.NewArticleNotFound())
+	uc.On("Delete", mock.Anything, articleID).Return(articleentity.NewArticleNotFound())
 
 	router := setupTestRouter(handler)
 	router.DELETE("/articles/:id", handler.Delete)

@@ -8,16 +8,17 @@ import (
 	mediadb "github.com/rulzi/hexa-go/internal/adapters/repository/media"
 	mediastorage "github.com/rulzi/hexa-go/internal/adapters/storage/media"
 	"github.com/rulzi/hexa-go/internal/application/media/usecase"
-	domainmedia "github.com/rulzi/hexa-go/internal/domain/media"
+	mediaport "github.com/rulzi/hexa-go/internal/domain/media/port"
+	mediaservice "github.com/rulzi/hexa-go/internal/domain/media/service"
 	"github.com/rulzi/hexa-go/internal/infrastructure/config"
 	"github.com/rulzi/hexa-go/internal/infrastructure/logger"
 )
 
 // Container holds all media domain dependencies
 type Container struct {
-	Repo      domainmedia.Repository
-	Storage   domainmedia.StoragePort
-	Service   *domainmedia.Service
+	Repo      mediaport.Repository
+	Storage   mediaport.StoragePort
+	Service   *mediaservice.Service
 	MediaUC   *usecase.MediaUseCase
 	Handler   *httpmedia.Handler
 }
@@ -31,7 +32,7 @@ func NewContainer(database *sql.DB, appLogger logger.Logger, storageCfg config.S
 		return nil, err
 	}
 
-	mediaService := domainmedia.NewService(mediaRepo)
+	mediaService := mediaservice.NewService(mediaRepo)
 	mediaUseCase := usecase.NewMediaUseCase(mediaRepo, mediaService, storage, storageCfg.BaseURL)
 	mediaHandler := httpmedia.NewHandler(mediaUseCase, appLogger)
 
@@ -44,7 +45,7 @@ func NewContainer(database *sql.DB, appLogger logger.Logger, storageCfg config.S
 	}, nil
 }
 
-func newStorageAdapter(storageCfg config.StorageConfig) (domainmedia.StoragePort, error) {
+func newStorageAdapter(storageCfg config.StorageConfig) (mediaport.StoragePort, error) {
 	switch storageCfg.Driver {
 	case "s3":
 		return mediastorage.NewS3StorageAdapter(mediastorage.S3Config{

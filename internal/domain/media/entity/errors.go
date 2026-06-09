@@ -1,11 +1,11 @@
-package media
+package entity
 
 import domainerrs "github.com/rulzi/hexa-go/internal/domain/errs"
 
 const (
-	CodeMediaNotFound  = "MEDIA_NOT_FOUND"
-	CodeNameRequired   = "MEDIA_NAME_REQUIRED"
-	CodePathRequired   = "MEDIA_PATH_REQUIRED"
+	CodeMediaNotFound = "MEDIA_NOT_FOUND"
+	CodeNameRequired  = "MEDIA_NAME_REQUIRED"
+	CodePathRequired  = "MEDIA_PATH_REQUIRED"
 )
 
 func NewMediaNotFound() error {

@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/rulzi/hexa-go/internal/application/article/dto"
-	domainarticle "github.com/rulzi/hexa-go/internal/domain/article"
+	articleentity "github.com/rulzi/hexa-go/internal/domain/article/entity"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -13,28 +13,28 @@ type mockArticleRepository struct {
 	mock.Mock
 }
 
-func (m *mockArticleRepository) Create(ctx context.Context, article *domainarticle.Article) (*domainarticle.Article, error) {
+func (m *mockArticleRepository) Create(ctx context.Context, article *articleentity.Article) (*articleentity.Article, error) {
 	args := m.Called(ctx, article)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*domainarticle.Article), args.Error(1)
+	return args.Get(0).(*articleentity.Article), args.Error(1)
 }
 
-func (m *mockArticleRepository) GetByID(ctx context.Context, id int64) (*domainarticle.Article, error) {
+func (m *mockArticleRepository) GetByID(ctx context.Context, id int64) (*articleentity.Article, error) {
 	args := m.Called(ctx, id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*domainarticle.Article), args.Error(1)
+	return args.Get(0).(*articleentity.Article), args.Error(1)
 }
 
-func (m *mockArticleRepository) Update(ctx context.Context, article *domainarticle.Article) (*domainarticle.Article, error) {
+func (m *mockArticleRepository) Update(ctx context.Context, article *articleentity.Article) (*articleentity.Article, error) {
 	args := m.Called(ctx, article)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*domainarticle.Article), args.Error(1)
+	return args.Get(0).(*articleentity.Article), args.Error(1)
 }
 
 func (m *mockArticleRepository) Delete(ctx context.Context, id int64) error {
@@ -42,20 +42,20 @@ func (m *mockArticleRepository) Delete(ctx context.Context, id int64) error {
 	return args.Error(0)
 }
 
-func (m *mockArticleRepository) List(ctx context.Context, limit, offset int) ([]*domainarticle.Article, error) {
+func (m *mockArticleRepository) List(ctx context.Context, limit, offset int) ([]*articleentity.Article, error) {
 	args := m.Called(ctx, limit, offset)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).([]*domainarticle.Article), args.Error(1)
+	return args.Get(0).([]*articleentity.Article), args.Error(1)
 }
 
-func (m *mockArticleRepository) ListByAuthor(ctx context.Context, authorID int64, limit, offset int) ([]*domainarticle.Article, error) {
+func (m *mockArticleRepository) ListByAuthor(ctx context.Context, authorID int64, limit, offset int) ([]*articleentity.Article, error) {
 	args := m.Called(ctx, authorID, limit, offset)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).([]*domainarticle.Article), args.Error(1)
+	return args.Get(0).([]*articleentity.Article), args.Error(1)
 }
 
 func (m *mockArticleRepository) Count(ctx context.Context) (int64, error) {
@@ -73,15 +73,15 @@ type mockArticleCache struct {
 	mock.Mock
 }
 
-func (m *mockArticleCache) Get(ctx context.Context, id int64) (*domainarticle.Article, error) {
+func (m *mockArticleCache) Get(ctx context.Context, id int64) (*articleentity.Article, error) {
 	args := m.Called(ctx, id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*domainarticle.Article), args.Error(1)
+	return args.Get(0).(*articleentity.Article), args.Error(1)
 }
 
-func (m *mockArticleCache) Set(ctx context.Context, id int64, article *domainarticle.Article) error {
+func (m *mockArticleCache) Set(ctx context.Context, id int64, article *articleentity.Article) error {
 	args := m.Called(ctx, id, article)
 	return args.Error(0)
 }

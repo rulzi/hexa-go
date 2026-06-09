@@ -7,14 +7,15 @@ import (
 	"testing"
 	"time"
 
-	domainmedia "github.com/rulzi/hexa-go/internal/domain/media"
+	mediaentity "github.com/rulzi/hexa-go/internal/domain/media/entity"
+	mediaservice "github.com/rulzi/hexa-go/internal/domain/media/service"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
 func TestNewMediaUseCase(t *testing.T) {
 	repo := &mockMediaRepository{}
-	service := domainmedia.NewService(repo)
+	service := mediaservice.NewService(repo)
 	storage := &mockMediaStorage{}
 	baseURL := "http://localhost:8080"
 
@@ -32,7 +33,7 @@ func TestNewMediaUseCase(t *testing.T) {
 func TestMediaUseCase_Create_Success(t *testing.T) {
 	ctx := context.Background()
 	repo := &mockMediaRepository{}
-	service := domainmedia.NewService(repo)
+	service := mediaservice.NewService(repo)
 	storage := &mockMediaStorage{}
 	baseURL := "http://localhost:8080"
 
@@ -41,13 +42,13 @@ func TestMediaUseCase_Create_Success(t *testing.T) {
 	filename := "test.jpg"
 	file := strings.NewReader("test file content")
 	storagePath := "2025/12/19/test.jpg"
-	expectedMedia := &domainmedia.Media{
+	expectedMedia := &mediaentity.Media{
 		ID: 1, Name: filename, Path: storagePath,
 		CreatedAt: time.Now(), UpdatedAt: time.Now(),
 	}
 
 	storage.On("Save", ctx, filename, mock.Anything).Return(storagePath, nil)
-	repo.On("Create", ctx, mock.AnythingOfType("*media.Media")).Return(expectedMedia, nil)
+	repo.On("Create", ctx, mock.Anything).Return(expectedMedia, nil)
 
 	result, err := uc.Create(ctx, filename, file)
 
@@ -63,7 +64,7 @@ func TestMediaUseCase_Create_Success(t *testing.T) {
 func TestMediaUseCase_Create_StorageError(t *testing.T) {
 	ctx := context.Background()
 	repo := &mockMediaRepository{}
-	service := domainmedia.NewService(repo)
+	service := mediaservice.NewService(repo)
 	storage := &mockMediaStorage{}
 	baseURL := "http://localhost:8080"
 
@@ -85,14 +86,14 @@ func TestMediaUseCase_Create_StorageError(t *testing.T) {
 func TestMediaUseCase_Get_Success(t *testing.T) {
 	ctx := context.Background()
 	repo := &mockMediaRepository{}
-	service := domainmedia.NewService(repo)
+	service := mediaservice.NewService(repo)
 	storage := &mockMediaStorage{}
 	baseURL := "http://localhost:8080"
 
 	uc := NewMediaUseCase(repo, service, storage, baseURL)
 
 	mediaID := int64(1)
-	mediaEntity := &domainmedia.Media{
+	mediaEntity := &mediaentity.Media{
 		ID: mediaID, Name: "test.jpg", Path: "2025/12/19/test.jpg",
 		CreatedAt: time.Now(), UpdatedAt: time.Now(),
 	}
@@ -110,7 +111,7 @@ func TestMediaUseCase_Get_Success(t *testing.T) {
 func TestMediaUseCase_Get_MediaNotFound(t *testing.T) {
 	ctx := context.Background()
 	repo := &mockMediaRepository{}
-	service := domainmedia.NewService(repo)
+	service := mediaservice.NewService(repo)
 	storage := &mockMediaStorage{}
 	baseURL := "http://localhost:8080"
 
@@ -122,7 +123,7 @@ func TestMediaUseCase_Get_MediaNotFound(t *testing.T) {
 	result, err := uc.Get(ctx, mediaID)
 
 	assert.Error(t, err)
-	assert.True(t, domainmedia.IsMediaNotFound(err))
+	assert.True(t, mediaentity.IsMediaNotFound(err))
 	assert.Nil(t, result)
 }
 
@@ -131,14 +132,14 @@ func TestMediaUseCase_Get_MediaNotFound(t *testing.T) {
 func TestMediaUseCase_List_Success(t *testing.T) {
 	ctx := context.Background()
 	repo := &mockMediaRepository{}
-	service := domainmedia.NewService(repo)
+	service := mediaservice.NewService(repo)
 	storage := &mockMediaStorage{}
 	baseURL := "http://localhost:8080"
 
 	uc := NewMediaUseCase(repo, service, storage, baseURL)
 
 	limit, offset := 10, 0
-	mediaList := []*domainmedia.Media{
+	mediaList := []*mediaentity.Media{
 		{ID: 1, Name: "a.jpg", Path: "path/a.jpg", CreatedAt: time.Now(), UpdatedAt: time.Now()},
 	}
 	total := int64(1)
@@ -158,13 +159,13 @@ func TestMediaUseCase_List_Success(t *testing.T) {
 func TestMediaUseCase_List_DefaultPagination(t *testing.T) {
 	ctx := context.Background()
 	repo := &mockMediaRepository{}
-	service := domainmedia.NewService(repo)
+	service := mediaservice.NewService(repo)
 	storage := &mockMediaStorage{}
 	baseURL := "http://localhost:8080"
 
 	uc := NewMediaUseCase(repo, service, storage, baseURL)
 
-	repo.On("List", ctx, 10, 0).Return([]*domainmedia.Media{}, nil)
+	repo.On("List", ctx, 10, 0).Return([]*mediaentity.Media{}, nil)
 	repo.On("Count", ctx).Return(int64(0), nil)
 
 	result, err := uc.List(ctx, -1, -1)
@@ -180,26 +181,26 @@ func TestMediaUseCase_List_DefaultPagination(t *testing.T) {
 func TestMediaUseCase_Update_Success(t *testing.T) {
 	ctx := context.Background()
 	repo := &mockMediaRepository{}
-	service := domainmedia.NewService(repo)
+	service := mediaservice.NewService(repo)
 	storage := &mockMediaStorage{}
 	baseURL := "http://localhost:8080"
 
 	uc := NewMediaUseCase(repo, service, storage, baseURL)
 
 	mediaID := int64(1)
-	existingMedia := &domainmedia.Media{
+	existingMedia := &mediaentity.Media{
 		ID: mediaID, Name: "old.jpg", Path: "old/path.jpg",
 		CreatedAt: time.Now(), UpdatedAt: time.Now(),
 	}
 	newPath := "new/path.jpg"
-	updatedMedia := &domainmedia.Media{
+	updatedMedia := &mediaentity.Media{
 		ID: mediaID, Name: "new.jpg", Path: newPath,
 		CreatedAt: existingMedia.CreatedAt, UpdatedAt: time.Now(),
 	}
 
 	repo.On("GetByID", ctx, mediaID).Return(existingMedia, nil)
 	storage.On("Save", ctx, "new.jpg", mock.Anything).Return(newPath, nil)
-	repo.On("Update", ctx, mock.AnythingOfType("*media.Media")).Return(updatedMedia, nil)
+	repo.On("Update", ctx, mock.Anything).Return(updatedMedia, nil)
 	storage.On("Delete", ctx, existingMedia.Path).Return(nil)
 
 	result, err := uc.Update(ctx, mediaID, "new.jpg", strings.NewReader("new content"))
@@ -214,7 +215,7 @@ func TestMediaUseCase_Update_Success(t *testing.T) {
 func TestMediaUseCase_Update_MediaNotFound(t *testing.T) {
 	ctx := context.Background()
 	repo := &mockMediaRepository{}
-	service := domainmedia.NewService(repo)
+	service := mediaservice.NewService(repo)
 	storage := &mockMediaStorage{}
 	baseURL := "http://localhost:8080"
 
@@ -226,7 +227,7 @@ func TestMediaUseCase_Update_MediaNotFound(t *testing.T) {
 	result, err := uc.Update(ctx, mediaID, "new.jpg", strings.NewReader("x"))
 
 	assert.Error(t, err)
-	assert.True(t, domainmedia.IsMediaNotFound(err))
+	assert.True(t, mediaentity.IsMediaNotFound(err))
 	assert.Nil(t, result)
 	storage.AssertNotCalled(t, "Save")
 }
@@ -236,14 +237,14 @@ func TestMediaUseCase_Update_MediaNotFound(t *testing.T) {
 func TestMediaUseCase_Delete_Success(t *testing.T) {
 	ctx := context.Background()
 	repo := &mockMediaRepository{}
-	service := domainmedia.NewService(repo)
+	service := mediaservice.NewService(repo)
 	storage := &mockMediaStorage{}
 	baseURL := "http://localhost:8080"
 
 	uc := NewMediaUseCase(repo, service, storage, baseURL)
 
 	mediaID := int64(1)
-	existingMedia := &domainmedia.Media{
+	existingMedia := &mediaentity.Media{
 		ID: mediaID, Name: "test.jpg", Path: "path/test.jpg",
 		CreatedAt: time.Now(), UpdatedAt: time.Now(),
 	}
@@ -261,7 +262,7 @@ func TestMediaUseCase_Delete_Success(t *testing.T) {
 func TestMediaUseCase_Delete_MediaNotFound(t *testing.T) {
 	ctx := context.Background()
 	repo := &mockMediaRepository{}
-	service := domainmedia.NewService(repo)
+	service := mediaservice.NewService(repo)
 	storage := &mockMediaStorage{}
 	baseURL := "http://localhost:8080"
 
@@ -273,7 +274,7 @@ func TestMediaUseCase_Delete_MediaNotFound(t *testing.T) {
 	err := uc.Delete(ctx, mediaID)
 
 	assert.Error(t, err)
-	assert.True(t, domainmedia.IsMediaNotFound(err))
+	assert.True(t, mediaentity.IsMediaNotFound(err))
 	storage.AssertNotCalled(t, "Delete")
 	repo.AssertNotCalled(t, "Delete")
 }

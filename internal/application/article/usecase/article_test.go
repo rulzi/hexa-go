@@ -7,14 +7,15 @@ import (
 	"time"
 
 	"github.com/rulzi/hexa-go/internal/application/article/dto"
-	domainarticle "github.com/rulzi/hexa-go/internal/domain/article"
+	articleentity "github.com/rulzi/hexa-go/internal/domain/article/entity"
+	articleservice "github.com/rulzi/hexa-go/internal/domain/article/service"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
 func TestNewArticleUseCase(t *testing.T) {
 	repo := &mockArticleRepository{}
-	service := domainarticle.NewService(repo)
+	service := articleservice.NewService(repo)
 	cache := &mockArticleCache{}
 	listCache := &mockArticleListCache{}
 
@@ -32,7 +33,7 @@ func TestNewArticleUseCase(t *testing.T) {
 func TestArticleUseCase_Create_Success(t *testing.T) {
 	ctx := context.Background()
 	repo := &mockArticleRepository{}
-	service := domainarticle.NewService(repo)
+	service := articleservice.NewService(repo)
 	cache := &mockArticleCache{}
 	listCache := &mockArticleListCache{}
 
@@ -44,7 +45,7 @@ func TestArticleUseCase_Create_Success(t *testing.T) {
 		AuthorID: 1,
 	}
 
-	expectedArticle := &domainarticle.Article{
+	expectedArticle := &articleentity.Article{
 		ID:        1,
 		Title:     req.Title,
 		Content:   req.Content,
@@ -53,7 +54,7 @@ func TestArticleUseCase_Create_Success(t *testing.T) {
 		UpdatedAt: time.Now(),
 	}
 
-	repo.On("Create", ctx, mock.AnythingOfType("*article.Article")).Return(expectedArticle, nil)
+	repo.On("Create", ctx, mock.Anything).Return(expectedArticle, nil)
 	cache.On("InvalidateList", ctx).Return(nil)
 
 	result, err := uc.Create(ctx, req)
@@ -72,7 +73,7 @@ func TestArticleUseCase_Create_Success(t *testing.T) {
 func TestArticleUseCase_Create_ValidationError(t *testing.T) {
 	ctx := context.Background()
 	repo := &mockArticleRepository{}
-	service := domainarticle.NewService(repo)
+	service := articleservice.NewService(repo)
 	cache := &mockArticleCache{}
 	listCache := &mockArticleListCache{}
 
@@ -100,7 +101,7 @@ func TestArticleUseCase_Create_ValidationError(t *testing.T) {
 func TestArticleUseCase_Create_RepositoryError(t *testing.T) {
 	ctx := context.Background()
 	repo := &mockArticleRepository{}
-	service := domainarticle.NewService(repo)
+	service := articleservice.NewService(repo)
 	cache := &mockArticleCache{}
 	listCache := &mockArticleListCache{}
 
@@ -108,7 +109,7 @@ func TestArticleUseCase_Create_RepositoryError(t *testing.T) {
 
 	req := dto.CreateArticleRequest{Title: "Test Article", Content: "Test Content", AuthorID: 1}
 	repoError := errors.New("repository error")
-	repo.On("Create", ctx, mock.AnythingOfType("*article.Article")).Return(nil, repoError)
+	repo.On("Create", ctx, mock.Anything).Return(nil, repoError)
 
 	result, err := uc.Create(ctx, req)
 
@@ -122,12 +123,12 @@ func TestArticleUseCase_Create_RepositoryError(t *testing.T) {
 func TestArticleUseCase_Create_WithNilCache(t *testing.T) {
 	ctx := context.Background()
 	repo := &mockArticleRepository{}
-	service := domainarticle.NewService(repo)
+	service := articleservice.NewService(repo)
 
 	uc := NewArticleUseCase(repo, service, nil, nil)
 
 	req := dto.CreateArticleRequest{Title: "Test Article", Content: "Test Content", AuthorID: 1}
-	expectedArticle := &domainarticle.Article{
+	expectedArticle := &articleentity.Article{
 		ID:        1,
 		Title:     req.Title,
 		Content:   req.Content,
@@ -135,7 +136,7 @@ func TestArticleUseCase_Create_WithNilCache(t *testing.T) {
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
-	repo.On("Create", ctx, mock.AnythingOfType("*article.Article")).Return(expectedArticle, nil)
+	repo.On("Create", ctx, mock.Anything).Return(expectedArticle, nil)
 
 	result, err := uc.Create(ctx, req)
 
@@ -149,14 +150,14 @@ func TestArticleUseCase_Create_WithNilCache(t *testing.T) {
 func TestArticleUseCase_Get_SuccessFromCache(t *testing.T) {
 	ctx := context.Background()
 	repo := &mockArticleRepository{}
-	service := domainarticle.NewService(repo)
+	service := articleservice.NewService(repo)
 	cache := &mockArticleCache{}
 	listCache := &mockArticleListCache{}
 
 	uc := NewArticleUseCase(repo, service, cache, listCache)
 
 	articleID := int64(1)
-	cachedArticle := &domainarticle.Article{
+	cachedArticle := &articleentity.Article{
 		ID: articleID, Title: "Cached Article", Content: "Cached Content", AuthorID: 1,
 		CreatedAt: time.Now(), UpdatedAt: time.Now(),
 	}
@@ -175,14 +176,14 @@ func TestArticleUseCase_Get_SuccessFromCache(t *testing.T) {
 func TestArticleUseCase_Get_SuccessFromRepository(t *testing.T) {
 	ctx := context.Background()
 	repo := &mockArticleRepository{}
-	service := domainarticle.NewService(repo)
+	service := articleservice.NewService(repo)
 	cache := &mockArticleCache{}
 	listCache := &mockArticleListCache{}
 
 	uc := NewArticleUseCase(repo, service, cache, listCache)
 
 	articleID := int64(1)
-	articleEntity := &domainarticle.Article{
+	articleEntity := &articleentity.Article{
 		ID: articleID, Title: "Test Article", Content: "Test Content", AuthorID: 1,
 		CreatedAt: time.Now(), UpdatedAt: time.Now(),
 	}
@@ -202,7 +203,7 @@ func TestArticleUseCase_Get_SuccessFromRepository(t *testing.T) {
 func TestArticleUseCase_Get_ArticleNotFound(t *testing.T) {
 	ctx := context.Background()
 	repo := &mockArticleRepository{}
-	service := domainarticle.NewService(repo)
+	service := articleservice.NewService(repo)
 	cache := &mockArticleCache{}
 	listCache := &mockArticleListCache{}
 
@@ -215,19 +216,19 @@ func TestArticleUseCase_Get_ArticleNotFound(t *testing.T) {
 	result, err := uc.Get(ctx, articleID)
 
 	assert.Error(t, err)
-	assert.True(t, domainarticle.IsArticleNotFound(err))
+	assert.True(t, articleentity.IsArticleNotFound(err))
 	assert.Nil(t, result)
 }
 
 func TestArticleUseCase_Get_WithNilCache(t *testing.T) {
 	ctx := context.Background()
 	repo := &mockArticleRepository{}
-	service := domainarticle.NewService(repo)
+	service := articleservice.NewService(repo)
 
 	uc := NewArticleUseCase(repo, service, nil, nil)
 
 	articleID := int64(1)
-	articleEntity := &domainarticle.Article{
+	articleEntity := &articleentity.Article{
 		ID: articleID, Title: "Test Article", Content: "Test Content", AuthorID: 1,
 		CreatedAt: time.Now(), UpdatedAt: time.Now(),
 	}
@@ -246,7 +247,7 @@ func TestArticleUseCase_Get_WithNilCache(t *testing.T) {
 func TestArticleUseCase_List_SuccessFromCache(t *testing.T) {
 	ctx := context.Background()
 	repo := &mockArticleRepository{}
-	service := domainarticle.NewService(repo)
+	service := articleservice.NewService(repo)
 	cache := &mockArticleCache{}
 	listCache := &mockArticleListCache{}
 
@@ -274,14 +275,14 @@ func TestArticleUseCase_List_SuccessFromCache(t *testing.T) {
 func TestArticleUseCase_List_SuccessFromRepository(t *testing.T) {
 	ctx := context.Background()
 	repo := &mockArticleRepository{}
-	service := domainarticle.NewService(repo)
+	service := articleservice.NewService(repo)
 	cache := &mockArticleCache{}
 	listCache := &mockArticleListCache{}
 
 	uc := NewArticleUseCase(repo, service, cache, listCache)
 
 	limit, offset := 10, 0
-	articles := []*domainarticle.Article{
+	articles := []*articleentity.Article{
 		{ID: 1, Title: "Article 1", Content: "Content 1", AuthorID: 1, CreatedAt: time.Now(), UpdatedAt: time.Now()},
 		{ID: 2, Title: "Article 2", Content: "Content 2", AuthorID: 1, CreatedAt: time.Now(), UpdatedAt: time.Now()},
 	}
@@ -304,14 +305,14 @@ func TestArticleUseCase_List_SuccessFromRepository(t *testing.T) {
 func TestArticleUseCase_List_DefaultPagination(t *testing.T) {
 	ctx := context.Background()
 	repo := &mockArticleRepository{}
-	service := domainarticle.NewService(repo)
+	service := articleservice.NewService(repo)
 	cache := &mockArticleCache{}
 	listCache := &mockArticleListCache{}
 
 	uc := NewArticleUseCase(repo, service, cache, listCache)
 
 	listCache.On("GetArticleList", ctx, 10, 0).Return(nil, errors.New("cache miss"))
-	repo.On("List", ctx, 10, 0).Return([]*domainarticle.Article{}, nil)
+	repo.On("List", ctx, 10, 0).Return([]*articleentity.Article{}, nil)
 	repo.On("Count", ctx).Return(int64(0), nil)
 	listCache.On("SetArticleList", ctx, 10, 0, mock.AnythingOfType("*dto.ListArticlesResponse")).Return(nil)
 
@@ -326,13 +327,13 @@ func TestArticleUseCase_List_DefaultPagination(t *testing.T) {
 func TestArticleUseCase_List_WithNilListCache(t *testing.T) {
 	ctx := context.Background()
 	repo := &mockArticleRepository{}
-	service := domainarticle.NewService(repo)
+	service := articleservice.NewService(repo)
 	cache := &mockArticleCache{}
 
 	uc := NewArticleUseCase(repo, service, cache, nil)
 
 	limit, offset := 10, 0
-	articles := []*domainarticle.Article{
+	articles := []*articleentity.Article{
 		{ID: 1, Title: "Article 1", Content: "Content 1", AuthorID: 1, CreatedAt: time.Now(), UpdatedAt: time.Now()},
 	}
 	total := int64(1)
@@ -352,25 +353,25 @@ func TestArticleUseCase_List_WithNilListCache(t *testing.T) {
 func TestArticleUseCase_Update_Success(t *testing.T) {
 	ctx := context.Background()
 	repo := &mockArticleRepository{}
-	service := domainarticle.NewService(repo)
+	service := articleservice.NewService(repo)
 	cache := &mockArticleCache{}
 	listCache := &mockArticleListCache{}
 
 	uc := NewArticleUseCase(repo, service, cache, listCache)
 
 	articleID := int64(1)
-	existingArticle := &domainarticle.Article{
+	existingArticle := &articleentity.Article{
 		ID: articleID, Title: "Old Title", Content: "Old Content", AuthorID: 1,
 		CreatedAt: time.Now().Add(-24 * time.Hour), UpdatedAt: time.Now().Add(-24 * time.Hour),
 	}
 	req := dto.UpdateArticleRequest{Title: "New Title", Content: "New Content"}
-	updatedArticle := &domainarticle.Article{
+	updatedArticle := &articleentity.Article{
 		ID: articleID, Title: req.Title, Content: req.Content, AuthorID: existingArticle.AuthorID,
 		CreatedAt: existingArticle.CreatedAt, UpdatedAt: time.Now(),
 	}
 
 	repo.On("GetByID", ctx, articleID).Return(existingArticle, nil)
-	repo.On("Update", ctx, mock.AnythingOfType("*article.Article")).Return(updatedArticle, nil)
+	repo.On("Update", ctx, mock.Anything).Return(updatedArticle, nil)
 	cache.On("Delete", ctx, articleID).Return(nil)
 	cache.On("InvalidateList", ctx).Return(nil)
 	listCache.On("InvalidateArticleList", ctx).Return(nil)
@@ -389,7 +390,7 @@ func TestArticleUseCase_Update_Success(t *testing.T) {
 func TestArticleUseCase_Update_ArticleNotFound(t *testing.T) {
 	ctx := context.Background()
 	repo := &mockArticleRepository{}
-	service := domainarticle.NewService(repo)
+	service := articleservice.NewService(repo)
 	cache := &mockArticleCache{}
 	listCache := &mockArticleListCache{}
 
@@ -402,7 +403,7 @@ func TestArticleUseCase_Update_ArticleNotFound(t *testing.T) {
 	result, err := uc.Update(ctx, articleID, req)
 
 	assert.Error(t, err)
-	assert.True(t, domainarticle.IsArticleNotFound(err))
+	assert.True(t, articleentity.IsArticleNotFound(err))
 	assert.Nil(t, result)
 	repo.AssertNotCalled(t, "Update")
 }
@@ -410,14 +411,14 @@ func TestArticleUseCase_Update_ArticleNotFound(t *testing.T) {
 func TestArticleUseCase_Update_ValidationError(t *testing.T) {
 	ctx := context.Background()
 	repo := &mockArticleRepository{}
-	service := domainarticle.NewService(repo)
+	service := articleservice.NewService(repo)
 	cache := &mockArticleCache{}
 	listCache := &mockArticleListCache{}
 
 	uc := NewArticleUseCase(repo, service, cache, listCache)
 
 	articleID := int64(1)
-	existingArticle := &domainarticle.Article{
+	existingArticle := &articleentity.Article{
 		ID: articleID, Title: "Old Title", Content: "Old Content", AuthorID: 1, CreatedAt: time.Now(), UpdatedAt: time.Now(),
 	}
 	tests := []struct {
@@ -444,14 +445,14 @@ func TestArticleUseCase_Update_ValidationError(t *testing.T) {
 func TestArticleUseCase_Delete_Success(t *testing.T) {
 	ctx := context.Background()
 	repo := &mockArticleRepository{}
-	service := domainarticle.NewService(repo)
+	service := articleservice.NewService(repo)
 	cache := &mockArticleCache{}
 	listCache := &mockArticleListCache{}
 
 	uc := NewArticleUseCase(repo, service, cache, listCache)
 
 	articleID := int64(1)
-	existingArticle := &domainarticle.Article{
+	existingArticle := &articleentity.Article{
 		ID: articleID, Title: "Test Article", Content: "Test Content", AuthorID: 1, CreatedAt: time.Now(), UpdatedAt: time.Now(),
 	}
 	repo.On("GetByID", ctx, articleID).Return(existingArticle, nil)
@@ -471,7 +472,7 @@ func TestArticleUseCase_Delete_Success(t *testing.T) {
 func TestArticleUseCase_Delete_ArticleNotFound(t *testing.T) {
 	ctx := context.Background()
 	repo := &mockArticleRepository{}
-	service := domainarticle.NewService(repo)
+	service := articleservice.NewService(repo)
 	cache := &mockArticleCache{}
 	listCache := &mockArticleListCache{}
 
@@ -483,20 +484,20 @@ func TestArticleUseCase_Delete_ArticleNotFound(t *testing.T) {
 	err := uc.Delete(ctx, articleID)
 
 	assert.Error(t, err)
-	assert.True(t, domainarticle.IsArticleNotFound(err))
+	assert.True(t, articleentity.IsArticleNotFound(err))
 	repo.AssertNotCalled(t, "Delete")
 }
 
 func TestArticleUseCase_Delete_WithNilCache(t *testing.T) {
 	ctx := context.Background()
 	repo := &mockArticleRepository{}
-	service := domainarticle.NewService(repo)
+	service := articleservice.NewService(repo)
 	listCache := &mockArticleListCache{}
 
 	uc := NewArticleUseCase(repo, service, nil, listCache)
 
 	articleID := int64(1)
-	existingArticle := &domainarticle.Article{
+	existingArticle := &articleentity.Article{
 		ID: articleID, Title: "Test Article", Content: "Test Content", AuthorID: 1, CreatedAt: time.Now(), UpdatedAt: time.Now(),
 	}
 	repo.On("GetByID", ctx, articleID).Return(existingArticle, nil)

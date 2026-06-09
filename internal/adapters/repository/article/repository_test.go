@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	domainarticle "github.com/rulzi/hexa-go/internal/domain/article"
+	articleentity "github.com/rulzi/hexa-go/internal/domain/article/entity"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -32,14 +32,14 @@ func TestNewMySQLRepository(t *testing.T) {
 func TestMySQLRepository_Create(t *testing.T) {
 	tests := []struct {
 		name    string
-		article *domainarticle.Article
+		article *articleentity.Article
 		setup   func(mock sqlmock.Sqlmock)
 		wantErr bool
-		check   func(t *testing.T, article *domainarticle.Article)
+		check   func(t *testing.T, article *articleentity.Article)
 	}{
 		{
 			name: "success create article",
-			article: &domainarticle.Article{
+			article: &articleentity.Article{
 				Title:     "Test Article",
 				Content:   "This is a test article content",
 				AuthorID:  1,
@@ -52,7 +52,7 @@ func TestMySQLRepository_Create(t *testing.T) {
 					WillReturnResult(sqlmock.NewResult(1, 1))
 			},
 			wantErr: false,
-			check: func(t *testing.T, article *domainarticle.Article) {
+			check: func(t *testing.T, article *articleentity.Article) {
 				assert.Equal(t, int64(1), article.ID)
 				assert.Equal(t, "Test Article", article.Title)
 				assert.Equal(t, "This is a test article content", article.Content)
@@ -61,7 +61,7 @@ func TestMySQLRepository_Create(t *testing.T) {
 		},
 		{
 			name: "error on database exec",
-			article: &domainarticle.Article{
+			article: &articleentity.Article{
 				Title:     "Test Article",
 				Content:   "This is a test article content",
 				AuthorID:  1,
@@ -77,7 +77,7 @@ func TestMySQLRepository_Create(t *testing.T) {
 		},
 		{
 			name: "error on last insert id",
-			article: &domainarticle.Article{
+			article: &articleentity.Article{
 				Title:     "Test Article",
 				Content:   "This is a test article content",
 				AuthorID:  1,
@@ -133,7 +133,7 @@ func TestMySQLRepository_GetByID(t *testing.T) {
 		id      int64
 		setup   func(mock sqlmock.Sqlmock)
 		wantErr bool
-		check   func(t *testing.T, article *domainarticle.Article)
+		check   func(t *testing.T, article *articleentity.Article)
 	}{
 		{
 			name: "success get article by id",
@@ -146,7 +146,7 @@ func TestMySQLRepository_GetByID(t *testing.T) {
 					WillReturnRows(rows)
 			},
 			wantErr: false,
-			check: func(t *testing.T, article *domainarticle.Article) {
+			check: func(t *testing.T, article *articleentity.Article) {
 				assert.Equal(t, int64(1), article.ID)
 				assert.Equal(t, "Test Article", article.Title)
 				assert.Equal(t, "Test Content", article.Content)
@@ -162,7 +162,7 @@ func TestMySQLRepository_GetByID(t *testing.T) {
 					WillReturnError(sql.ErrNoRows)
 			},
 			wantErr: true,
-			check: func(t *testing.T, article *domainarticle.Article) {
+			check: func(t *testing.T, article *articleentity.Article) {
 				assert.Nil(t, article)
 			},
 		},
@@ -199,7 +199,7 @@ func TestMySQLRepository_GetByID(t *testing.T) {
 			if tt.wantErr {
 				assert.Error(t, err)
 				if tt.name == "article not found" {
-					assert.True(t, domainarticle.IsArticleNotFound(err))
+					assert.True(t, articleentity.IsArticleNotFound(err))
 				}
 				if tt.check != nil {
 					tt.check(t, result)
@@ -222,14 +222,14 @@ func TestMySQLRepository_GetByID(t *testing.T) {
 func TestMySQLRepository_Update(t *testing.T) {
 	tests := []struct {
 		name    string
-		article *domainarticle.Article
+		article *articleentity.Article
 		setup   func(mock sqlmock.Sqlmock)
 		wantErr bool
-		check   func(t *testing.T, article *domainarticle.Article)
+		check   func(t *testing.T, article *articleentity.Article)
 	}{
 		{
 			name: "success update article",
-			article: &domainarticle.Article{
+			article: &articleentity.Article{
 				ID:        1,
 				Title:     "Updated Article",
 				Content:   "Updated Content",
@@ -241,7 +241,7 @@ func TestMySQLRepository_Update(t *testing.T) {
 					WillReturnResult(sqlmock.NewResult(0, 1))
 			},
 			wantErr: false,
-			check: func(t *testing.T, article *domainarticle.Article) {
+			check: func(t *testing.T, article *articleentity.Article) {
 				assert.Equal(t, int64(1), article.ID)
 				assert.Equal(t, "Updated Article", article.Title)
 				assert.Equal(t, "Updated Content", article.Content)
@@ -249,7 +249,7 @@ func TestMySQLRepository_Update(t *testing.T) {
 		},
 		{
 			name: "error on database exec",
-			article: &domainarticle.Article{
+			article: &articleentity.Article{
 				ID:        1,
 				Title:     "Updated Article",
 				Content:   "Updated Content",
@@ -368,7 +368,7 @@ func TestMySQLRepository_Delete(t *testing.T) {
 			if tt.wantErr {
 				assert.Error(t, err)
 				if tt.name == "article not found" {
-					assert.True(t, domainarticle.IsArticleNotFound(err))
+					assert.True(t, articleentity.IsArticleNotFound(err))
 				}
 			} else {
 				assert.NoError(t, err)
@@ -386,7 +386,7 @@ func TestMySQLRepository_List(t *testing.T) {
 		offset  int
 		setup   func(mock sqlmock.Sqlmock)
 		wantErr bool
-		check   func(t *testing.T, articles []*domainarticle.Article)
+		check   func(t *testing.T, articles []*articleentity.Article)
 	}{
 		{
 			name:   "success list articles",
@@ -401,7 +401,7 @@ func TestMySQLRepository_List(t *testing.T) {
 					WillReturnRows(rows)
 			},
 			wantErr: false,
-			check: func(t *testing.T, articles []*domainarticle.Article) {
+			check: func(t *testing.T, articles []*articleentity.Article) {
 				assert.Len(t, articles, 2)
 				assert.Equal(t, int64(1), articles[0].ID)
 				assert.Equal(t, "Article 1", articles[0].Title)
@@ -420,9 +420,9 @@ func TestMySQLRepository_List(t *testing.T) {
 					WillReturnRows(rows)
 			},
 			wantErr: false,
-			check: func(t *testing.T, articles []*domainarticle.Article) {
+			check: func(t *testing.T, articles []*articleentity.Article) {
 				if articles == nil {
-					articles = []*domainarticle.Article{}
+					articles = []*articleentity.Article{}
 				}
 				assert.Len(t, articles, 0)
 			},
@@ -492,7 +492,7 @@ func TestMySQLRepository_List(t *testing.T) {
 				assert.NoError(t, err)
 				// For empty results, result might be nil or empty slice, both are acceptable
 				if result == nil && tt.name == "success list articles empty result" {
-					result = []*domainarticle.Article{}
+					result = []*articleentity.Article{}
 				}
 				if tt.check != nil {
 					tt.check(t, result)
@@ -514,7 +514,7 @@ func TestMySQLRepository_ListByAuthor(t *testing.T) {
 		offset   int
 		setup    func(mock sqlmock.Sqlmock)
 		wantErr  bool
-		check    func(t *testing.T, articles []*domainarticle.Article)
+		check    func(t *testing.T, articles []*articleentity.Article)
 	}{
 		{
 			name:     "success list articles by author",
@@ -530,7 +530,7 @@ func TestMySQLRepository_ListByAuthor(t *testing.T) {
 					WillReturnRows(rows)
 			},
 			wantErr: false,
-			check: func(t *testing.T, articles []*domainarticle.Article) {
+			check: func(t *testing.T, articles []*articleentity.Article) {
 				assert.Len(t, articles, 2)
 				assert.Equal(t, int64(1), articles[0].ID)
 				assert.Equal(t, "Article 1", articles[0].Title)
@@ -552,9 +552,9 @@ func TestMySQLRepository_ListByAuthor(t *testing.T) {
 					WillReturnRows(rows)
 			},
 			wantErr: false,
-			check: func(t *testing.T, articles []*domainarticle.Article) {
+			check: func(t *testing.T, articles []*articleentity.Article) {
 				if articles == nil {
-					articles = []*domainarticle.Article{}
+					articles = []*articleentity.Article{}
 				}
 				assert.Len(t, articles, 0)
 			},
@@ -627,7 +627,7 @@ func TestMySQLRepository_ListByAuthor(t *testing.T) {
 				assert.NoError(t, err)
 				// For empty results, result might be nil or empty slice, both are acceptable
 				if result == nil && tt.name == "success list articles by author empty result" {
-					result = []*domainarticle.Article{}
+					result = []*articleentity.Article{}
 				}
 				if tt.check != nil {
 					tt.check(t, result)

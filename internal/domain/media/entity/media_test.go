@@ -1,4 +1,4 @@
-package media
+package entity
 
 import (
 	"testing"
@@ -55,7 +55,7 @@ func TestMedia_Validate(t *testing.T) {
 				CreatedAt: time.Now(),
 				UpdatedAt: time.Now(),
 			},
-			wantErrCheck: IsNameRequired, // Should return first error encountered
+			wantErrCheck: IsNameRequired,
 		},
 		{
 			name: "valid media with long name",

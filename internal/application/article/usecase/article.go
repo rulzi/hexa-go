@@ -5,7 +5,9 @@ import (
 	"time"
 
 	"github.com/rulzi/hexa-go/internal/application/article/dto"
-	domainarticle "github.com/rulzi/hexa-go/internal/domain/article"
+	articleentity "github.com/rulzi/hexa-go/internal/domain/article/entity"
+	articleport "github.com/rulzi/hexa-go/internal/domain/article/port"
+	articleservice "github.com/rulzi/hexa-go/internal/domain/article/service"
 )
 
 // ArticleListCache defines the interface for article list caching (DTO-based for performance)
@@ -17,17 +19,17 @@ type ArticleListCache interface {
 
 // ArticleUseCase handles all article operations (create, get, list, update, delete)
 type ArticleUseCase struct {
-	articleRepo    domainarticle.Repository
-	articleService *domainarticle.Service
-	cache          domainarticle.Cache
+	articleRepo    articleport.Repository
+	articleService *articleservice.Service
+	cache          articleport.Cache
 	listCache      ArticleListCache
 }
 
 // NewArticleUseCase creates a new ArticleUseCase
 func NewArticleUseCase(
-	articleRepo domainarticle.Repository,
-	articleService *domainarticle.Service,
-	cache domainarticle.Cache,
+	articleRepo articleport.Repository,
+	articleService *articleservice.Service,
+	cache articleport.Cache,
 	listCache ArticleListCache,
 ) *ArticleUseCase {
 	return &ArticleUseCase{
@@ -40,7 +42,7 @@ func NewArticleUseCase(
 
 // Create creates a new article
 func (uc *ArticleUseCase) Create(ctx context.Context, req dto.CreateArticleRequest) (*dto.ArticleResponse, error) {
-	newArticle := &domainarticle.Article{
+	newArticle := &articleentity.Article{
 		Title:     req.Title,
 		Content:   req.Content,
 		AuthorID:  req.AuthorID,
@@ -93,7 +95,7 @@ func (uc *ArticleUseCase) Get(ctx context.Context, id int64) (*dto.ArticleRespon
 	}
 
 	if articleEntity == nil {
-		return nil, domainarticle.NewArticleNotFound()
+		return nil, articleentity.NewArticleNotFound()
 	}
 
 	response := &dto.ArticleResponse{
@@ -172,7 +174,7 @@ func (uc *ArticleUseCase) Update(ctx context.Context, id int64, req dto.UpdateAr
 	}
 
 	if existingArticle == nil {
-		return nil, domainarticle.NewArticleNotFound()
+		return nil, articleentity.NewArticleNotFound()
 	}
 
 	existingArticle.Title = req.Title
@@ -216,7 +218,7 @@ func (uc *ArticleUseCase) Delete(ctx context.Context, id int64) error {
 	}
 
 	if existingArticle == nil {
-		return domainarticle.NewArticleNotFound()
+		return articleentity.NewArticleNotFound()
 	}
 
 	if err := uc.articleRepo.Delete(ctx, id); err != nil {

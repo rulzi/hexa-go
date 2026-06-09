@@ -5,8 +5,11 @@ import (
 	"database/sql"
 	"log"
 
-	domainmedia "github.com/rulzi/hexa-go/internal/domain/media"
+	mediaentity "github.com/rulzi/hexa-go/internal/domain/media/entity"
+	mediaport "github.com/rulzi/hexa-go/internal/domain/media/port"
 )
+
+var _ mediaport.Repository = (*MySQLRepository)(nil)
 
 // MySQLRepository is the MySQL implementation of media.Repository (driven adapter)
 type MySQLRepository struct {
@@ -19,7 +22,7 @@ func NewMySQLRepository(db *sql.DB) *MySQLRepository {
 }
 
 // Create creates a new media
-func (r *MySQLRepository) Create(ctx context.Context, m *domainmedia.Media) (*domainmedia.Media, error) {
+func (r *MySQLRepository) Create(ctx context.Context, m *mediaentity.Media) (*mediaentity.Media, error) {
 	query := `
 		INSERT INTO media (name, path, created_at, updated_at)
 		VALUES (?, ?, ?, ?)
@@ -40,14 +43,14 @@ func (r *MySQLRepository) Create(ctx context.Context, m *domainmedia.Media) (*do
 }
 
 // GetByID retrieves a media by ID
-func (r *MySQLRepository) GetByID(ctx context.Context, id int64) (*domainmedia.Media, error) {
+func (r *MySQLRepository) GetByID(ctx context.Context, id int64) (*mediaentity.Media, error) {
 	query := `
 		SELECT id, name, path, created_at, updated_at
 		FROM media
 		WHERE id = ?
 	`
 
-	m := &domainmedia.Media{}
+	m := &mediaentity.Media{}
 	err := r.db.QueryRowContext(ctx, query, id).Scan(
 		&m.ID,
 		&m.Name,
@@ -57,7 +60,7 @@ func (r *MySQLRepository) GetByID(ctx context.Context, id int64) (*domainmedia.M
 	)
 
 	if err == sql.ErrNoRows {
-		return nil, domainmedia.NewMediaNotFound()
+		return nil, mediaentity.NewMediaNotFound()
 	}
 	if err != nil {
 		return nil, err
@@ -67,7 +70,7 @@ func (r *MySQLRepository) GetByID(ctx context.Context, id int64) (*domainmedia.M
 }
 
 // Update updates an existing media
-func (r *MySQLRepository) Update(ctx context.Context, m *domainmedia.Media) (*domainmedia.Media, error) {
+func (r *MySQLRepository) Update(ctx context.Context, m *mediaentity.Media) (*mediaentity.Media, error) {
 	query := `
 		UPDATE media
 		SET name = ?, path = ?, updated_at = ?
@@ -97,14 +100,14 @@ func (r *MySQLRepository) Delete(ctx context.Context, id int64) error {
 	}
 
 	if rowsAffected == 0 {
-		return domainmedia.NewMediaNotFound()
+		return mediaentity.NewMediaNotFound()
 	}
 
 	return nil
 }
 
 // List retrieves all media with pagination
-func (r *MySQLRepository) List(ctx context.Context, limit, offset int) ([]*domainmedia.Media, error) {
+func (r *MySQLRepository) List(ctx context.Context, limit, offset int) ([]*mediaentity.Media, error) {
 	query := `
 		SELECT id, name, path, created_at, updated_at
 		FROM media
@@ -122,9 +125,9 @@ func (r *MySQLRepository) List(ctx context.Context, limit, offset int) ([]*domai
 		}
 	}()
 
-	var mediaList []*domainmedia.Media
+	var mediaList []*mediaentity.Media
 	for rows.Next() {
-		m := &domainmedia.Media{}
+		m := &mediaentity.Media{}
 		err := rows.Scan(
 			&m.ID,
 			&m.Name,

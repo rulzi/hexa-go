@@ -11,7 +11,7 @@ import (
 	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
-	domainmedia "github.com/rulzi/hexa-go/internal/domain/media"
+	mediaentity "github.com/rulzi/hexa-go/internal/domain/media/entity"
 )
 
 // S3Config holds configuration for the S3 storage adapter.
@@ -92,7 +92,7 @@ func (s *S3StorageAdapter) Get(ctx context.Context, path string) (io.ReadCloser,
 	})
 	if err != nil {
 		if isS3NotFound(err) {
-			return nil, domainmedia.NewMediaNotFound()
+			return nil, mediaentity.NewMediaNotFound()
 		}
 		return nil, fmt.Errorf("failed to get file from S3: %w", err)
 	}

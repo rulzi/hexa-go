@@ -1,4 +1,4 @@
-package article
+package entity
 
 import (
 	"testing"
@@ -83,7 +83,7 @@ func TestArticle_Validate(t *testing.T) {
 				CreatedAt: time.Now(),
 				UpdatedAt: time.Now(),
 			},
-			wantErrCheck: IsTitleRequired, // Should return first error encountered
+			wantErrCheck: IsTitleRequired,
 		},
 		{
 			name: "all fields invalid",
@@ -95,7 +95,7 @@ func TestArticle_Validate(t *testing.T) {
 				CreatedAt: time.Now(),
 				UpdatedAt: time.Now(),
 			},
-			wantErrCheck: IsTitleRequired, // Should return first error encountered
+			wantErrCheck: IsTitleRequired,
 		},
 	}
 

@@ -8,7 +8,7 @@ import (
 	"os"
 	"path/filepath"
 
-	domainmedia "github.com/rulzi/hexa-go/internal/domain/media"
+	mediaentity "github.com/rulzi/hexa-go/internal/domain/media/entity"
 )
 
 // LocalStorageAdapter stores files on the local filesystem.
@@ -76,7 +76,7 @@ func (s *LocalStorageAdapter) Get(ctx context.Context, path string) (io.ReadClos
 	file, err := os.Open(fullPath)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return nil, domainmedia.NewMediaNotFound()
+			return nil, mediaentity.NewMediaNotFound()
 		}
 		return nil, fmt.Errorf("failed to open file: %w", err)
 	}

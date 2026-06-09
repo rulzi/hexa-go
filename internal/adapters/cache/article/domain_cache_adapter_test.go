@@ -7,7 +7,8 @@ import (
 	"time"
 
 	"github.com/rulzi/hexa-go/internal/application/article/dto"
-	domainarticle "github.com/rulzi/hexa-go/internal/domain/article"
+	articleentity "github.com/rulzi/hexa-go/internal/domain/article/entity"
+	articleport "github.com/rulzi/hexa-go/internal/domain/article/port"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -59,7 +60,7 @@ func newTestDomainCacheAdapter(dtoCache dtoCacheInterface) *testDomainCacheAdapt
 	}
 }
 
-func (a *testDomainCacheAdapter) Get(ctx context.Context, id int64) (*domainarticle.Article, error) {
+func (a *testDomainCacheAdapter) Get(ctx context.Context, id int64) (*articleentity.Article, error) {
 	dtoResp, err := a.dtoCache.GetArticle(ctx, id)
 	if err != nil {
 		return nil, err
@@ -68,7 +69,7 @@ func (a *testDomainCacheAdapter) Get(ctx context.Context, id int64) (*domainarti
 		return nil, nil
 	}
 
-	return &domainarticle.Article{
+	return &articleentity.Article{
 		ID:        dtoResp.ID,
 		Title:     dtoResp.Title,
 		Content:   dtoResp.Content,
@@ -78,7 +79,7 @@ func (a *testDomainCacheAdapter) Get(ctx context.Context, id int64) (*domainarti
 	}, nil
 }
 
-func (a *testDomainCacheAdapter) Set(ctx context.Context, id int64, article *domainarticle.Article) error {
+func (a *testDomainCacheAdapter) Set(ctx context.Context, id int64, article *articleentity.Article) error {
 	dtoResp := &dto.ArticleResponse{
 		ID:        article.ID,
 		Title:     article.Title,
@@ -185,7 +186,7 @@ func TestDomainCacheAdapter_Set_Success(t *testing.T) {
 
 	articleID := int64(1)
 	now := time.Now()
-	domainArticle := &domainarticle.Article{
+	domainArticle := &articleentity.Article{
 		ID:        articleID,
 		Title:     "Test Article",
 		Content:   "Test Content",
@@ -218,7 +219,7 @@ func TestDomainCacheAdapter_Set_Error(t *testing.T) {
 
 	articleID := int64(1)
 	now := time.Now()
-	domainArticle := &domainarticle.Article{
+	domainArticle := &articleentity.Article{
 		ID:        articleID,
 		Title:     "Test Article",
 		Content:   "Test Content",
@@ -310,8 +311,8 @@ func TestDomainCacheAdapter_ImplementsInterface(t *testing.T) {
 	dtoCache := &mockRedisCache{}
 	adapter := newTestDomainCacheAdapter(dtoCache)
 
-	// Verify that testDomainCacheAdapter implements domainarticle.Cache interface
-	var _ domainarticle.Cache = adapter
+	// Verify that testDomainCacheAdapter implements articleport.Cache interface
+	var _ articleport.Cache = adapter
 }
 
 func TestDomainCacheAdapter_Get_ConvertsDTOToDomain(t *testing.T) {
@@ -354,7 +355,7 @@ func TestDomainCacheAdapter_Set_ConvertsDomainToDTO(t *testing.T) {
 
 	articleID := int64(99)
 	now := time.Now().Truncate(time.Second)
-	domainArticle := &domainarticle.Article{
+	domainArticle := &articleentity.Article{
 		ID:        articleID,
 		Title:     "Domain Article",
 		Content:   "Domain content here",
@@ -386,7 +387,7 @@ func TestDomainCacheAdapter_RoundTrip(t *testing.T) {
 
 	articleID := int64(100)
 	now := time.Now().Truncate(time.Second)
-	originalArticle := &domainarticle.Article{
+	originalArticle := &articleentity.Article{
 		ID:        articleID,
 		Title:     "Round Trip Article",
 		Content:   "Round trip content",

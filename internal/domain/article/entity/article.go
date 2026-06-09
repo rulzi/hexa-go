@@ -1,4 +1,4 @@
-package article
+package entity
 
 import "time"
 
@@ -25,4 +25,3 @@ func (a *Article) Validate() error {
 	}
 	return nil
 }
-
