@@ -3,9 +3,9 @@ package http
 import (
 	"github.com/gin-gonic/gin"
 	httparticle "github.com/rulzi/hexa-go/internal/adapters/http/article"
+	httphealth "github.com/rulzi/hexa-go/internal/adapters/http/health"
 	httpmedia "github.com/rulzi/hexa-go/internal/adapters/http/media"
 	"github.com/rulzi/hexa-go/internal/adapters/http/middleware"
-	"github.com/rulzi/hexa-go/internal/adapters/http/response"
 	httpuser "github.com/rulzi/hexa-go/internal/adapters/http/user"
 	userport "github.com/rulzi/hexa-go/internal/domain/user/port"
 	"github.com/rulzi/hexa-go/internal/infrastructure/logger"
@@ -16,17 +16,27 @@ type Router struct {
 	userHandler     *httpuser.Handler
 	articleHandler  *httparticle.Handler
 	mediaHandler    *httpmedia.Handler
+	healthHandler   *httphealth.Handler
 	tokenValidator  userport.TokenValidator
 	storageBasePath string
 	logger          logger.Logger
 }
 
 // NewRouter creates a new router
-func NewRouter(userHandler *httpuser.Handler, articleHandler *httparticle.Handler, mediaHandler *httpmedia.Handler, tokenValidator userport.TokenValidator, storageBasePath string, appLogger logger.Logger) *Router {
+func NewRouter(
+	userHandler *httpuser.Handler,
+	articleHandler *httparticle.Handler,
+	mediaHandler *httpmedia.Handler,
+	healthHandler *httphealth.Handler,
+	tokenValidator userport.TokenValidator,
+	storageBasePath string,
+	appLogger logger.Logger,
+) *Router {
 	return &Router{
 		userHandler:     userHandler,
 		articleHandler:  articleHandler,
 		mediaHandler:    mediaHandler,
+		healthHandler:   healthHandler,
 		tokenValidator:  tokenValidator,
 		storageBasePath: storageBasePath,
 		logger:          appLogger,
@@ -34,9 +44,9 @@ func NewRouter(userHandler *httpuser.Handler, articleHandler *httparticle.Handle
 }
 
 // SetupRoutes configures all HTTP routes
-func (r *Router) SetupRoutes(engine *gin.Engine, debug bool) {
+func (r *Router) SetupRoutes(engine *gin.Engine) {
 	// Apply default middlewares
-	middleware.SetupDefaultMiddlewares(engine, debug, r.logger)
+	middleware.SetupDefaultMiddlewares(engine, r.logger)
 
 	api := engine.Group("/api/v1")
 	{
@@ -85,7 +95,5 @@ func (r *Router) SetupRoutes(engine *gin.Engine, debug bool) {
 	}
 
 	// Health check endpoint
-	engine.GET("/health", func(c *gin.Context) {
-		response.SuccessResponseOK(c, "Service is healthy", gin.H{"status": "ok"})
-	})
+	engine.GET("/health", r.healthHandler.Check)
 }

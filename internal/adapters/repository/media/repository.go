@@ -3,8 +3,8 @@ package media
 import (
 	"context"
 	"database/sql"
-	"log"
 
+	adapterlogging "github.com/rulzi/hexa-go/internal/adapters/logging"
 	mediaentity "github.com/rulzi/hexa-go/internal/domain/media/entity"
 	mediaport "github.com/rulzi/hexa-go/internal/domain/media/port"
 )
@@ -121,7 +121,7 @@ func (r *MySQLRepository) List(ctx context.Context, limit, offset int) ([]*media
 	}
 	defer func() {
 		if err := rows.Close(); err != nil {
-			log.Printf("Failed to close rows: %v", err)
+			adapterlogging.LogRepoError(ctx, "failed to close rows: %v", err)
 		}
 	}()
 

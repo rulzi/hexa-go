@@ -91,7 +91,7 @@ func main() {
 	router := gin.New()
 
 	// Setup routes
-	container.Router.SetupRoutes(router, cfg.Server.Debug)
+	container.Router.SetupRoutes(router)
 
 	// Start server
 	addr := fmt.Sprintf("%s:%s", cfg.Server.Host, cfg.Server.Port)

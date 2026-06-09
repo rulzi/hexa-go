@@ -5,6 +5,7 @@ import (
 
 	"github.com/redis/go-redis/v9"
 	"github.com/rulzi/hexa-go/internal/adapters/http"
+	httphealth "github.com/rulzi/hexa-go/internal/adapters/http/health"
 	"github.com/rulzi/hexa-go/internal/infrastructure/config"
 	"github.com/rulzi/hexa-go/internal/infrastructure/logger"
 	diarticle "github.com/rulzi/hexa-go/internal/infrastructure/di/article"
@@ -33,8 +34,17 @@ func NewContainer(database *sql.DB, redisClient *redis.Client, appLogger logger.
 		return nil, err
 	}
 
-	// Initialize router
-	router := http.NewRouter(userContainer.Handler, articleContainer.Handler, mediaContainer.Handler, userContainer.TokenValidator, storageCfg.BasePath, appLogger)
+	// Initialize health handler and router
+	healthHandler := httphealth.NewHandler(database, redisClient)
+	router := http.NewRouter(
+		userContainer.Handler,
+		articleContainer.Handler,
+		mediaContainer.Handler,
+		healthHandler,
+		userContainer.TokenValidator,
+		storageCfg.BasePath,
+		appLogger,
+	)
 
 	return &Container{
 		DB:      database,

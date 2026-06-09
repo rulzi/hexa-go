@@ -6,14 +6,15 @@ import (
 )
 
 // SetupDefaultMiddlewares applies default middlewares to the router
-func SetupDefaultMiddlewares(engine *gin.Engine, debug bool, appLogger logger.Logger) {
+func SetupDefaultMiddlewares(engine *gin.Engine, appLogger logger.Logger) {
 	// Recovery middleware - catches panics and returns proper error responses
 	engine.Use(RecoveryMiddleware(appLogger))
 
-	// Logger middleware - logs HTTP requests (only in debug mode)
-	if debug {
-		engine.Use(gin.Logger())
-	}
+	// Request ID middleware - propagates request_id through context
+	engine.Use(RequestIDMiddleware())
+
+	// Structured logging middleware - logs every HTTP request
+	engine.Use(LoggingMiddleware(appLogger))
 
 	// CORS middleware - handles cross-origin requests
 	engine.Use(CORSMiddleware())

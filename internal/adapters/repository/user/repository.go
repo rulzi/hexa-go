@@ -3,8 +3,8 @@ package user
 import (
 	"context"
 	"database/sql"
-	"log"
 
+	adapterlogging "github.com/rulzi/hexa-go/internal/adapters/logging"
 	userentity "github.com/rulzi/hexa-go/internal/domain/user/entity"
 	userport "github.com/rulzi/hexa-go/internal/domain/user/port"
 )
@@ -150,7 +150,7 @@ func (r *MySQLRepository) List(ctx context.Context, limit, offset int) ([]*usere
 	}
 	defer func() {
 		if err := rows.Close(); err != nil {
-			log.Printf("Failed to close rows: %v", err)
+			adapterlogging.LogRepoError(ctx, "failed to close rows: %v", err)
 		}
 	}()
 
