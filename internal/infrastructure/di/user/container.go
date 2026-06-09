@@ -28,7 +28,7 @@ type Container struct {
 // NewContainer creates a new user domain container
 func NewContainer(database *sql.DB, appLogger logger.Logger, jwtSecret string, jwtExpiration int) *Container {
 	// Initialize repository (driven adapter)
-	userRepo := userdb.NewMySQLRepository(database)
+	userRepo := userdb.NewMySQLRepository(database, appLogger)
 
 	// Initialize auth adapters (driven adapters)
 	jwtAdapter := authadapter.NewJWTAdapter(jwtSecret, jwtExpiration)

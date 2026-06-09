@@ -7,18 +7,23 @@ import (
 	adapterlogging "github.com/rulzi/hexa-go/internal/adapters/logging"
 	userentity "github.com/rulzi/hexa-go/internal/domain/user/entity"
 	userport "github.com/rulzi/hexa-go/internal/domain/user/port"
+	"github.com/rulzi/hexa-go/internal/infrastructure/logger"
 )
 
 var _ userport.Repository = (*MySQLRepository)(nil)
 
 // MySQLRepository is the MySQL implementation of user.Repository (driven adapter)
 type MySQLRepository struct {
-	db *sql.DB
+	db         *sql.DB
+	repoLogger *adapterlogging.RepoLogger
 }
 
 // NewMySQLRepository creates a new MySQLRepository
-func NewMySQLRepository(db *sql.DB) *MySQLRepository {
-	return &MySQLRepository{db: db}
+func NewMySQLRepository(db *sql.DB, appLogger logger.Logger) *MySQLRepository {
+	return &MySQLRepository{
+		db:         db,
+		repoLogger: adapterlogging.NewRepoLogger(appLogger),
+	}
 }
 
 // Create creates a new user
@@ -150,7 +155,7 @@ func (r *MySQLRepository) List(ctx context.Context, limit, offset int) ([]*usere
 	}
 	defer func() {
 		if err := rows.Close(); err != nil {
-			adapterlogging.LogRepoError(ctx, "failed to close rows: %v", err)
+			r.repoLogger.LogError(ctx, "failed to close rows: %v", err)
 		}
 	}()
 

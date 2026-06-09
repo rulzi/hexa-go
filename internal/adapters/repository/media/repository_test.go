@@ -9,8 +9,11 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	mediaentity "github.com/rulzi/hexa-go/internal/domain/media/entity"
+	"github.com/rulzi/hexa-go/internal/infrastructure/logger"
 	"github.com/stretchr/testify/assert"
 )
+
+var testLogger logger.Logger = logger.NewSimpleLogger()
 
 func TestNewMySQLRepository(t *testing.T) {
 	db, mock, err := sqlmock.New()
@@ -24,7 +27,7 @@ func TestNewMySQLRepository(t *testing.T) {
 		}
 	}()
 
-	repo := NewMySQLRepository(db)
+	repo := NewMySQLRepository(db, testLogger)
 	assert.NotNil(t, repo)
 	assert.Equal(t, db, repo.db)
 }
@@ -102,7 +105,7 @@ func TestMySQLRepository_Create(t *testing.T) {
 				}
 			}()
 
-			repo := NewMySQLRepository(db)
+			repo := NewMySQLRepository(db, testLogger)
 			tt.setup(mock)
 
 			result, err := repo.Create(context.Background(), tt.media)
@@ -186,7 +189,7 @@ func TestMySQLRepository_GetByID(t *testing.T) {
 				}
 			}()
 
-			repo := NewMySQLRepository(db)
+			repo := NewMySQLRepository(db, testLogger)
 			tt.setup(mock)
 
 			result, err := repo.GetByID(context.Background(), tt.id)
@@ -272,7 +275,7 @@ func TestMySQLRepository_Update(t *testing.T) {
 				}
 			}()
 
-			repo := NewMySQLRepository(db)
+			repo := NewMySQLRepository(db, testLogger)
 			tt.setup(mock)
 
 			result, err := repo.Update(context.Background(), tt.media)
@@ -355,7 +358,7 @@ func TestMySQLRepository_Delete(t *testing.T) {
 				}
 			}()
 
-			repo := NewMySQLRepository(db)
+			repo := NewMySQLRepository(db, testLogger)
 			tt.setup(mock)
 
 			err = repo.Delete(context.Background(), tt.id)
@@ -477,7 +480,7 @@ func TestMySQLRepository_List(t *testing.T) {
 				}
 			}()
 
-			repo := NewMySQLRepository(db)
+			repo := NewMySQLRepository(db, testLogger)
 			tt.setup(mock)
 
 			result, err := repo.List(context.Background(), tt.limit, tt.offset)
@@ -556,7 +559,7 @@ func TestMySQLRepository_Count(t *testing.T) {
 				}
 			}()
 
-			repo := NewMySQLRepository(db)
+			repo := NewMySQLRepository(db, testLogger)
 			tt.setup(mock)
 
 			result, err := repo.Count(context.Background())

@@ -7,18 +7,23 @@ import (
 	adapterlogging "github.com/rulzi/hexa-go/internal/adapters/logging"
 	mediaentity "github.com/rulzi/hexa-go/internal/domain/media/entity"
 	mediaport "github.com/rulzi/hexa-go/internal/domain/media/port"
+	"github.com/rulzi/hexa-go/internal/infrastructure/logger"
 )
 
 var _ mediaport.Repository = (*MySQLRepository)(nil)
 
 // MySQLRepository is the MySQL implementation of media.Repository (driven adapter)
 type MySQLRepository struct {
-	db *sql.DB
+	db         *sql.DB
+	repoLogger *adapterlogging.RepoLogger
 }
 
 // NewMySQLRepository creates a new MySQLRepository
-func NewMySQLRepository(db *sql.DB) *MySQLRepository {
-	return &MySQLRepository{db: db}
+func NewMySQLRepository(db *sql.DB, appLogger logger.Logger) *MySQLRepository {
+	return &MySQLRepository{
+		db:         db,
+		repoLogger: adapterlogging.NewRepoLogger(appLogger),
+	}
 }
 
 // Create creates a new media
@@ -121,7 +126,7 @@ func (r *MySQLRepository) List(ctx context.Context, limit, offset int) ([]*media
 	}
 	defer func() {
 		if err := rows.Close(); err != nil {
-			adapterlogging.LogRepoError(ctx, "failed to close rows: %v", err)
+			r.repoLogger.LogError(ctx, "failed to close rows: %v", err)
 		}
 	}()
 

@@ -7,18 +7,23 @@ import (
 	adapterlogging "github.com/rulzi/hexa-go/internal/adapters/logging"
 	articleentity "github.com/rulzi/hexa-go/internal/domain/article/entity"
 	articleport "github.com/rulzi/hexa-go/internal/domain/article/port"
+	"github.com/rulzi/hexa-go/internal/infrastructure/logger"
 )
 
 var _ articleport.Repository = (*MySQLRepository)(nil)
 
 // MySQLRepository is the MySQL implementation of article.Repository (driven adapter)
 type MySQLRepository struct {
-	db *sql.DB
+	db         *sql.DB
+	repoLogger *adapterlogging.RepoLogger
 }
 
 // NewMySQLRepository creates a new MySQLRepository
-func NewMySQLRepository(db *sql.DB) *MySQLRepository {
-	return &MySQLRepository{db: db}
+func NewMySQLRepository(db *sql.DB, appLogger logger.Logger) *MySQLRepository {
+	return &MySQLRepository{
+		db:         db,
+		repoLogger: adapterlogging.NewRepoLogger(appLogger),
+	}
 }
 
 // Create creates a new article
@@ -122,7 +127,7 @@ func (r *MySQLRepository) List(ctx context.Context, limit, offset int) ([]*artic
 	}
 	defer func() {
 		if err := rows.Close(); err != nil {
-			adapterlogging.LogRepoError(ctx, "failed to close rows: %v", err)
+			r.repoLogger.LogError(ctx, "failed to close rows: %v", err)
 		}
 	}()
 
@@ -166,7 +171,7 @@ func (r *MySQLRepository) ListByAuthor(ctx context.Context, authorID int64, limi
 	}
 	defer func() {
 		if err := rows.Close(); err != nil {
-			adapterlogging.LogRepoError(ctx, "failed to close rows: %v", err)
+			r.repoLogger.LogError(ctx, "failed to close rows: %v", err)
 		}
 	}()
 

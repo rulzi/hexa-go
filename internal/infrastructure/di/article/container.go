@@ -25,7 +25,7 @@ type Container struct {
 // NewContainer creates a new article domain container
 func NewContainer(database *sql.DB, redisClient *redis.Client, appLogger logger.Logger) *Container {
 	// Initialize repository (driven adapter)
-	articleRepo := articledb.NewMySQLRepository(database)
+	articleRepo := articledb.NewMySQLRepository(database, appLogger)
 
 	// Initialize cache (driven adapter)
 	var domainCache articleport.Cache

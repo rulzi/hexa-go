@@ -25,9 +25,9 @@ type Container struct {
 
 // NewContainer creates a new media domain container
 func NewContainer(database *sql.DB, appLogger logger.Logger, storageCfg config.StorageConfig) (*Container, error) {
-	mediaRepo := mediadb.NewMySQLRepository(database)
+	mediaRepo := mediadb.NewMySQLRepository(database, appLogger)
 
-	storage, err := newStorageAdapter(storageCfg)
+	storage, err := newStorageAdapter(storageCfg, appLogger)
 	if err != nil {
 		return nil, err
 	}
@@ -45,7 +45,7 @@ func NewContainer(database *sql.DB, appLogger logger.Logger, storageCfg config.S
 	}, nil
 }
 
-func newStorageAdapter(storageCfg config.StorageConfig) (mediaport.StoragePort, error) {
+func newStorageAdapter(storageCfg config.StorageConfig, appLogger logger.Logger) (mediaport.StoragePort, error) {
 	switch storageCfg.Driver {
 	case "s3":
 		return mediastorage.NewS3StorageAdapter(mediastorage.S3Config{
@@ -55,7 +55,7 @@ func newStorageAdapter(storageCfg config.StorageConfig) (mediaport.StoragePort, 
 			UsePathStyle: storageCfg.S3PathStyle,
 		})
 	case "local", "":
-		return mediastorage.NewLocalStorageAdapter(storageCfg.BasePath)
+		return mediastorage.NewLocalStorageAdapter(storageCfg.BasePath, appLogger)
 	default:
 		return nil, fmt.Errorf("unsupported STORAGE_DRIVER %q", storageCfg.Driver)
 	}

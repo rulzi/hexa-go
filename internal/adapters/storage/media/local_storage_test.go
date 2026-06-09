@@ -11,13 +11,16 @@ import (
 
 	mediaentity "github.com/rulzi/hexa-go/internal/domain/media/entity"
 	mediaport "github.com/rulzi/hexa-go/internal/domain/media/port"
+	"github.com/rulzi/hexa-go/internal/infrastructure/logger"
 	"github.com/stretchr/testify/assert"
 )
+
+var testLogger logger.Logger = logger.NewSimpleLogger()
 
 func TestNewLocalStorageAdapter_Success(t *testing.T) {
 	tmpDir := t.TempDir()
 
-	storage, err := NewLocalStorageAdapter(tmpDir)
+	storage, err := NewLocalStorageAdapter(tmpDir, testLogger)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, storage)
@@ -32,7 +35,7 @@ func TestNewLocalStorageAdapter_Success(t *testing.T) {
 func TestNewLocalStorageAdapter_CreatesDirectory(t *testing.T) {
 	tmpDir := filepath.Join(t.TempDir(), "new", "storage", "path")
 
-	storage, err := NewLocalStorageAdapter(tmpDir)
+	storage, err := NewLocalStorageAdapter(tmpDir, testLogger)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, storage)
@@ -46,7 +49,7 @@ func TestNewLocalStorageAdapter_CreatesDirectory(t *testing.T) {
 func TestLocalStorageAdapter_Save_Success(t *testing.T) {
 	ctx := context.Background()
 	tmpDir := t.TempDir()
-	storage, err := NewLocalStorageAdapter(tmpDir)
+	storage, err := NewLocalStorageAdapter(tmpDir, testLogger)
 	assert.NoError(t, err)
 
 	filename := "test.jpg"
@@ -77,7 +80,7 @@ func TestLocalStorageAdapter_Save_Success(t *testing.T) {
 func TestLocalStorageAdapter_Save_CreatesDateDirectory(t *testing.T) {
 	ctx := context.Background()
 	tmpDir := t.TempDir()
-	storage, err := NewLocalStorageAdapter(tmpDir)
+	storage, err := NewLocalStorageAdapter(tmpDir, testLogger)
 	assert.NoError(t, err)
 
 	filename := "test.png"
@@ -100,7 +103,7 @@ func TestLocalStorageAdapter_Save_CreatesDateDirectory(t *testing.T) {
 func TestLocalStorageAdapter_Save_GeneratesUniqueFilename(t *testing.T) {
 	ctx := context.Background()
 	tmpDir := t.TempDir()
-	storage, err := NewLocalStorageAdapter(tmpDir)
+	storage, err := NewLocalStorageAdapter(tmpDir, testLogger)
 	assert.NoError(t, err)
 
 	filename := "test.jpg"
@@ -128,7 +131,7 @@ func TestLocalStorageAdapter_Save_GeneratesUniqueFilename(t *testing.T) {
 func TestLocalStorageAdapter_Save_RejectsFilesWithoutExtension(t *testing.T) {
 	ctx := context.Background()
 	tmpDir := t.TempDir()
-	storage, err := NewLocalStorageAdapter(tmpDir)
+	storage, err := NewLocalStorageAdapter(tmpDir, testLogger)
 	assert.NoError(t, err)
 
 	_, err = storage.Save(ctx, "testfile", strings.NewReader("test content"))
@@ -138,7 +141,7 @@ func TestLocalStorageAdapter_Save_RejectsFilesWithoutExtension(t *testing.T) {
 func TestLocalStorageAdapter_Save_HandlesEmptyFile(t *testing.T) {
 	ctx := context.Background()
 	tmpDir := t.TempDir()
-	storage, err := NewLocalStorageAdapter(tmpDir)
+	storage, err := NewLocalStorageAdapter(tmpDir, testLogger)
 	assert.NoError(t, err)
 
 	filename := "empty.jpg"
@@ -159,7 +162,7 @@ func TestLocalStorageAdapter_Save_HandlesEmptyFile(t *testing.T) {
 func TestLocalStorageAdapter_Delete_Success(t *testing.T) {
 	ctx := context.Background()
 	tmpDir := t.TempDir()
-	storage, err := NewLocalStorageAdapter(tmpDir)
+	storage, err := NewLocalStorageAdapter(tmpDir, testLogger)
 	assert.NoError(t, err)
 
 	// First, save a file
@@ -185,7 +188,7 @@ func TestLocalStorageAdapter_Delete_Success(t *testing.T) {
 func TestLocalStorageAdapter_Delete_FileNotExists(t *testing.T) {
 	ctx := context.Background()
 	tmpDir := t.TempDir()
-	storage, err := NewLocalStorageAdapter(tmpDir)
+	storage, err := NewLocalStorageAdapter(tmpDir, testLogger)
 	assert.NoError(t, err)
 
 	// Try to delete non-existent file (should be idempotent)
@@ -196,7 +199,7 @@ func TestLocalStorageAdapter_Delete_FileNotExists(t *testing.T) {
 func TestLocalStorageAdapter_Delete_WithNestedPath(t *testing.T) {
 	ctx := context.Background()
 	tmpDir := t.TempDir()
-	storage, err := NewLocalStorageAdapter(tmpDir)
+	storage, err := NewLocalStorageAdapter(tmpDir, testLogger)
 	assert.NoError(t, err)
 
 	// Save a file (which creates nested directory structure)
@@ -218,7 +221,7 @@ func TestLocalStorageAdapter_Delete_WithNestedPath(t *testing.T) {
 func TestLocalStorageAdapter_Get_Success(t *testing.T) {
 	ctx := context.Background()
 	tmpDir := t.TempDir()
-	storage, err := NewLocalStorageAdapter(tmpDir)
+	storage, err := NewLocalStorageAdapter(tmpDir, testLogger)
 	assert.NoError(t, err)
 
 	// First, save a file
@@ -247,7 +250,7 @@ func TestLocalStorageAdapter_Get_Success(t *testing.T) {
 func TestLocalStorageAdapter_Get_FileNotFound(t *testing.T) {
 	ctx := context.Background()
 	tmpDir := t.TempDir()
-	storage, err := NewLocalStorageAdapter(tmpDir)
+	storage, err := NewLocalStorageAdapter(tmpDir, testLogger)
 	assert.NoError(t, err)
 
 	// Try to get non-existent file
@@ -261,7 +264,7 @@ func TestLocalStorageAdapter_Get_FileNotFound(t *testing.T) {
 func TestLocalStorageAdapter_Get_WithNestedPath(t *testing.T) {
 	ctx := context.Background()
 	tmpDir := t.TempDir()
-	storage, err := NewLocalStorageAdapter(tmpDir)
+	storage, err := NewLocalStorageAdapter(tmpDir, testLogger)
 	assert.NoError(t, err)
 
 	// Save a file
@@ -290,7 +293,7 @@ func TestLocalStorageAdapter_Get_WithNestedPath(t *testing.T) {
 func TestLocalStorageAdapter_RoundTrip(t *testing.T) {
 	ctx := context.Background()
 	tmpDir := t.TempDir()
-	storage, err := NewLocalStorageAdapter(tmpDir)
+	storage, err := NewLocalStorageAdapter(tmpDir, testLogger)
 	assert.NoError(t, err)
 
 	// Save
@@ -326,7 +329,7 @@ func TestLocalStorageAdapter_RoundTrip(t *testing.T) {
 
 func TestLocalStorageAdapter_ImplementsInterface(t *testing.T) {
 	tmpDir := t.TempDir()
-	storage, err := NewLocalStorageAdapter(tmpDir)
+	storage, err := NewLocalStorageAdapter(tmpDir, testLogger)
 	assert.NoError(t, err)
 
 	// Verify that LocalStorageAdapter implements mediaport.StoragePort interface
@@ -336,7 +339,7 @@ func TestLocalStorageAdapter_ImplementsInterface(t *testing.T) {
 func TestLocalStorageAdapter_Save_ReturnsRelativePath(t *testing.T) {
 	ctx := context.Background()
 	tmpDir := t.TempDir()
-	storage, err := NewLocalStorageAdapter(tmpDir)
+	storage, err := NewLocalStorageAdapter(tmpDir, testLogger)
 	assert.NoError(t, err)
 
 	filename := "relative.jpg"
@@ -356,7 +359,7 @@ func TestLocalStorageAdapter_Save_ReturnsRelativePath(t *testing.T) {
 func TestLocalStorageAdapter_Save_DifferentFileTypes(t *testing.T) {
 	ctx := context.Background()
 	tmpDir := t.TempDir()
-	storage, err := NewLocalStorageAdapter(tmpDir)
+	storage, err := NewLocalStorageAdapter(tmpDir, testLogger)
 	assert.NoError(t, err)
 
 	testCases := []struct {
@@ -394,7 +397,7 @@ func TestLocalStorageAdapter_Save_DifferentFileTypes(t *testing.T) {
 func TestLocalStorageAdapter_Save_LargeFile(t *testing.T) {
 	ctx := context.Background()
 	tmpDir := t.TempDir()
-	storage, err := NewLocalStorageAdapter(tmpDir)
+	storage, err := NewLocalStorageAdapter(tmpDir, testLogger)
 	assert.NoError(t, err)
 
 	// Create a larger file (1MB)
@@ -416,7 +419,7 @@ func TestLocalStorageAdapter_Save_LargeFile(t *testing.T) {
 func TestLocalStorageAdapter_Get_ClosesFile(t *testing.T) {
 	ctx := context.Background()
 	tmpDir := t.TempDir()
-	storage, err := NewLocalStorageAdapter(tmpDir)
+	storage, err := NewLocalStorageAdapter(tmpDir, testLogger)
 	assert.NoError(t, err)
 
 	// Save a file
@@ -442,7 +445,7 @@ func TestLocalStorageAdapter_Get_ClosesFile(t *testing.T) {
 func TestLocalStorageAdapter_Save_HandlesSpecialCharactersInFilename(t *testing.T) {
 	ctx := context.Background()
 	tmpDir := t.TempDir()
-	storage, err := NewLocalStorageAdapter(tmpDir)
+	storage, err := NewLocalStorageAdapter(tmpDir, testLogger)
 	assert.NoError(t, err)
 
 	testCases := []struct {
@@ -475,7 +478,7 @@ func TestLocalStorageAdapter_Save_HandlesSpecialCharactersInFilename(t *testing.
 func TestLocalStorageAdapter_Save_RejectsDisallowedExtension(t *testing.T) {
 	ctx := context.Background()
 	tmpDir := t.TempDir()
-	storage, err := NewLocalStorageAdapter(tmpDir)
+	storage, err := NewLocalStorageAdapter(tmpDir, testLogger)
 	assert.NoError(t, err)
 
 	_, err = storage.Save(ctx, "malware.php", strings.NewReader("<?php"))

@@ -4,25 +4,26 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"path/filepath"
 
 	mediaentity "github.com/rulzi/hexa-go/internal/domain/media/entity"
+	"github.com/rulzi/hexa-go/internal/infrastructure/logger"
 )
 
 // LocalStorageAdapter stores files on the local filesystem.
 type LocalStorageAdapter struct {
 	basePath string
+	logger   logger.Logger
 }
 
 // NewLocalStorageAdapter creates a local filesystem storage adapter.
-func NewLocalStorageAdapter(basePath string) (*LocalStorageAdapter, error) {
+func NewLocalStorageAdapter(basePath string, appLogger logger.Logger) (*LocalStorageAdapter, error) {
 	if err := os.MkdirAll(basePath, 0755); err != nil {
 		return nil, fmt.Errorf("failed to create storage directory: %w", err)
 	}
 
-	return &LocalStorageAdapter{basePath: basePath}, nil
+	return &LocalStorageAdapter{basePath: basePath, logger: appLogger}, nil
 }
 
 // Save saves a file and returns the storage path.
@@ -47,13 +48,19 @@ func (s *LocalStorageAdapter) Save(ctx context.Context, filename string, file io
 	}
 	defer func() {
 		if err := dst.Close(); err != nil {
-			log.Printf("Failed to close file: %v", err)
+			s.logger.ErrorWithFields("failed to close file", map[string]interface{}{
+				"path":  fullPath,
+				"error": err.Error(),
+			})
 		}
 	}()
 
 	if _, err := io.Copy(dst, file); err != nil {
 		if removeErr := os.Remove(fullPath); removeErr != nil {
-			log.Printf("Failed to remove file: %v", removeErr)
+			s.logger.ErrorWithFields("failed to remove file", map[string]interface{}{
+				"path":  fullPath,
+				"error": removeErr.Error(),
+			})
 		}
 		return "", fmt.Errorf("failed to save file: %w", err)
 	}
