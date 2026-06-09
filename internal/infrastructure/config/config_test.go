@@ -86,6 +86,52 @@ func TestValidate_ProductionAcceptsValidSecrets(t *testing.T) {
 	}
 }
 
+func TestValidate_ProductionRequiresS3BucketWhenDriverIsS3(t *testing.T) {
+	cfg := &Config{
+		Server: ServerConfig{Debug: false},
+		Database: DatabaseConfig{
+			Password: "secure-db-password",
+		},
+		JWT: JWTConfig{
+			Secret: "this-is-a-secure-jwt-secret-with-enough-length",
+		},
+		Storage: StorageConfig{
+			Driver: "s3",
+		},
+	}
+
+	err := cfg.Validate()
+	if err == nil {
+		t.Fatal("expected validation error for missing S3 bucket")
+	}
+	if !strings.Contains(err.Error(), "S3_BUCKET") {
+		t.Errorf("unexpected error: %v", err)
+	}
+}
+
+func TestValidate_ProductionRejectsUnsupportedStorageDriver(t *testing.T) {
+	cfg := &Config{
+		Server: ServerConfig{Debug: false},
+		Database: DatabaseConfig{
+			Password: "secure-db-password",
+		},
+		JWT: JWTConfig{
+			Secret: "this-is-a-secure-jwt-secret-with-enough-length",
+		},
+		Storage: StorageConfig{
+			Driver: "gcs",
+		},
+	}
+
+	err := cfg.Validate()
+	if err == nil {
+		t.Fatal("expected validation error for unsupported storage driver")
+	}
+	if !strings.Contains(err.Error(), "STORAGE_DRIVER") {
+		t.Errorf("unexpected error: %v", err)
+	}
+}
+
 func TestValidate_DebugAllowsMissingSecrets(t *testing.T) {
 	cfg := &Config{
 		Server: ServerConfig{Debug: true},

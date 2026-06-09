@@ -55,8 +55,13 @@ type JWTConfig struct {
 
 // StorageConfig holds storage configuration
 type StorageConfig struct {
-	BasePath string
-	BaseURL  string
+	Driver       string // local | s3
+	BasePath     string
+	BaseURL      string
+	S3Bucket     string
+	S3Region     string
+	S3Endpoint   string
+	S3PathStyle  bool
 }
 
 // LoggerConfig holds logger configuration
@@ -97,8 +102,13 @@ func Load() (*Config, error) {
 			Expiration: getEnvInt("JWT_EXPIRATION", 24),
 		},
 		Storage: StorageConfig{
-			BasePath: getEnv("STORAGE_BASE_PATH", "./storage"),
-			BaseURL:  getEnv("STORAGE_BASE_URL", "http://localhost:8080"),
+			Driver:      getEnv("STORAGE_DRIVER", "local"),
+			BasePath:    getEnv("STORAGE_BASE_PATH", "./storage"),
+			BaseURL:     getEnv("STORAGE_BASE_URL", "http://localhost:8080"),
+			S3Bucket:    os.Getenv("S3_BUCKET"),
+			S3Region:    getEnv("S3_REGION", "us-east-1"),
+			S3Endpoint:  os.Getenv("S3_ENDPOINT"),
+			S3PathStyle: getEnvBool("S3_USE_PATH_STYLE", false),
 		},
 		Logger: LoggerConfig{
 			Level:         getEnv("LOG_LEVEL", "info"),
@@ -136,11 +146,32 @@ func (c *Config) Validate() error {
 		errs = append(errs, err.Error())
 	}
 
+	if err := validateStorageConfig(c.Storage); err != nil {
+		errs = append(errs, err.Error())
+	}
+
 	if len(errs) == 0 {
 		return nil
 	}
 
 	return fmt.Errorf("configuration validation failed:\n  - %s", strings.Join(errs, "\n  - "))
+}
+
+func validateStorageConfig(storage StorageConfig) error {
+	switch storage.Driver {
+	case "local", "":
+		return nil
+	case "s3":
+		if storage.S3Bucket == "" {
+			return fmt.Errorf("S3_BUCKET is required when STORAGE_DRIVER=s3")
+		}
+		if storage.S3Region == "" {
+			return fmt.Errorf("S3_REGION is required when STORAGE_DRIVER=s3")
+		}
+		return nil
+	default:
+		return fmt.Errorf("unsupported STORAGE_DRIVER %q (supported: local, s3)", storage.Driver)
+	}
 }
 
 func validateJWTSecret(secret string) error {

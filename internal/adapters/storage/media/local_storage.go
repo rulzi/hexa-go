@@ -7,48 +7,33 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"time"
 
 	domainmedia "github.com/rulzi/hexa-go/internal/domain/media"
 )
 
-// LocalStorage is the local file system implementation of media.Storage
-type LocalStorage struct {
+// LocalStorageAdapter stores files on the local filesystem.
+type LocalStorageAdapter struct {
 	basePath string
 }
 
-// NewLocalStorage creates a new LocalStorage instance
-func NewLocalStorage(basePath string) (*LocalStorage, error) {
-	// Create base directory if it doesn't exist
+// NewLocalStorageAdapter creates a local filesystem storage adapter.
+func NewLocalStorageAdapter(basePath string) (*LocalStorageAdapter, error) {
 	if err := os.MkdirAll(basePath, 0755); err != nil {
 		return nil, fmt.Errorf("failed to create storage directory: %w", err)
 	}
 
-	return &LocalStorage{
-		basePath: basePath,
-	}, nil
+	return &LocalStorageAdapter{basePath: basePath}, nil
 }
 
-// Save saves a file and returns the storage path
-func (s *LocalStorage) Save(ctx context.Context, filename string, file io.Reader) (string, error) {
-	// Generate unique filename with timestamp to avoid conflicts
-	timestamp := time.Now().Unix()
-	ext := filepath.Ext(filename)
-	nameWithoutExt := filename[:len(filename)-len(ext)]
-	uniqueFilename := fmt.Sprintf("%s_%d%s", nameWithoutExt, timestamp, ext)
+// Save saves a file and returns the storage path.
+func (s *LocalStorageAdapter) Save(ctx context.Context, filename string, file io.Reader) (string, error) {
+	relPath := generateStoragePath(filename)
+	fullPath := filepath.Join(s.basePath, relPath)
 
-	// Create directory structure: YYYY/MM/DD
-	now := time.Now()
-	dirPath := filepath.Join(s.basePath, fmt.Sprintf("%d", now.Year()), fmt.Sprintf("%02d", now.Month()), fmt.Sprintf("%02d", now.Day()))
-
-	if err := os.MkdirAll(dirPath, 0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(fullPath), 0755); err != nil {
 		return "", fmt.Errorf("failed to create directory: %w", err)
 	}
 
-	// Full file path
-	fullPath := filepath.Join(dirPath, uniqueFilename)
-
-	// Create file
 	dst, err := os.Create(fullPath)
 	if err != nil {
 		return "", fmt.Errorf("failed to create file: %w", err)
@@ -59,31 +44,21 @@ func (s *LocalStorage) Save(ctx context.Context, filename string, file io.Reader
 		}
 	}()
 
-	// Copy file content
 	if _, err := io.Copy(dst, file); err != nil {
-		if err := os.Remove(fullPath); err != nil {
-			log.Printf("Failed to remove file: %v", err)
+		if removeErr := os.Remove(fullPath); removeErr != nil {
+			log.Printf("Failed to remove file: %v", removeErr)
 		}
 		return "", fmt.Errorf("failed to save file: %w", err)
-	}
-
-	// Return relative path from basePath
-	relPath, err := filepath.Rel(s.basePath, fullPath)
-	if err != nil {
-		// If relative path fails, return the path after basePath
-		relPath = fullPath[len(s.basePath)+1:]
 	}
 
 	return relPath, nil
 }
 
-// Delete deletes a file by path
-func (s *LocalStorage) Delete(ctx context.Context, path string) error {
+// Delete deletes a file by path.
+func (s *LocalStorageAdapter) Delete(ctx context.Context, path string) error {
 	fullPath := filepath.Join(s.basePath, path)
 
-	// Check if file exists
 	if _, err := os.Stat(fullPath); os.IsNotExist(err) {
-		// File doesn't exist, but we don't return error (idempotent)
 		return nil
 	}
 
@@ -94,8 +69,8 @@ func (s *LocalStorage) Delete(ctx context.Context, path string) error {
 	return nil
 }
 
-// Get retrieves a file by path
-func (s *LocalStorage) Get(ctx context.Context, path string) (io.ReadCloser, error) {
+// Get retrieves a file by path.
+func (s *LocalStorageAdapter) Get(ctx context.Context, path string) (io.ReadCloser, error) {
 	fullPath := filepath.Join(s.basePath, path)
 
 	file, err := os.Open(fullPath)
