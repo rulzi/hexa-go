@@ -1,6 +1,8 @@
 package auth
 
 import (
+	"encoding/base64"
+	"strings"
 	"testing"
 	"time"
 
@@ -145,6 +147,31 @@ func TestJWTAdapter_Validate_EmptyToken(t *testing.T) {
 
 	assert.Error(t, err)
 	assert.Nil(t, claims)
+}
+
+func TestJWTAdapter_Validate_UnexpectedSigningMethod(t *testing.T) {
+	secret := "test-secret-key"
+	expiration := 24
+	adapter := NewJWTAdapter(secret, expiration)
+
+	userID := int64(123)
+	email := "test@example.com"
+
+	tokenString, err := adapter.Generate(userID, email)
+	assert.NoError(t, err)
+
+	// Algorithm confusion: keep HS256 payload/signature but claim RS256 in the header.
+	parts := strings.Split(tokenString, ".")
+	assert.Len(t, parts, 3)
+
+	rs256Header := base64.RawURLEncoding.EncodeToString([]byte(`{"alg":"RS256","typ":"JWT"}`))
+	attackToken := rs256Header + "." + parts[1] + "." + parts[2]
+
+	claims, err := adapter.Validate(attackToken)
+
+	assert.Error(t, err)
+	assert.Nil(t, claims)
+	assert.Contains(t, err.Error(), "unexpected signing method")
 }
 
 func TestJWTAdapter_Validate_InvalidSignature(t *testing.T) {
