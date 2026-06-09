@@ -1,5 +1,3 @@
-version: '3.8'
-
 # Credentials are loaded from .env.docker (gitignored).
 # Setup: cp .env.docker.example .env.docker
 #
