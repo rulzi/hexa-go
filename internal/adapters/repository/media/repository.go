@@ -57,7 +57,7 @@ func (r *MySQLRepository) GetByID(ctx context.Context, id int64) (*domainmedia.M
 	)
 
 	if err == sql.ErrNoRows {
-		return nil, domainmedia.ErrMediaNotFound
+		return nil, domainmedia.NewMediaNotFound()
 	}
 	if err != nil {
 		return nil, err
@@ -97,7 +97,7 @@ func (r *MySQLRepository) Delete(ctx context.Context, id int64) error {
 	}
 
 	if rowsAffected == 0 {
-		return domainmedia.ErrMediaNotFound
+		return domainmedia.NewMediaNotFound()
 	}
 
 	return nil

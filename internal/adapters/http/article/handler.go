@@ -5,9 +5,10 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/rulzi/hexa-go/internal/adapters/http/errmapper"
 	"github.com/rulzi/hexa-go/internal/adapters/http/response"
 	"github.com/rulzi/hexa-go/internal/application/article/dto"
-	domainarticle "github.com/rulzi/hexa-go/internal/domain/article"
+	domainerrs "github.com/rulzi/hexa-go/internal/domain/errs"
 	"github.com/rulzi/hexa-go/internal/infrastructure/logger"
 )
 
@@ -34,6 +35,20 @@ func NewHandler(articleUseCase UseCase, appLogger logger.Logger) *Handler {
 	}
 }
 
+func (h *Handler) handleUseCaseError(c *gin.Context, err error, fields map[string]interface{}, logMsg string) {
+	if fields == nil {
+		fields = make(map[string]interface{})
+	}
+
+	if domainerrs.IsNotFound(err) || domainerrs.IsValidation(err) || domainerrs.IsConflict(err) || domainerrs.IsUnauthorized(err) {
+		h.logger.DebugWithFields(logMsg, fields)
+	} else {
+		fields["error"] = err.Error()
+		h.logger.ErrorWithFields(logMsg, fields)
+	}
+	errmapper.Respond(c, err)
+}
+
 // Create handles POST /articles
 func (h *Handler) Create(c *gin.Context) {
 	var req dto.CreateArticleRequest
@@ -44,8 +59,7 @@ func (h *Handler) Create(c *gin.Context) {
 
 	resp, err := h.articleUseCase.Create(c.Request.Context(), req)
 	if err != nil {
-		h.logger.ErrorWithFields("article create failed", map[string]interface{}{"error": err.Error()})
-		response.ErrorResponseInternalServerError(c, err.Error())
+		h.handleUseCaseError(c, err, map[string]interface{}{"title": req.Title}, "article create failed")
 		return
 	}
 
@@ -63,13 +77,7 @@ func (h *Handler) Get(c *gin.Context) {
 
 	resp, err := h.articleUseCase.Get(c.Request.Context(), id)
 	if err != nil {
-		if err == domainarticle.ErrArticleNotFound {
-			h.logger.DebugWithFields("article not found", map[string]interface{}{"article_id": id})
-			response.ErrorResponseNotFound(c, err.Error())
-		} else {
-			h.logger.ErrorWithFields("article get failed", map[string]interface{}{"article_id": id, "error": err.Error()})
-			response.ErrorResponseInternalServerError(c, err.Error())
-		}
+		h.handleUseCaseError(c, err, map[string]interface{}{"article_id": id}, "article get failed")
 		return
 	}
 
@@ -83,8 +91,7 @@ func (h *Handler) List(c *gin.Context) {
 
 	resp, err := h.articleUseCase.List(c.Request.Context(), limit, offset)
 	if err != nil {
-		h.logger.ErrorWithFields("article list failed", map[string]interface{}{"error": err.Error()})
-		response.ErrorResponseInternalServerError(c, err.Error())
+		h.handleUseCaseError(c, err, nil, "article list failed")
 		return
 	}
 
@@ -107,13 +114,7 @@ func (h *Handler) Update(c *gin.Context) {
 
 	resp, err := h.articleUseCase.Update(c.Request.Context(), id, req)
 	if err != nil {
-		if err == domainarticle.ErrArticleNotFound {
-			h.logger.DebugWithFields("article not found on update", map[string]interface{}{"article_id": id})
-			response.ErrorResponseNotFound(c, err.Error())
-		} else {
-			h.logger.ErrorWithFields("article update failed", map[string]interface{}{"article_id": id, "error": err.Error()})
-			response.ErrorResponseInternalServerError(c, err.Error())
-		}
+		h.handleUseCaseError(c, err, map[string]interface{}{"article_id": id}, "article update failed")
 		return
 	}
 
@@ -131,13 +132,7 @@ func (h *Handler) Delete(c *gin.Context) {
 
 	err = h.articleUseCase.Delete(c.Request.Context(), id)
 	if err != nil {
-		if err == domainarticle.ErrArticleNotFound {
-			h.logger.DebugWithFields("article not found on delete", map[string]interface{}{"article_id": id})
-			response.ErrorResponseNotFound(c, err.Error())
-		} else {
-			h.logger.ErrorWithFields("article delete failed", map[string]interface{}{"article_id": id, "error": err.Error()})
-			response.ErrorResponseInternalServerError(c, err.Error())
-		}
+		h.handleUseCaseError(c, err, map[string]interface{}{"article_id": id}, "article delete failed")
 		return
 	}
 

@@ -58,7 +58,7 @@ func (r *MySQLRepository) GetByID(ctx context.Context, id int64) (*domainarticle
 	)
 
 	if err == sql.ErrNoRows {
-		return nil, domainarticle.ErrArticleNotFound
+		return nil, domainarticle.NewArticleNotFound()
 	}
 	if err != nil {
 		return nil, err
@@ -98,7 +98,7 @@ func (r *MySQLRepository) Delete(ctx context.Context, id int64) error {
 	}
 
 	if rowsAffected == 0 {
-		return domainarticle.ErrArticleNotFound
+		return domainarticle.NewArticleNotFound()
 	}
 
 	return nil

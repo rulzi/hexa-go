@@ -14,10 +14,10 @@ type Media struct {
 // Validate validates the media entity
 func (m *Media) Validate() error {
 	if m.Name == "" {
-		return ErrNameRequired
+		return NewNameRequired()
 	}
 	if m.Path == "" {
-		return ErrPathRequired
+		return NewPathRequired()
 	}
 	return nil
 }

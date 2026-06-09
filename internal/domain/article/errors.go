@@ -1,14 +1,31 @@
 package article
 
-import "errors"
+import domainerrs "github.com/rulzi/hexa-go/internal/domain/errs"
 
-var (
-	// ErrArticleNotFound is returned when an article is not found
-	ErrArticleNotFound = errors.New("article not found")
-	// ErrTitleRequired is returned when article title is missing
-	ErrTitleRequired = errors.New("title is required")
-	// ErrContentRequired is returned when article content is missing
-	ErrContentRequired = errors.New("content is required")
-	// ErrAuthorIDRequired is returned when author ID is missing
-	ErrAuthorIDRequired = errors.New("author id is required")
+const (
+	CodeArticleNotFound   = "ARTICLE_NOT_FOUND"
+	CodeTitleRequired     = "ARTICLE_TITLE_REQUIRED"
+	CodeContentRequired   = "ARTICLE_CONTENT_REQUIRED"
+	CodeAuthorIDRequired  = "ARTICLE_AUTHOR_ID_REQUIRED"
 )
+
+func NewArticleNotFound() error {
+	return domainerrs.NewNotFound(CodeArticleNotFound, "article not found")
+}
+
+func NewTitleRequired() error {
+	return domainerrs.NewValidation(CodeTitleRequired, "title is required")
+}
+
+func NewContentRequired() error {
+	return domainerrs.NewValidation(CodeContentRequired, "content is required")
+}
+
+func NewAuthorIDRequired() error {
+	return domainerrs.NewValidation(CodeAuthorIDRequired, "author id is required")
+}
+
+func IsArticleNotFound(err error) bool  { return domainerrs.IsCode(err, CodeArticleNotFound) }
+func IsTitleRequired(err error) bool    { return domainerrs.IsCode(err, CodeTitleRequired) }
+func IsContentRequired(err error) bool  { return domainerrs.IsCode(err, CodeContentRequired) }
+func IsAuthorIDRequired(err error) bool { return domainerrs.IsCode(err, CodeAuthorIDRequired) }

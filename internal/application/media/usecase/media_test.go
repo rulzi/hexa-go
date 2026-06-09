@@ -122,7 +122,7 @@ func TestMediaUseCase_Get_MediaNotFound(t *testing.T) {
 	result, err := uc.Get(ctx, mediaID)
 
 	assert.Error(t, err)
-	assert.Equal(t, domainmedia.ErrMediaNotFound, err)
+	assert.True(t, domainmedia.IsMediaNotFound(err))
 	assert.Nil(t, result)
 }
 
@@ -226,7 +226,7 @@ func TestMediaUseCase_Update_MediaNotFound(t *testing.T) {
 	result, err := uc.Update(ctx, mediaID, "new.jpg", strings.NewReader("x"))
 
 	assert.Error(t, err)
-	assert.Equal(t, domainmedia.ErrMediaNotFound, err)
+	assert.True(t, domainmedia.IsMediaNotFound(err))
 	assert.Nil(t, result)
 	storage.AssertNotCalled(t, "Save")
 }
@@ -273,7 +273,7 @@ func TestMediaUseCase_Delete_MediaNotFound(t *testing.T) {
 	err := uc.Delete(ctx, mediaID)
 
 	assert.Error(t, err)
-	assert.Equal(t, domainmedia.ErrMediaNotFound, err)
+	assert.True(t, domainmedia.IsMediaNotFound(err))
 	storage.AssertNotCalled(t, "Delete")
 	repo.AssertNotCalled(t, "Delete")
 }

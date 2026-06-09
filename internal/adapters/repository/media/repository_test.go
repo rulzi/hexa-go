@@ -194,7 +194,7 @@ func TestMySQLRepository_GetByID(t *testing.T) {
 			if tt.wantErr {
 				assert.Error(t, err)
 				if tt.name == "media not found" {
-					assert.Equal(t, domainmedia.ErrMediaNotFound, err)
+					assert.True(t, domainmedia.IsMediaNotFound(err))
 				}
 				if tt.check != nil {
 					tt.check(t, result)
@@ -363,7 +363,7 @@ func TestMySQLRepository_Delete(t *testing.T) {
 			if tt.wantErr {
 				assert.Error(t, err)
 				if tt.name == "media not found" {
-					assert.Equal(t, domainmedia.ErrMediaNotFound, err)
+					assert.True(t, domainmedia.IsMediaNotFound(err))
 				}
 			} else {
 				assert.NoError(t, err)

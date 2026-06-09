@@ -266,7 +266,7 @@ func TestLocalStorageAdapter_Get_FileNotFound(t *testing.T) {
 	reader, err := storage.Get(ctx, "nonexistent/file.jpg")
 
 	assert.Error(t, err)
-	assert.Equal(t, domainmedia.ErrMediaNotFound, err)
+	assert.True(t, domainmedia.IsMediaNotFound(err))
 	assert.Nil(t, reader)
 }
 
@@ -333,7 +333,7 @@ func TestLocalStorageAdapter_RoundTrip(t *testing.T) {
 	// Verify deleted
 	_, err = storage.Get(ctx, path)
 	assert.Error(t, err)
-	assert.Equal(t, domainmedia.ErrMediaNotFound, err)
+	assert.True(t, domainmedia.IsMediaNotFound(err))
 }
 
 func TestLocalStorageAdapter_ImplementsInterface(t *testing.T) {

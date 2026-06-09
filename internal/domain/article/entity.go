@@ -15,13 +15,13 @@ type Article struct {
 // Validate validates the article entity
 func (a *Article) Validate() error {
 	if a.Title == "" {
-		return ErrTitleRequired
+		return NewTitleRequired()
 	}
 	if a.Content == "" {
-		return ErrContentRequired
+		return NewContentRequired()
 	}
 	if a.AuthorID <= 0 {
-		return ErrAuthorIDRequired
+		return NewAuthorIDRequired()
 	}
 	return nil
 }

@@ -9,9 +9,9 @@ import (
 
 func TestArticle_Validate(t *testing.T) {
 	tests := []struct {
-		name    string
-		article Article
-		wantErr error
+		name         string
+		article      Article
+		wantErrCheck func(error) bool
 	}{
 		{
 			name: "valid article",
@@ -23,7 +23,7 @@ func TestArticle_Validate(t *testing.T) {
 				CreatedAt: time.Now(),
 				UpdatedAt: time.Now(),
 			},
-			wantErr: nil,
+			wantErrCheck: nil,
 		},
 		{
 			name: "missing title",
@@ -35,7 +35,7 @@ func TestArticle_Validate(t *testing.T) {
 				CreatedAt: time.Now(),
 				UpdatedAt: time.Now(),
 			},
-			wantErr: ErrTitleRequired,
+			wantErrCheck: IsTitleRequired,
 		},
 		{
 			name: "missing content",
@@ -47,7 +47,7 @@ func TestArticle_Validate(t *testing.T) {
 				CreatedAt: time.Now(),
 				UpdatedAt: time.Now(),
 			},
-			wantErr: ErrContentRequired,
+			wantErrCheck: IsContentRequired,
 		},
 		{
 			name: "zero author ID",
@@ -59,7 +59,7 @@ func TestArticle_Validate(t *testing.T) {
 				CreatedAt: time.Now(),
 				UpdatedAt: time.Now(),
 			},
-			wantErr: ErrAuthorIDRequired,
+			wantErrCheck: IsAuthorIDRequired,
 		},
 		{
 			name: "negative author ID",
@@ -71,7 +71,7 @@ func TestArticle_Validate(t *testing.T) {
 				CreatedAt: time.Now(),
 				UpdatedAt: time.Now(),
 			},
-			wantErr: ErrAuthorIDRequired,
+			wantErrCheck: IsAuthorIDRequired,
 		},
 		{
 			name: "missing title and content",
@@ -83,7 +83,7 @@ func TestArticle_Validate(t *testing.T) {
 				CreatedAt: time.Now(),
 				UpdatedAt: time.Now(),
 			},
-			wantErr: ErrTitleRequired, // Should return first error encountered
+			wantErrCheck: IsTitleRequired, // Should return first error encountered
 		},
 		{
 			name: "all fields invalid",
@@ -95,18 +95,18 @@ func TestArticle_Validate(t *testing.T) {
 				CreatedAt: time.Now(),
 				UpdatedAt: time.Now(),
 			},
-			wantErr: ErrTitleRequired, // Should return first error encountered
+			wantErrCheck: IsTitleRequired, // Should return first error encountered
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := tt.article.Validate()
-			if tt.wantErr == nil {
+			if tt.wantErrCheck == nil {
 				assert.NoError(t, err)
 			} else {
 				assert.Error(t, err)
-				assert.Equal(t, tt.wantErr, err)
+				assert.True(t, tt.wantErrCheck(err))
 			}
 		})
 	}

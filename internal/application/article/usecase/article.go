@@ -93,7 +93,7 @@ func (uc *ArticleUseCase) Get(ctx context.Context, id int64) (*dto.ArticleRespon
 	}
 
 	if articleEntity == nil {
-		return nil, domainarticle.ErrArticleNotFound
+		return nil, domainarticle.NewArticleNotFound()
 	}
 
 	response := &dto.ArticleResponse{
@@ -172,7 +172,7 @@ func (uc *ArticleUseCase) Update(ctx context.Context, id int64, req dto.UpdateAr
 	}
 
 	if existingArticle == nil {
-		return nil, domainarticle.ErrArticleNotFound
+		return nil, domainarticle.NewArticleNotFound()
 	}
 
 	existingArticle.Title = req.Title
@@ -216,7 +216,7 @@ func (uc *ArticleUseCase) Delete(ctx context.Context, id int64) error {
 	}
 
 	if existingArticle == nil {
-		return domainarticle.ErrArticleNotFound
+		return domainarticle.NewArticleNotFound()
 	}
 
 	if err := uc.articleRepo.Delete(ctx, id); err != nil {

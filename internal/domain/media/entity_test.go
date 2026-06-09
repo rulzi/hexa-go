@@ -9,9 +9,9 @@ import (
 
 func TestMedia_Validate(t *testing.T) {
 	tests := []struct {
-		name    string
-		media   Media
-		wantErr error
+		name         string
+		media        Media
+		wantErrCheck func(error) bool
 	}{
 		{
 			name: "valid media",
@@ -22,7 +22,7 @@ func TestMedia_Validate(t *testing.T) {
 				CreatedAt: time.Now(),
 				UpdatedAt: time.Now(),
 			},
-			wantErr: nil,
+			wantErrCheck: nil,
 		},
 		{
 			name: "missing name",
@@ -33,7 +33,7 @@ func TestMedia_Validate(t *testing.T) {
 				CreatedAt: time.Now(),
 				UpdatedAt: time.Now(),
 			},
-			wantErr: ErrNameRequired,
+			wantErrCheck: IsNameRequired,
 		},
 		{
 			name: "missing path",
@@ -44,7 +44,7 @@ func TestMedia_Validate(t *testing.T) {
 				CreatedAt: time.Now(),
 				UpdatedAt: time.Now(),
 			},
-			wantErr: ErrPathRequired,
+			wantErrCheck: IsPathRequired,
 		},
 		{
 			name: "missing name and path",
@@ -55,7 +55,7 @@ func TestMedia_Validate(t *testing.T) {
 				CreatedAt: time.Now(),
 				UpdatedAt: time.Now(),
 			},
-			wantErr: ErrNameRequired, // Should return first error encountered
+			wantErrCheck: IsNameRequired, // Should return first error encountered
 		},
 		{
 			name: "valid media with long name",
@@ -66,7 +66,7 @@ func TestMedia_Validate(t *testing.T) {
 				CreatedAt: time.Now(),
 				UpdatedAt: time.Now(),
 			},
-			wantErr: nil,
+			wantErrCheck: nil,
 		},
 		{
 			name: "valid media with nested path",
@@ -77,18 +77,18 @@ func TestMedia_Validate(t *testing.T) {
 				CreatedAt: time.Now(),
 				UpdatedAt: time.Now(),
 			},
-			wantErr: nil,
+			wantErrCheck: nil,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := tt.media.Validate()
-			if tt.wantErr == nil {
+			if tt.wantErrCheck == nil {
 				assert.NoError(t, err)
 			} else {
 				assert.Error(t, err)
-				assert.Equal(t, tt.wantErr, err)
+				assert.True(t, tt.wantErrCheck(err))
 			}
 		})
 	}

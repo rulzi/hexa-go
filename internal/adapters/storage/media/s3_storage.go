@@ -92,7 +92,7 @@ func (s *S3StorageAdapter) Get(ctx context.Context, path string) (io.ReadCloser,
 	})
 	if err != nil {
 		if isS3NotFound(err) {
-			return nil, domainmedia.ErrMediaNotFound
+			return nil, domainmedia.NewMediaNotFound()
 		}
 		return nil, fmt.Errorf("failed to get file from S3: %w", err)
 	}

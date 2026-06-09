@@ -76,7 +76,7 @@ func (s *LocalStorageAdapter) Get(ctx context.Context, path string) (io.ReadClos
 	file, err := os.Open(fullPath)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return nil, domainmedia.ErrMediaNotFound
+			return nil, domainmedia.NewMediaNotFound()
 		}
 		return nil, fmt.Errorf("failed to open file: %w", err)
 	}

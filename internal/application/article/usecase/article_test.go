@@ -215,7 +215,7 @@ func TestArticleUseCase_Get_ArticleNotFound(t *testing.T) {
 	result, err := uc.Get(ctx, articleID)
 
 	assert.Error(t, err)
-	assert.Equal(t, domainarticle.ErrArticleNotFound, err)
+	assert.True(t, domainarticle.IsArticleNotFound(err))
 	assert.Nil(t, result)
 }
 
@@ -402,7 +402,7 @@ func TestArticleUseCase_Update_ArticleNotFound(t *testing.T) {
 	result, err := uc.Update(ctx, articleID, req)
 
 	assert.Error(t, err)
-	assert.Equal(t, domainarticle.ErrArticleNotFound, err)
+	assert.True(t, domainarticle.IsArticleNotFound(err))
 	assert.Nil(t, result)
 	repo.AssertNotCalled(t, "Update")
 }
@@ -483,7 +483,7 @@ func TestArticleUseCase_Delete_ArticleNotFound(t *testing.T) {
 	err := uc.Delete(ctx, articleID)
 
 	assert.Error(t, err)
-	assert.Equal(t, domainarticle.ErrArticleNotFound, err)
+	assert.True(t, domainarticle.IsArticleNotFound(err))
 	repo.AssertNotCalled(t, "Delete")
 }
 

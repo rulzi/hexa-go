@@ -199,7 +199,7 @@ func TestMySQLRepository_GetByID(t *testing.T) {
 			if tt.wantErr {
 				assert.Error(t, err)
 				if tt.name == "article not found" {
-					assert.Equal(t, domainarticle.ErrArticleNotFound, err)
+					assert.True(t, domainarticle.IsArticleNotFound(err))
 				}
 				if tt.check != nil {
 					tt.check(t, result)
@@ -368,7 +368,7 @@ func TestMySQLRepository_Delete(t *testing.T) {
 			if tt.wantErr {
 				assert.Error(t, err)
 				if tt.name == "article not found" {
-					assert.Equal(t, domainarticle.ErrArticleNotFound, err)
+					assert.True(t, domainarticle.IsArticleNotFound(err))
 				}
 			} else {
 				assert.NoError(t, err)

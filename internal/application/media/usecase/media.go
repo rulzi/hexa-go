@@ -75,7 +75,7 @@ func (uc *MediaUseCase) Get(ctx context.Context, id int64) (*dto.MediaResponse, 
 	}
 
 	if mediaEntity == nil {
-		return nil, domainmedia.ErrMediaNotFound
+		return nil, domainmedia.NewMediaNotFound()
 	}
 
 	return &dto.MediaResponse{
@@ -135,7 +135,7 @@ func (uc *MediaUseCase) Update(ctx context.Context, id int64, filename string, f
 	}
 
 	if existingMedia == nil {
-		return nil, domainmedia.ErrMediaNotFound
+		return nil, domainmedia.NewMediaNotFound()
 	}
 
 	oldPath := existingMedia.Path
@@ -180,7 +180,7 @@ func (uc *MediaUseCase) Delete(ctx context.Context, id int64) error {
 	}
 
 	if existingMedia == nil {
-		return domainmedia.ErrMediaNotFound
+		return domainmedia.NewMediaNotFound()
 	}
 
 	if err := uc.storage.Delete(ctx, existingMedia.Path); err != nil {

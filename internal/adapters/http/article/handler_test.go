@@ -237,7 +237,7 @@ func TestHandler_Get_NotFound(t *testing.T) {
 	handler := NewHandler(uc, testLogger)
 
 	articleID := int64(999)
-	uc.On("Get", mock.Anything, articleID).Return(nil, domainarticle.ErrArticleNotFound)
+	uc.On("Get", mock.Anything, articleID).Return(nil, domainarticle.NewArticleNotFound())
 
 	router := setupTestRouter(handler)
 	router.GET("/articles/:id", handler.Get)
@@ -473,7 +473,7 @@ func TestHandler_Update_NotFound(t *testing.T) {
 		Content: "Updated Content",
 	}
 
-	uc.On("Update", mock.Anything, articleID, reqBody).Return(nil, domainarticle.ErrArticleNotFound)
+	uc.On("Update", mock.Anything, articleID, reqBody).Return(nil, domainarticle.NewArticleNotFound())
 
 	router := setupTestRouter(handler)
 	router.PUT("/articles/:id", handler.Update)
@@ -561,7 +561,7 @@ func TestHandler_Delete_NotFound(t *testing.T) {
 	handler := NewHandler(uc, testLogger)
 
 	articleID := int64(999)
-	uc.On("Delete", mock.Anything, articleID).Return(domainarticle.ErrArticleNotFound)
+	uc.On("Delete", mock.Anything, articleID).Return(domainarticle.NewArticleNotFound())
 
 	router := setupTestRouter(handler)
 	router.DELETE("/articles/:id", handler.Delete)

@@ -169,7 +169,7 @@ func TestHandler_Create_BadRequest_ValidationError(t *testing.T) {
 	body, contentType, err := createMultipartFormData(filename, fileContent)
 	assert.NoError(t, err)
 
-	uc.On("Create", mock.Anything, filename, mock.Anything).Return(nil, domainmedia.ErrNameRequired)
+	uc.On("Create", mock.Anything, filename, mock.Anything).Return(nil, domainmedia.NewNameRequired())
 
 	router := setupTestRouter(handler)
 	router.POST("/media", handler.Create)
@@ -265,7 +265,7 @@ func TestHandler_Get_NotFound(t *testing.T) {
 	handler := NewHandler(uc, testLogger)
 
 	mediaID := int64(999)
-	uc.On("Get", mock.Anything, mediaID).Return(nil, domainmedia.ErrMediaNotFound)
+	uc.On("Get", mock.Anything, mediaID).Return(nil, domainmedia.NewMediaNotFound())
 
 	router := setupTestRouter(handler)
 	router.GET("/media/:id", handler.Get)
@@ -481,7 +481,7 @@ func TestHandler_Update_BadRequest_ValidationError(t *testing.T) {
 	body, contentType, err := createMultipartFormData(filename, fileContent)
 	assert.NoError(t, err)
 
-	uc.On("Update", mock.Anything, mediaID, filename, mock.Anything).Return(nil, domainmedia.ErrNameRequired)
+	uc.On("Update", mock.Anything, mediaID, filename, mock.Anything).Return(nil, domainmedia.NewNameRequired())
 
 	router := setupTestRouter(handler)
 	router.PUT("/media/:id", handler.Update)
@@ -508,7 +508,7 @@ func TestHandler_Update_NotFound(t *testing.T) {
 	body, contentType, err := createMultipartFormData(filename, fileContent)
 	assert.NoError(t, err)
 
-	uc.On("Update", mock.Anything, mediaID, filename, mock.Anything).Return(nil, domainmedia.ErrMediaNotFound)
+	uc.On("Update", mock.Anything, mediaID, filename, mock.Anything).Return(nil, domainmedia.NewMediaNotFound())
 
 	router := setupTestRouter(handler)
 	router.PUT("/media/:id", handler.Update)
@@ -596,7 +596,7 @@ func TestHandler_Delete_NotFound(t *testing.T) {
 	handler := NewHandler(uc, testLogger)
 
 	mediaID := int64(999)
-	uc.On("Delete", mock.Anything, mediaID).Return(domainmedia.ErrMediaNotFound)
+	uc.On("Delete", mock.Anything, mediaID).Return(domainmedia.NewMediaNotFound())
 
 	router := setupTestRouter(handler)
 	router.DELETE("/media/:id", handler.Delete)
