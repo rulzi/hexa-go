@@ -1,8 +1,13 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
@@ -93,11 +98,33 @@ func main() {
 	// Setup routes
 	container.Router.SetupRoutes(router)
 
-	// Start server
+	// Start server with graceful shutdown
 	addr := fmt.Sprintf("%s:%s", cfg.Server.Host, cfg.Server.Port)
-	appLogger.Info(fmt.Sprintf("Server starting on %s", addr))
-
-	if err := http.ListenAndServe(addr, router); err != nil {
-		appLogger.Fatal(fmt.Sprintf("Failed to start server: %v", err))
+	srv := &http.Server{
+		Addr:    addr,
+		Handler: router,
 	}
+
+	go func() {
+		appLogger.Info(fmt.Sprintf("Server starting on %s", addr))
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			appLogger.Fatal(fmt.Sprintf("Failed to start server: %v", err))
+		}
+	}()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
+	appLogger.Info("Shutting down server...")
+
+	const shutdownTimeout = 30 * time.Second
+	ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
+	defer cancel()
+
+	if err := srv.Shutdown(ctx); err != nil {
+		appLogger.Error(fmt.Sprintf("Server forced to shutdown: %v", err))
+	}
+
+	appLogger.Info("Server exited")
 }
