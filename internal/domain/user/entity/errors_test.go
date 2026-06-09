@@ -1,4 +1,4 @@
-package user
+package entity
 
 import (
 	"fmt"
@@ -10,10 +10,10 @@ import (
 
 func TestUserErrors(t *testing.T) {
 	tests := []struct {
-		name     string
-		err      error
-		check    func(error) bool
-		kind     func(error) bool
+		name  string
+		err   error
+		check func(error) bool
+		kind  func(error) bool
 	}{
 		{"not found", NewUserNotFound(), IsUserNotFound, domainerrs.IsNotFound},
 		{"email exists", NewEmailExists(), IsEmailExists, domainerrs.IsConflict},

@@ -1,4 +1,4 @@
-package user
+package entity
 
 import (
 	"testing"
@@ -71,7 +71,7 @@ func TestUser_Validate(t *testing.T) {
 				CreatedAt: time.Now(),
 				UpdatedAt: time.Now(),
 			},
-			wantErrCheck: IsNameRequired, // Should return first error encountered
+			wantErrCheck: IsNameRequired,
 		},
 		{
 			name: "missing name and password",
@@ -83,7 +83,7 @@ func TestUser_Validate(t *testing.T) {
 				CreatedAt: time.Now(),
 				UpdatedAt: time.Now(),
 			},
-			wantErrCheck: IsNameRequired, // Should return first error encountered
+			wantErrCheck: IsNameRequired,
 		},
 		{
 			name: "missing email and password",
@@ -95,7 +95,7 @@ func TestUser_Validate(t *testing.T) {
 				CreatedAt: time.Now(),
 				UpdatedAt: time.Now(),
 			},
-			wantErrCheck: IsEmailRequired, // Should return first error encountered
+			wantErrCheck: IsEmailRequired,
 		},
 		{
 			name: "all fields missing",
@@ -107,7 +107,7 @@ func TestUser_Validate(t *testing.T) {
 				CreatedAt: time.Now(),
 				UpdatedAt: time.Now(),
 			},
-			wantErrCheck: IsNameRequired, // Should return first error encountered
+			wantErrCheck: IsNameRequired,
 		},
 		{
 			name: "valid user with long name",
@@ -147,4 +147,3 @@ func TestUser_Validate(t *testing.T) {
 		})
 	}
 }
-

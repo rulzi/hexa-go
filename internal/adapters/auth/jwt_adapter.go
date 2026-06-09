@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	domainuser "github.com/rulzi/hexa-go/internal/domain/user"
+	userport "github.com/rulzi/hexa-go/internal/domain/user/port"
 )
 
 // JWTAdapter implements TokenGenerator and TokenValidator using JWT library
@@ -43,7 +43,7 @@ func (a *JWTAdapter) Generate(userID int64, email string) (string, error) {
 }
 
 // Validate implements TokenValidator interface
-func (a *JWTAdapter) Validate(tokenString string) (*domainuser.TokenClaims, error) {
+func (a *JWTAdapter) Validate(tokenString string) (*userport.TokenClaims, error) {
 	claims := &jwtClaims{}
 
 	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
@@ -58,7 +58,7 @@ func (a *JWTAdapter) Validate(tokenString string) (*domainuser.TokenClaims, erro
 		return nil, jwt.ErrSignatureInvalid
 	}
 
-	return &domainuser.TokenClaims{
+	return &userport.TokenClaims{
 		UserID: claims.UserID,
 		Email:  claims.Email,
 	}, nil

@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	domainuser "github.com/rulzi/hexa-go/internal/domain/user"
+	userport "github.com/rulzi/hexa-go/internal/domain/user/port"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -18,12 +18,12 @@ type mockTokenValidator struct {
 	mock.Mock
 }
 
-func (m *mockTokenValidator) Validate(token string) (*domainuser.TokenClaims, error) {
+func (m *mockTokenValidator) Validate(token string) (*userport.TokenClaims, error) {
 	args := m.Called(token)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*domainuser.TokenClaims), args.Error(1)
+	return args.Get(0).(*userport.TokenClaims), args.Error(1)
 }
 
 func setupTestRouter(middleware gin.HandlerFunc) *gin.Engine {
@@ -40,7 +40,7 @@ func TestAuthMiddleware_Success(t *testing.T) {
 	mockValidator := &mockTokenValidator{}
 	middleware := AuthMiddleware(mockValidator)
 
-	expectedClaims := &domainuser.TokenClaims{
+	expectedClaims := &userport.TokenClaims{
 		UserID: 1,
 		Email:  "test@example.com",
 	}
@@ -218,7 +218,7 @@ func TestAuthMiddleware_ContextValuesSet(t *testing.T) {
 	mockValidator := &mockTokenValidator{}
 	middleware := AuthMiddleware(mockValidator)
 
-	expectedClaims := &domainuser.TokenClaims{
+	expectedClaims := &userport.TokenClaims{
 		UserID: 123,
 		Email:  "user@example.com",
 	}

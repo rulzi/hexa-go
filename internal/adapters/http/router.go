@@ -7,7 +7,7 @@ import (
 	"github.com/rulzi/hexa-go/internal/adapters/http/middleware"
 	"github.com/rulzi/hexa-go/internal/adapters/http/response"
 	httpuser "github.com/rulzi/hexa-go/internal/adapters/http/user"
-	domainuser "github.com/rulzi/hexa-go/internal/domain/user"
+	userport "github.com/rulzi/hexa-go/internal/domain/user/port"
 	"github.com/rulzi/hexa-go/internal/infrastructure/logger"
 )
 
@@ -16,13 +16,13 @@ type Router struct {
 	userHandler     *httpuser.Handler
 	articleHandler  *httparticle.Handler
 	mediaHandler    *httpmedia.Handler
-	tokenValidator  domainuser.TokenValidator
+	tokenValidator  userport.TokenValidator
 	storageBasePath string
 	logger          logger.Logger
 }
 
 // NewRouter creates a new router
-func NewRouter(userHandler *httpuser.Handler, articleHandler *httparticle.Handler, mediaHandler *httpmedia.Handler, tokenValidator domainuser.TokenValidator, storageBasePath string, appLogger logger.Logger) *Router {
+func NewRouter(userHandler *httpuser.Handler, articleHandler *httparticle.Handler, mediaHandler *httpmedia.Handler, tokenValidator userport.TokenValidator, storageBasePath string, appLogger logger.Logger) *Router {
 	return &Router{
 		userHandler:     userHandler,
 		articleHandler:  articleHandler,

@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	domainuser "github.com/rulzi/hexa-go/internal/domain/user"
+	userport "github.com/rulzi/hexa-go/internal/domain/user/port"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -218,8 +218,8 @@ func TestJWTAdapter_Validate_ImplementsInterface(t *testing.T) {
 	adapter := NewJWTAdapter(secret, expiration)
 
 	// Verify that JWTAdapter implements TokenGenerator and TokenValidator interfaces
-	var _ domainuser.TokenGenerator = adapter
-	var _ domainuser.TokenValidator = adapter
+	var _ userport.TokenGenerator = adapter
+	var _ userport.TokenValidator = adapter
 }
 
 func TestJWTAdapter_Generate_ExpirationTime(t *testing.T) {

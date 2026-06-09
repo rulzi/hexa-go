@@ -1,17 +1,17 @@
-package user
+package entity
 
 import domainerrs "github.com/rulzi/hexa-go/internal/domain/errs"
 
 // Domain-specific error codes. Used for assertions and logging — not HTTP status.
 const (
-	CodeUserNotFound        = "USER_NOT_FOUND"
-	CodeEmailExists         = "USER_EMAIL_EXISTS"
-	CodeNameRequired        = "USER_NAME_REQUIRED"
-	CodeEmailRequired       = "USER_EMAIL_REQUIRED"
-	CodePasswordRequired    = "USER_PASSWORD_REQUIRED"
-	CodePasswordTooShort    = "USER_PASSWORD_TOO_SHORT"
-	CodeInvalidEmail        = "USER_INVALID_EMAIL"
-	CodeInvalidCredentials  = "USER_INVALID_CREDENTIALS"
+	CodeUserNotFound       = "USER_NOT_FOUND"
+	CodeEmailExists        = "USER_EMAIL_EXISTS"
+	CodeNameRequired       = "USER_NAME_REQUIRED"
+	CodeEmailRequired      = "USER_EMAIL_REQUIRED"
+	CodePasswordRequired   = "USER_PASSWORD_REQUIRED"
+	CodePasswordTooShort   = "USER_PASSWORD_TOO_SHORT"
+	CodeInvalidEmail       = "USER_INVALID_EMAIL"
+	CodeInvalidCredentials = "USER_INVALID_CREDENTIALS"
 )
 
 func NewUserNotFound() error {

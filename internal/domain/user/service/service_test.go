@@ -1,45 +1,46 @@
-package user
+package service
 
 import (
 	"context"
 	"testing"
 
+	"github.com/rulzi/hexa-go/internal/domain/user/entity"
+	"github.com/rulzi/hexa-go/internal/domain/user/port"
 	"github.com/stretchr/testify/assert"
 )
 
-// mockRepository is a mock implementation of Repository for testing
 type mockRepository struct {
-	createFunc    func(ctx context.Context, user *User) (*User, error)
-	getByIDFunc   func(ctx context.Context, id int64) (*User, error)
-	getByEmailFunc func(ctx context.Context, email string) (*User, error)
-	updateFunc    func(ctx context.Context, user *User) (*User, error)
-	deleteFunc    func(ctx context.Context, id int64) error
-	listFunc      func(ctx context.Context, limit, offset int) ([]*User, error)
-	countFunc     func(ctx context.Context) (int64, error)
+	createFunc     func(ctx context.Context, user *entity.User) (*entity.User, error)
+	getByIDFunc    func(ctx context.Context, id int64) (*entity.User, error)
+	getByEmailFunc func(ctx context.Context, email string) (*entity.User, error)
+	updateFunc     func(ctx context.Context, user *entity.User) (*entity.User, error)
+	deleteFunc     func(ctx context.Context, id int64) error
+	listFunc       func(ctx context.Context, limit, offset int) ([]*entity.User, error)
+	countFunc      func(ctx context.Context) (int64, error)
 }
 
-func (m *mockRepository) Create(ctx context.Context, user *User) (*User, error) {
+func (m *mockRepository) Create(ctx context.Context, user *entity.User) (*entity.User, error) {
 	if m.createFunc != nil {
 		return m.createFunc(ctx, user)
 	}
 	return nil, nil
 }
 
-func (m *mockRepository) GetByID(ctx context.Context, id int64) (*User, error) {
+func (m *mockRepository) GetByID(ctx context.Context, id int64) (*entity.User, error) {
 	if m.getByIDFunc != nil {
 		return m.getByIDFunc(ctx, id)
 	}
 	return nil, nil
 }
 
-func (m *mockRepository) GetByEmail(ctx context.Context, email string) (*User, error) {
+func (m *mockRepository) GetByEmail(ctx context.Context, email string) (*entity.User, error) {
 	if m.getByEmailFunc != nil {
 		return m.getByEmailFunc(ctx, email)
 	}
 	return nil, nil
 }
 
-func (m *mockRepository) Update(ctx context.Context, user *User) (*User, error) {
+func (m *mockRepository) Update(ctx context.Context, user *entity.User) (*entity.User, error) {
 	if m.updateFunc != nil {
 		return m.updateFunc(ctx, user)
 	}
@@ -53,7 +54,7 @@ func (m *mockRepository) Delete(ctx context.Context, id int64) error {
 	return nil
 }
 
-func (m *mockRepository) List(ctx context.Context, limit, offset int) ([]*User, error) {
+func (m *mockRepository) List(ctx context.Context, limit, offset int) ([]*entity.User, error) {
 	if m.listFunc != nil {
 		return m.listFunc(ctx, limit, offset)
 	}
@@ -67,7 +68,6 @@ func (m *mockRepository) Count(ctx context.Context) (int64, error) {
 	return 0, nil
 }
 
-// mockTokenGenerator is a mock implementation of TokenGenerator for testing
 type mockTokenGenerator struct {
 	generateFunc func(userID int64, email string) (string, error)
 }
@@ -79,19 +79,17 @@ func (m *mockTokenGenerator) Generate(userID int64, email string) (string, error
 	return "mock-token", nil
 }
 
-// mockTokenValidator is a mock implementation of TokenValidator for testing
 type mockTokenValidator struct {
-	validateFunc func(token string) (*TokenClaims, error)
+	validateFunc func(token string) (*port.TokenClaims, error)
 }
 
-func (m *mockTokenValidator) Validate(token string) (*TokenClaims, error) {
+func (m *mockTokenValidator) Validate(token string) (*port.TokenClaims, error) {
 	if m.validateFunc != nil {
 		return m.validateFunc(token)
 	}
-	return &TokenClaims{UserID: 1, Email: "test@example.com"}, nil
+	return &port.TokenClaims{UserID: 1, Email: "test@example.com"}, nil
 }
 
-// mockPasswordHasher is a mock implementation of PasswordHasher for testing
 type mockPasswordHasher struct {
 	hashFunc   func(password string) (string, error)
 	verifyFunc func(hashedPassword, password string) bool
@@ -114,10 +112,10 @@ func (m *mockPasswordHasher) Verify(hashedPassword, password string) bool {
 func TestNewService(t *testing.T) {
 	tests := []struct {
 		name           string
-		repo           Repository
-		tokenGen       TokenGenerator
-		tokenValidator TokenValidator
-		passwordHasher PasswordHasher
+		repo           port.Repository
+		tokenGen       port.TokenGenerator
+		tokenValidator port.TokenValidator
+		passwordHasher port.PasswordHasher
 	}{
 		{
 			name:           "create service with all dependencies",
@@ -144,13 +142,12 @@ func TestNewService(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			service := NewService(tt.repo, tt.tokenGen, tt.tokenValidator, tt.passwordHasher)
-			assert.NotNil(t, service)
-			assert.Equal(t, tt.repo, service.repo)
-			assert.Equal(t, tt.tokenGen, service.tokenGen)
-			assert.Equal(t, tt.tokenValidator, service.tokenValidator)
-			assert.Equal(t, tt.passwordHasher, service.passwordHasher)
+			svc := NewService(tt.repo, tt.tokenGen, tt.tokenValidator, tt.passwordHasher)
+			assert.NotNil(t, svc)
+			assert.Equal(t, tt.repo, svc.repo)
+			assert.Equal(t, tt.tokenGen, svc.tokenGen)
+			assert.Equal(t, tt.tokenValidator, svc.tokenValidator)
+			assert.Equal(t, tt.passwordHasher, svc.passwordHasher)
 		})
 	}
 }
-

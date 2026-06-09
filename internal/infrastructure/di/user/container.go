@@ -8,18 +8,19 @@ import (
 	httpuser "github.com/rulzi/hexa-go/internal/adapters/http/user"
 	userdb "github.com/rulzi/hexa-go/internal/adapters/repository/user"
 	"github.com/rulzi/hexa-go/internal/application/user/usecase"
-	domainuser "github.com/rulzi/hexa-go/internal/domain/user"
+	userport "github.com/rulzi/hexa-go/internal/domain/user/port"
+	userservice "github.com/rulzi/hexa-go/internal/domain/user/service"
 	"github.com/rulzi/hexa-go/internal/infrastructure/logger"
 )
 
 // Container holds all user domain dependencies
 type Container struct {
-	Repo                domainuser.Repository
-	Service             *domainuser.Service
-	TokenGen            domainuser.TokenGenerator
-	TokenValidator      domainuser.TokenValidator
-	PasswordHasher      domainuser.PasswordHasher
-	NotificationService domainuser.NotificationService
+	Repo                userport.Repository
+	Service             *userservice.Service
+	TokenGen            userport.TokenGenerator
+	TokenValidator      userport.TokenValidator
+	PasswordHasher      userport.PasswordHasher
+	NotificationService userport.NotificationService
 	UserUC              *usecase.UserUseCase
 	Handler             *httpuser.Handler
 }
@@ -34,7 +35,7 @@ func NewContainer(database *sql.DB, appLogger logger.Logger, jwtSecret string, j
 	passwordHasher := authadapter.NewBcryptPasswordHasher()
 
 	// Initialize domain service
-	userService := domainuser.NewService(userRepo, jwtAdapter, jwtAdapter, passwordHasher)
+	userService := userservice.NewService(userRepo, jwtAdapter, jwtAdapter, passwordHasher)
 
 	// Initialize external service adapter
 	notificationService := userexternal.NewEmailSenderImpl(appLogger)

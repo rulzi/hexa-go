@@ -5,11 +5,11 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/rulzi/hexa-go/internal/adapters/http/response"
-	domainuser "github.com/rulzi/hexa-go/internal/domain/user"
+	userport "github.com/rulzi/hexa-go/internal/domain/user/port"
 )
 
 // AuthMiddleware creates a middleware for JWT authentication
-func AuthMiddleware(tokenValidator domainuser.TokenValidator) gin.HandlerFunc {
+func AuthMiddleware(tokenValidator userport.TokenValidator) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {

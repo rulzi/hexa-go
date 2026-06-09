@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	domainuser "github.com/rulzi/hexa-go/internal/domain/user"
+	userentity "github.com/rulzi/hexa-go/internal/domain/user/entity"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -32,14 +32,14 @@ func TestNewMySQLRepository(t *testing.T) {
 func TestMySQLRepository_Create(t *testing.T) {
 	tests := []struct {
 		name    string
-		user    *domainuser.User
+		user    *userentity.User
 		setup   func(mock sqlmock.Sqlmock)
 		wantErr bool
-		check   func(t *testing.T, user *domainuser.User)
+		check   func(t *testing.T, user *userentity.User)
 	}{
 		{
 			name: "success create user",
-			user: &domainuser.User{
+			user: &userentity.User{
 				Name:      "John Doe",
 				Email:     "john@example.com",
 				Password:  "hashedpassword",
@@ -52,7 +52,7 @@ func TestMySQLRepository_Create(t *testing.T) {
 					WillReturnResult(sqlmock.NewResult(1, 1))
 			},
 			wantErr: false,
-			check: func(t *testing.T, user *domainuser.User) {
+			check: func(t *testing.T, user *userentity.User) {
 				assert.Equal(t, int64(1), user.ID)
 				assert.Equal(t, "John Doe", user.Name)
 				assert.Equal(t, "john@example.com", user.Email)
@@ -60,7 +60,7 @@ func TestMySQLRepository_Create(t *testing.T) {
 		},
 		{
 			name: "error on database exec",
-			user: &domainuser.User{
+			user: &userentity.User{
 				Name:      "John Doe",
 				Email:     "john@example.com",
 				Password:  "hashedpassword",
@@ -76,7 +76,7 @@ func TestMySQLRepository_Create(t *testing.T) {
 		},
 		{
 			name: "error on last insert id",
-			user: &domainuser.User{
+			user: &userentity.User{
 				Name:      "John Doe",
 				Email:     "john@example.com",
 				Password:  "hashedpassword",
@@ -132,7 +132,7 @@ func TestMySQLRepository_GetByID(t *testing.T) {
 		id      int64
 		setup   func(mock sqlmock.Sqlmock)
 		wantErr bool
-		check   func(t *testing.T, user *domainuser.User)
+		check   func(t *testing.T, user *userentity.User)
 	}{
 		{
 			name: "success get user by id",
@@ -145,7 +145,7 @@ func TestMySQLRepository_GetByID(t *testing.T) {
 					WillReturnRows(rows)
 			},
 			wantErr: false,
-			check: func(t *testing.T, user *domainuser.User) {
+			check: func(t *testing.T, user *userentity.User) {
 				assert.Equal(t, int64(1), user.ID)
 				assert.Equal(t, "John Doe", user.Name)
 				assert.Equal(t, "john@example.com", user.Email)
@@ -161,7 +161,7 @@ func TestMySQLRepository_GetByID(t *testing.T) {
 					WillReturnError(sql.ErrNoRows)
 			},
 			wantErr: true,
-			check: func(t *testing.T, user *domainuser.User) {
+			check: func(t *testing.T, user *userentity.User) {
 				assert.Nil(t, user)
 			},
 		},
@@ -198,7 +198,7 @@ func TestMySQLRepository_GetByID(t *testing.T) {
 			if tt.wantErr {
 				assert.Error(t, err)
 				if tt.name == "user not found" {
-					assert.True(t, domainuser.IsUserNotFound(err))
+					assert.True(t, userentity.IsUserNotFound(err))
 				}
 				if tt.check != nil {
 					tt.check(t, result)
@@ -224,7 +224,7 @@ func TestMySQLRepository_GetByEmail(t *testing.T) {
 		email   string
 		setup   func(mock sqlmock.Sqlmock)
 		wantErr bool
-		check   func(t *testing.T, user *domainuser.User)
+		check   func(t *testing.T, user *userentity.User)
 	}{
 		{
 			name:  "success get user by email",
@@ -237,7 +237,7 @@ func TestMySQLRepository_GetByEmail(t *testing.T) {
 					WillReturnRows(rows)
 			},
 			wantErr: false,
-			check: func(t *testing.T, user *domainuser.User) {
+			check: func(t *testing.T, user *userentity.User) {
 				assert.Equal(t, int64(1), user.ID)
 				assert.Equal(t, "John Doe", user.Name)
 				assert.Equal(t, "john@example.com", user.Email)
@@ -253,7 +253,7 @@ func TestMySQLRepository_GetByEmail(t *testing.T) {
 					WillReturnError(sql.ErrNoRows)
 			},
 			wantErr: true,
-			check: func(t *testing.T, user *domainuser.User) {
+			check: func(t *testing.T, user *userentity.User) {
 				assert.Nil(t, user)
 			},
 		},
@@ -290,7 +290,7 @@ func TestMySQLRepository_GetByEmail(t *testing.T) {
 			if tt.wantErr {
 				assert.Error(t, err)
 				if tt.name == "user not found" {
-					assert.True(t, domainuser.IsUserNotFound(err))
+					assert.True(t, userentity.IsUserNotFound(err))
 				}
 				if tt.check != nil {
 					tt.check(t, result)
@@ -313,14 +313,14 @@ func TestMySQLRepository_GetByEmail(t *testing.T) {
 func TestMySQLRepository_Update(t *testing.T) {
 	tests := []struct {
 		name    string
-		user    *domainuser.User
+		user    *userentity.User
 		setup   func(mock sqlmock.Sqlmock)
 		wantErr bool
-		check   func(t *testing.T, user *domainuser.User)
+		check   func(t *testing.T, user *userentity.User)
 	}{
 		{
 			name: "success update user",
-			user: &domainuser.User{
+			user: &userentity.User{
 				ID:        1,
 				Name:      "John Updated",
 				Email:     "john.updated@example.com",
@@ -333,7 +333,7 @@ func TestMySQLRepository_Update(t *testing.T) {
 					WillReturnResult(sqlmock.NewResult(0, 1))
 			},
 			wantErr: false,
-			check: func(t *testing.T, user *domainuser.User) {
+			check: func(t *testing.T, user *userentity.User) {
 				assert.Equal(t, int64(1), user.ID)
 				assert.Equal(t, "John Updated", user.Name)
 				assert.Equal(t, "john.updated@example.com", user.Email)
@@ -341,7 +341,7 @@ func TestMySQLRepository_Update(t *testing.T) {
 		},
 		{
 			name: "error on database exec",
-			user: &domainuser.User{
+			user: &userentity.User{
 				ID:        1,
 				Name:      "John Updated",
 				Email:     "john.updated@example.com",
@@ -461,7 +461,7 @@ func TestMySQLRepository_Delete(t *testing.T) {
 			if tt.wantErr {
 				assert.Error(t, err)
 				if tt.name == "user not found" {
-					assert.True(t, domainuser.IsUserNotFound(err))
+					assert.True(t, userentity.IsUserNotFound(err))
 				}
 			} else {
 				assert.NoError(t, err)
@@ -479,7 +479,7 @@ func TestMySQLRepository_List(t *testing.T) {
 		offset  int
 		setup   func(mock sqlmock.Sqlmock)
 		wantErr bool
-		check   func(t *testing.T, users []*domainuser.User)
+		check   func(t *testing.T, users []*userentity.User)
 	}{
 		{
 			name:   "success list users",
@@ -494,7 +494,7 @@ func TestMySQLRepository_List(t *testing.T) {
 					WillReturnRows(rows)
 			},
 			wantErr: false,
-			check: func(t *testing.T, users []*domainuser.User) {
+			check: func(t *testing.T, users []*userentity.User) {
 				assert.Len(t, users, 2)
 				assert.Equal(t, int64(1), users[0].ID)
 				assert.Equal(t, "John Doe", users[0].Name)
@@ -513,9 +513,9 @@ func TestMySQLRepository_List(t *testing.T) {
 					WillReturnRows(rows)
 			},
 			wantErr: false,
-			check: func(t *testing.T, users []*domainuser.User) {
+			check: func(t *testing.T, users []*userentity.User) {
 				if users == nil {
-					users = []*domainuser.User{}
+					users = []*userentity.User{}
 				}
 				assert.Len(t, users, 0)
 			},
@@ -585,7 +585,7 @@ func TestMySQLRepository_List(t *testing.T) {
 				assert.NoError(t, err)
 				// For empty results, result might be nil or empty slice, both are acceptable
 				if result == nil && tt.name == "success list users empty result" {
-					result = []*domainuser.User{}
+					result = []*userentity.User{}
 				}
 				if tt.check != nil {
 					tt.check(t, result)

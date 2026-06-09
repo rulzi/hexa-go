@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/rulzi/hexa-go/internal/application/user/dto"
-	domainuser "github.com/rulzi/hexa-go/internal/domain/user"
-	usermocks "github.com/rulzi/hexa-go/internal/domain/user/mocks"
+	userentity "github.com/rulzi/hexa-go/internal/domain/user/entity"
+	usermocks "github.com/rulzi/hexa-go/internal/domain/user/port/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -36,7 +36,7 @@ func TestUserUseCase_Create(t *testing.T) {
 				Password: "password123",
 			},
 			setupRepo: func(repo *usermocks.MockRepository) {
-				created := &domainuser.User{
+				created := &userentity.User{
 					ID:        1,
 					Name:      "Test User",
 					Email:     "test@example.com",
@@ -44,8 +44,8 @@ func TestUserUseCase_Create(t *testing.T) {
 					CreatedAt: time.Now(),
 					UpdatedAt: time.Now(),
 				}
-				repo.EXPECT().GetByEmail(ctx, "test@example.com").Return(nil, domainuser.NewUserNotFound())
-				repo.EXPECT().Create(ctx, gomock.AssignableToTypeOf(&domainuser.User{})).Return(created, nil)
+				repo.EXPECT().GetByEmail(ctx, "test@example.com").Return(nil, userentity.NewUserNotFound())
+				repo.EXPECT().Create(ctx, gomock.AssignableToTypeOf(&userentity.User{})).Return(created, nil)
 			},
 			setupHasher: func(hasher *mockPasswordHasher) {
 				hasher.On("Hash", "password123").Return("hashed_123", nil)
@@ -69,11 +69,11 @@ func TestUserUseCase_Create(t *testing.T) {
 				Password: "password123",
 			},
 			setupRepo: func(repo *usermocks.MockRepository) {
-				existing := &domainuser.User{ID: 42, Email: "exist@example.com"}
+				existing := &userentity.User{ID: 42, Email: "exist@example.com"}
 				repo.EXPECT().GetByEmail(ctx, "exist@example.com").Return(existing, nil)
 			},
 			setupHasher: func(hasher *mockPasswordHasher) {},
-			wantErrCheck: domainuser.IsEmailExists,
+			wantErrCheck: userentity.IsEmailExists,
 			assertResult: func(t *testing.T, resp *dto.UserResponse) {
 				assert.Nil(t, resp)
 			},
@@ -87,7 +87,7 @@ func TestUserUseCase_Create(t *testing.T) {
 			},
 			setupRepo:   func(repo *usermocks.MockRepository) {},
 			setupHasher: func(hasher *mockPasswordHasher) {},
-			wantErrCheck: domainuser.IsEmailRequired,
+			wantErrCheck: userentity.IsEmailRequired,
 			assertResult: func(t *testing.T, resp *dto.UserResponse) {
 				assert.Nil(t, resp)
 			},
@@ -101,7 +101,7 @@ func TestUserUseCase_Create(t *testing.T) {
 			},
 			setupRepo:   func(repo *usermocks.MockRepository) {},
 			setupHasher: func(hasher *mockPasswordHasher) {},
-			wantErrCheck: domainuser.IsPasswordTooShort,
+			wantErrCheck: userentity.IsPasswordTooShort,
 			assertResult: func(t *testing.T, resp *dto.UserResponse) {
 				assert.Nil(t, resp)
 			},
@@ -114,8 +114,8 @@ func TestUserUseCase_Create(t *testing.T) {
 				Password: "password123",
 			},
 			setupRepo: func(repo *usermocks.MockRepository) {
-				repo.EXPECT().GetByEmail(ctx, "new@example.com").Return(nil, domainuser.NewUserNotFound())
-				repo.EXPECT().Create(ctx, gomock.AssignableToTypeOf(&domainuser.User{})).Return(nil, dbDownErr)
+				repo.EXPECT().GetByEmail(ctx, "new@example.com").Return(nil, userentity.NewUserNotFound())
+				repo.EXPECT().Create(ctx, gomock.AssignableToTypeOf(&userentity.User{})).Return(nil, dbDownErr)
 			},
 			setupHasher: func(hasher *mockPasswordHasher) {
 				hasher.On("Hash", "password123").Return("hashed_123", nil)
@@ -202,7 +202,7 @@ func TestUserUseCase_Create_EmailExistsDoesNotPersist(t *testing.T) {
 	hasher := &mockPasswordHasher{}
 	notifier := &mockNotificationService{}
 
-	existing := &domainuser.User{ID: 1, Email: "exist@example.com"}
+	existing := &userentity.User{ID: 1, Email: "exist@example.com"}
 	repo.EXPECT().GetByEmail(ctx, "exist@example.com").Return(existing, nil)
 
 	uc := NewUserUseCase(repo, hasher, notifier, &mockTokenGenerator{})
@@ -212,7 +212,7 @@ func TestUserUseCase_Create_EmailExistsDoesNotPersist(t *testing.T) {
 		Password: "password123",
 	})
 
-	assert.True(t, domainuser.IsEmailExists(err))
+	assert.True(t, userentity.IsEmailExists(err))
 	assert.Nil(t, resp)
 	hasher.AssertNotCalled(t, "Hash", mock.Anything)
 	notifier.AssertNotCalled(t, "SendWelcomeEmail", mock.Anything, mock.Anything, mock.Anything)

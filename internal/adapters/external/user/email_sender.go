@@ -3,7 +3,7 @@ package user
 import (
 	"context"
 
-	domainuser "github.com/rulzi/hexa-go/internal/domain/user"
+	userport "github.com/rulzi/hexa-go/internal/domain/user/port"
 	"github.com/rulzi/hexa-go/internal/infrastructure/logger"
 )
 
@@ -28,6 +28,6 @@ func (e *EmailSenderImpl) SendWelcomeEmail(ctx context.Context, email, name stri
 	return nil
 }
 
-// Ensure EmailSenderImpl implements domainuser.NotificationService
-var _ domainuser.NotificationService = (*EmailSenderImpl)(nil)
+// Ensure EmailSenderImpl implements userport.NotificationService
+var _ userport.NotificationService = (*EmailSenderImpl)(nil)
 

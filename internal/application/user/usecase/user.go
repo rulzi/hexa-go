@@ -5,23 +5,24 @@ import (
 	"time"
 
 	"github.com/rulzi/hexa-go/internal/application/user/dto"
-	domainuser "github.com/rulzi/hexa-go/internal/domain/user"
+	userentity "github.com/rulzi/hexa-go/internal/domain/user/entity"
+	userport "github.com/rulzi/hexa-go/internal/domain/user/port"
 )
 
 // UserUseCase handles all user operations (create, get, list, update, delete, login)
 type UserUseCase struct {
-	userRepo            domainuser.Repository
-	passwordHasher      domainuser.PasswordHasher
-	notificationService domainuser.NotificationService
-	tokenGen            domainuser.TokenGenerator
+	userRepo            userport.Repository
+	passwordHasher      userport.PasswordHasher
+	notificationService userport.NotificationService
+	tokenGen            userport.TokenGenerator
 }
 
 // NewUserUseCase creates a new UserUseCase
 func NewUserUseCase(
-	userRepo domainuser.Repository,
-	passwordHasher domainuser.PasswordHasher,
-	notificationService domainuser.NotificationService,
-	tokenGen domainuser.TokenGenerator,
+	userRepo userport.Repository,
+	passwordHasher userport.PasswordHasher,
+	notificationService userport.NotificationService,
+	tokenGen userport.TokenGenerator,
 ) *UserUseCase {
 	return &UserUseCase{
 		userRepo:            userRepo,
@@ -33,16 +34,16 @@ func NewUserUseCase(
 
 func validateCreateUserRequest(req dto.CreateUserRequest) error {
 	if req.Name == "" {
-		return domainuser.NewNameRequired()
+		return userentity.NewNameRequired()
 	}
 	if req.Email == "" {
-		return domainuser.NewEmailRequired()
+		return userentity.NewEmailRequired()
 	}
 	if req.Password == "" {
-		return domainuser.NewPasswordRequired()
+		return userentity.NewPasswordRequired()
 	}
 	if len(req.Password) < 6 {
-		return domainuser.NewPasswordTooShort()
+		return userentity.NewPasswordTooShort()
 	}
 	return nil
 }
@@ -55,7 +56,7 @@ func (uc *UserUseCase) Create(ctx context.Context, req dto.CreateUserRequest) (*
 
 	existingUser, err := uc.userRepo.GetByEmail(ctx, req.Email)
 	if err == nil && existingUser != nil {
-		return nil, domainuser.NewEmailExists()
+		return nil, userentity.NewEmailExists()
 	}
 
 	hashedPassword, err := uc.passwordHasher.Hash(req.Password)
@@ -63,7 +64,7 @@ func (uc *UserUseCase) Create(ctx context.Context, req dto.CreateUserRequest) (*
 		return nil, err
 	}
 
-	newUser := &domainuser.User{
+	newUser := &userentity.User{
 		Name:      req.Name,
 		Email:     req.Email,
 		Password:  hashedPassword,
@@ -99,7 +100,7 @@ func (uc *UserUseCase) Get(ctx context.Context, id int64) (*dto.UserResponse, er
 	}
 
 	if userEntity == nil {
-		return nil, domainuser.NewUserNotFound()
+		return nil, userentity.NewUserNotFound()
 	}
 
 	return &dto.UserResponse{
@@ -157,13 +158,13 @@ func (uc *UserUseCase) Update(ctx context.Context, id int64, req dto.UpdateUserR
 	}
 
 	if existingUser == nil {
-		return nil, domainuser.NewUserNotFound()
+		return nil, userentity.NewUserNotFound()
 	}
 
 	if req.Email != existingUser.Email {
 		emailUser, err := uc.userRepo.GetByEmail(ctx, req.Email)
 		if err == nil && emailUser != nil {
-			return nil, domainuser.NewEmailExists()
+			return nil, userentity.NewEmailExists()
 		}
 	}
 
@@ -205,7 +206,7 @@ func (uc *UserUseCase) Delete(ctx context.Context, id int64) error {
 	}
 
 	if existingUser == nil {
-		return domainuser.NewUserNotFound()
+		return userentity.NewUserNotFound()
 	}
 
 	return uc.userRepo.Delete(ctx, id)
@@ -215,15 +216,15 @@ func (uc *UserUseCase) Delete(ctx context.Context, id int64) error {
 func (uc *UserUseCase) Login(ctx context.Context, req dto.LoginRequest) (*dto.LoginResponse, error) {
 	userEntity, err := uc.userRepo.GetByEmail(ctx, req.Email)
 	if err != nil {
-		return nil, domainuser.NewInvalidCredentials()
+		return nil, userentity.NewInvalidCredentials()
 	}
 
 	if userEntity == nil {
-		return nil, domainuser.NewInvalidCredentials()
+		return nil, userentity.NewInvalidCredentials()
 	}
 
 	if !uc.passwordHasher.Verify(userEntity.Password, req.Password) {
-		return nil, domainuser.NewInvalidCredentials()
+		return nil, userentity.NewInvalidCredentials()
 	}
 
 	token, err := uc.tokenGen.Generate(userEntity.ID, userEntity.Email)

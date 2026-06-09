@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/rulzi/hexa-go/internal/application/user/dto"
-	domainuser "github.com/rulzi/hexa-go/internal/domain/user"
+	userentity "github.com/rulzi/hexa-go/internal/domain/user/entity"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -37,7 +37,7 @@ func TestUserUseCase_Get_Success(t *testing.T) {
 	uc := NewUserUseCase(repo, passwordHasher, notificationService, tokenGen)
 
 	userID := int64(1)
-	userEntity := &domainuser.User{
+	userEntity := &userentity.User{
 		ID: userID, Name: "Test", Email: "test@example.com",
 		CreatedAt: time.Now(), UpdatedAt: time.Now(),
 	}
@@ -67,7 +67,7 @@ func TestUserUseCase_Get_UserNotFound(t *testing.T) {
 	result, err := uc.Get(ctx, userID)
 
 	assert.Error(t, err)
-	assert.True(t, domainuser.IsUserNotFound(err))
+	assert.True(t, userentity.IsUserNotFound(err))
 	assert.Nil(t, result)
 }
 
@@ -81,7 +81,7 @@ func TestUserUseCase_List_Success(t *testing.T) {
 	uc := NewUserUseCase(repo, passwordHasher, notificationService, tokenGen)
 
 	limit, offset := 10, 0
-	users := []*domainuser.User{
+	users := []*userentity.User{
 		{ID: 1, Name: "User1", Email: "u1@example.com", CreatedAt: time.Now(), UpdatedAt: time.Now()},
 	}
 	total := int64(1)
@@ -107,19 +107,19 @@ func TestUserUseCase_Update_Success(t *testing.T) {
 	uc := NewUserUseCase(repo, passwordHasher, notificationService, tokenGen)
 
 	userID := int64(1)
-	existingUser := &domainuser.User{
+	existingUser := &userentity.User{
 		ID: userID, Name: "Old", Email: "old@example.com", Password: "hash",
 		CreatedAt: time.Now(), UpdatedAt: time.Now(),
 	}
 	req := dto.UpdateUserRequest{Name: "New", Email: "new@example.com"}
-	updatedUser := &domainuser.User{
+	updatedUser := &userentity.User{
 		ID: userID, Name: req.Name, Email: req.Email, Password: existingUser.Password,
 		CreatedAt: existingUser.CreatedAt, UpdatedAt: time.Now(),
 	}
 
 	repo.On("GetByID", ctx, userID).Return(existingUser, nil)
 	repo.On("GetByEmail", ctx, req.Email).Return(nil, errors.New("not found"))
-	repo.On("Update", ctx, mock.AnythingOfType("*user.User")).Return(updatedUser, nil)
+	repo.On("Update", ctx, mock.Anything).Return(updatedUser, nil)
 
 	result, err := uc.Update(ctx, userID, req)
 
@@ -146,7 +146,7 @@ func TestUserUseCase_Update_UserNotFound(t *testing.T) {
 	result, err := uc.Update(ctx, userID, req)
 
 	assert.Error(t, err)
-	assert.True(t, domainuser.IsUserNotFound(err))
+	assert.True(t, userentity.IsUserNotFound(err))
 	assert.Nil(t, result)
 	repo.AssertNotCalled(t, "Update")
 }
@@ -161,7 +161,7 @@ func TestUserUseCase_Delete_Success(t *testing.T) {
 	uc := NewUserUseCase(repo, passwordHasher, notificationService, tokenGen)
 
 	userID := int64(1)
-	existingUser := &domainuser.User{ID: userID, Name: "Test", Email: "test@example.com", CreatedAt: time.Now(), UpdatedAt: time.Now()}
+	existingUser := &userentity.User{ID: userID, Name: "Test", Email: "test@example.com", CreatedAt: time.Now(), UpdatedAt: time.Now()}
 	repo.On("GetByID", ctx, userID).Return(existingUser, nil)
 	repo.On("Delete", ctx, userID).Return(nil)
 
@@ -186,7 +186,7 @@ func TestUserUseCase_Delete_UserNotFound(t *testing.T) {
 	err := uc.Delete(ctx, userID)
 
 	assert.Error(t, err)
-	assert.True(t, domainuser.IsUserNotFound(err))
+	assert.True(t, userentity.IsUserNotFound(err))
 	repo.AssertNotCalled(t, "Delete")
 }
 
@@ -200,7 +200,7 @@ func TestUserUseCase_Login_Success(t *testing.T) {
 	uc := NewUserUseCase(repo, passwordHasher, notificationService, tokenGen)
 
 	req := dto.LoginRequest{Email: "test@example.com", Password: "password123"}
-	userEntity := &domainuser.User{
+	userEntity := &userentity.User{
 		ID: 1, Name: "Test", Email: req.Email, Password: "hashed",
 		CreatedAt: time.Now(), UpdatedAt: time.Now(),
 	}
@@ -236,7 +236,7 @@ func TestUserUseCase_Login_InvalidCredentials(t *testing.T) {
 	result, err := uc.Login(ctx, req)
 
 	assert.Error(t, err)
-	assert.True(t, domainuser.IsInvalidCredentials(err))
+	assert.True(t, userentity.IsInvalidCredentials(err))
 	assert.Nil(t, result)
 	passwordHasher.AssertNotCalled(t, "Verify")
 	tokenGen.AssertNotCalled(t, "Generate")
