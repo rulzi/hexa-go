@@ -58,7 +58,7 @@ func (r *MySQLRepository) GetByID(ctx context.Context, id int64) (*domainuser.Us
 	)
 
 	if err == sql.ErrNoRows {
-		return nil, domainuser.ErrUserNotFound
+		return nil, domainuser.NewUserNotFound()
 	}
 	if err != nil {
 		return nil, err
@@ -86,7 +86,7 @@ func (r *MySQLRepository) GetByEmail(ctx context.Context, email string) (*domain
 	)
 
 	if err == sql.ErrNoRows {
-		return nil, domainuser.ErrUserNotFound
+		return nil, domainuser.NewUserNotFound()
 	}
 	if err != nil {
 		return nil, err
@@ -126,7 +126,7 @@ func (r *MySQLRepository) Delete(ctx context.Context, id int64) error {
 	}
 
 	if rowsAffected == 0 {
-		return domainuser.ErrUserNotFound
+		return domainuser.NewUserNotFound()
 	}
 
 	return nil

@@ -9,9 +9,9 @@ import (
 
 func TestUser_Validate(t *testing.T) {
 	tests := []struct {
-		name    string
-		user    User
-		wantErr error
+		name         string
+		user         User
+		wantErrCheck func(error) bool
 	}{
 		{
 			name: "valid user",
@@ -23,7 +23,7 @@ func TestUser_Validate(t *testing.T) {
 				CreatedAt: time.Now(),
 				UpdatedAt: time.Now(),
 			},
-			wantErr: nil,
+			wantErrCheck: nil,
 		},
 		{
 			name: "missing name",
@@ -35,7 +35,7 @@ func TestUser_Validate(t *testing.T) {
 				CreatedAt: time.Now(),
 				UpdatedAt: time.Now(),
 			},
-			wantErr: ErrNameRequired,
+			wantErrCheck: IsNameRequired,
 		},
 		{
 			name: "missing email",
@@ -47,7 +47,7 @@ func TestUser_Validate(t *testing.T) {
 				CreatedAt: time.Now(),
 				UpdatedAt: time.Now(),
 			},
-			wantErr: ErrEmailRequired,
+			wantErrCheck: IsEmailRequired,
 		},
 		{
 			name: "missing password",
@@ -59,7 +59,7 @@ func TestUser_Validate(t *testing.T) {
 				CreatedAt: time.Now(),
 				UpdatedAt: time.Now(),
 			},
-			wantErr: ErrPasswordRequired,
+			wantErrCheck: IsPasswordRequired,
 		},
 		{
 			name: "missing name and email",
@@ -71,7 +71,7 @@ func TestUser_Validate(t *testing.T) {
 				CreatedAt: time.Now(),
 				UpdatedAt: time.Now(),
 			},
-			wantErr: ErrNameRequired, // Should return first error encountered
+			wantErrCheck: IsNameRequired, // Should return first error encountered
 		},
 		{
 			name: "missing name and password",
@@ -83,7 +83,7 @@ func TestUser_Validate(t *testing.T) {
 				CreatedAt: time.Now(),
 				UpdatedAt: time.Now(),
 			},
-			wantErr: ErrNameRequired, // Should return first error encountered
+			wantErrCheck: IsNameRequired, // Should return first error encountered
 		},
 		{
 			name: "missing email and password",
@@ -95,7 +95,7 @@ func TestUser_Validate(t *testing.T) {
 				CreatedAt: time.Now(),
 				UpdatedAt: time.Now(),
 			},
-			wantErr: ErrEmailRequired, // Should return first error encountered
+			wantErrCheck: IsEmailRequired, // Should return first error encountered
 		},
 		{
 			name: "all fields missing",
@@ -107,7 +107,7 @@ func TestUser_Validate(t *testing.T) {
 				CreatedAt: time.Now(),
 				UpdatedAt: time.Now(),
 			},
-			wantErr: ErrNameRequired, // Should return first error encountered
+			wantErrCheck: IsNameRequired, // Should return first error encountered
 		},
 		{
 			name: "valid user with long name",
@@ -119,7 +119,7 @@ func TestUser_Validate(t *testing.T) {
 				CreatedAt: time.Now(),
 				UpdatedAt: time.Now(),
 			},
-			wantErr: nil,
+			wantErrCheck: nil,
 		},
 		{
 			name: "valid user with complex email",
@@ -131,18 +131,18 @@ func TestUser_Validate(t *testing.T) {
 				CreatedAt: time.Now(),
 				UpdatedAt: time.Now(),
 			},
-			wantErr: nil,
+			wantErrCheck: nil,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := tt.user.Validate()
-			if tt.wantErr == nil {
+			if tt.wantErrCheck == nil {
 				assert.NoError(t, err)
 			} else {
 				assert.Error(t, err)
-				assert.Equal(t, tt.wantErr, err)
+				assert.True(t, tt.wantErrCheck(err))
 			}
 		})
 	}

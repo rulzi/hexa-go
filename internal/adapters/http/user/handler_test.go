@@ -150,7 +150,7 @@ func TestHandler_Create_Conflict_EmailExists(t *testing.T) {
 		Password: "password123",
 	}
 
-	uc.On("Create", mock.Anything, reqBody).Return(nil, domainuser.ErrEmailExists)
+	uc.On("Create", mock.Anything, reqBody).Return(nil, domainuser.NewEmailExists())
 
 	router := setupTestRouter(handler)
 	router.POST("/users", handler.Create)
@@ -246,7 +246,7 @@ func TestHandler_Get_NotFound(t *testing.T) {
 	handler := NewHandler(uc, testLogger)
 
 	userID := int64(999)
-	uc.On("Get", mock.Anything, userID).Return(nil, domainuser.ErrUserNotFound)
+	uc.On("Get", mock.Anything, userID).Return(nil, domainuser.NewUserNotFound())
 
 	router := setupTestRouter(handler)
 	router.GET("/users/:id", handler.Get)
@@ -458,7 +458,7 @@ func TestHandler_Update_NotFound(t *testing.T) {
 		Email: "updated@example.com",
 	}
 
-	uc.On("Update", mock.Anything, userID, reqBody).Return(nil, domainuser.ErrUserNotFound)
+	uc.On("Update", mock.Anything, userID, reqBody).Return(nil, domainuser.NewUserNotFound())
 
 	router := setupTestRouter(handler)
 	router.PUT("/users/:id", handler.Update)
@@ -484,7 +484,7 @@ func TestHandler_Update_Conflict_EmailExists(t *testing.T) {
 		Email: "existing@example.com",
 	}
 
-	uc.On("Update", mock.Anything, userID, reqBody).Return(nil, domainuser.ErrEmailExists)
+	uc.On("Update", mock.Anything, userID, reqBody).Return(nil, domainuser.NewEmailExists())
 
 	router := setupTestRouter(handler)
 	router.PUT("/users/:id", handler.Update)
@@ -572,7 +572,7 @@ func TestHandler_Delete_NotFound(t *testing.T) {
 	handler := NewHandler(uc, testLogger)
 
 	userID := int64(999)
-	uc.On("Delete", mock.Anything, userID).Return(domainuser.ErrUserNotFound)
+	uc.On("Delete", mock.Anything, userID).Return(domainuser.NewUserNotFound())
 
 	router := setupTestRouter(handler)
 	router.DELETE("/users/:id", handler.Delete)
@@ -672,7 +672,7 @@ func TestHandler_Register_Conflict_EmailExists(t *testing.T) {
 		Password: "password123",
 	}
 
-	uc.On("Create", mock.Anything, reqBody).Return(nil, domainuser.ErrEmailExists)
+	uc.On("Create", mock.Anything, reqBody).Return(nil, domainuser.NewEmailExists())
 
 	router := setupTestRouter(handler)
 	router.POST("/users/register", handler.Register)
@@ -756,7 +756,7 @@ func TestHandler_Login_Unauthorized_InvalidCredentials(t *testing.T) {
 		Password: "wrongpassword",
 	}
 
-	uc.On("Login", mock.Anything, reqBody).Return(nil, domainuser.ErrInvalidCredentials)
+	uc.On("Login", mock.Anything, reqBody).Return(nil, domainuser.NewInvalidCredentials())
 
 	router := setupTestRouter(handler)
 	router.POST("/users/login", handler.Login)

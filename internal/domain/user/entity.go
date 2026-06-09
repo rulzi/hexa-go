@@ -15,13 +15,13 @@ type User struct {
 // Validate validates the user entity
 func (u *User) Validate() error {
 	if u.Name == "" {
-		return ErrNameRequired
+		return NewNameRequired()
 	}
 	if u.Email == "" {
-		return ErrEmailRequired
+		return NewEmailRequired()
 	}
 	if u.Password == "" {
-		return ErrPasswordRequired
+		return NewPasswordRequired()
 	}
 	return nil
 }

@@ -25,7 +25,7 @@ func TestUserUseCase_Create(t *testing.T) {
 		setupRepo     func(repo *usermocks.MockRepository)
 		setupHasher   func(hasher *mockPasswordHasher)
 		setupNotifier func(notifier *mockNotificationService)
-		wantErr       error
+		wantErrCheck  func(error) bool
 		assertResult  func(t *testing.T, resp *dto.UserResponse)
 	}{
 		{
@@ -44,7 +44,7 @@ func TestUserUseCase_Create(t *testing.T) {
 					CreatedAt: time.Now(),
 					UpdatedAt: time.Now(),
 				}
-				repo.EXPECT().GetByEmail(ctx, "test@example.com").Return(nil, domainuser.ErrUserNotFound)
+				repo.EXPECT().GetByEmail(ctx, "test@example.com").Return(nil, domainuser.NewUserNotFound())
 				repo.EXPECT().Create(ctx, gomock.AssignableToTypeOf(&domainuser.User{})).Return(created, nil)
 			},
 			setupHasher: func(hasher *mockPasswordHasher) {
@@ -53,7 +53,7 @@ func TestUserUseCase_Create(t *testing.T) {
 			setupNotifier: func(notifier *mockNotificationService) {
 				notifier.On("SendWelcomeEmail", ctx, "test@example.com", "Test User").Return(nil)
 			},
-			wantErr: nil,
+			wantErrCheck: nil,
 			assertResult: func(t *testing.T, resp *dto.UserResponse) {
 				require.NotNil(t, resp)
 				assert.Equal(t, int64(1), resp.ID)
@@ -73,7 +73,7 @@ func TestUserUseCase_Create(t *testing.T) {
 				repo.EXPECT().GetByEmail(ctx, "exist@example.com").Return(existing, nil)
 			},
 			setupHasher: func(hasher *mockPasswordHasher) {},
-			wantErr:     domainuser.ErrEmailExists,
+			wantErrCheck: domainuser.IsEmailExists,
 			assertResult: func(t *testing.T, resp *dto.UserResponse) {
 				assert.Nil(t, resp)
 			},
@@ -87,7 +87,7 @@ func TestUserUseCase_Create(t *testing.T) {
 			},
 			setupRepo:   func(repo *usermocks.MockRepository) {},
 			setupHasher: func(hasher *mockPasswordHasher) {},
-			wantErr:     domainuser.ErrEmailRequired,
+			wantErrCheck: domainuser.IsEmailRequired,
 			assertResult: func(t *testing.T, resp *dto.UserResponse) {
 				assert.Nil(t, resp)
 			},
@@ -101,7 +101,7 @@ func TestUserUseCase_Create(t *testing.T) {
 			},
 			setupRepo:   func(repo *usermocks.MockRepository) {},
 			setupHasher: func(hasher *mockPasswordHasher) {},
-			wantErr:     domainuser.ErrPasswordTooShort,
+			wantErrCheck: domainuser.IsPasswordTooShort,
 			assertResult: func(t *testing.T, resp *dto.UserResponse) {
 				assert.Nil(t, resp)
 			},
@@ -114,13 +114,13 @@ func TestUserUseCase_Create(t *testing.T) {
 				Password: "password123",
 			},
 			setupRepo: func(repo *usermocks.MockRepository) {
-				repo.EXPECT().GetByEmail(ctx, "new@example.com").Return(nil, domainuser.ErrUserNotFound)
+				repo.EXPECT().GetByEmail(ctx, "new@example.com").Return(nil, domainuser.NewUserNotFound())
 				repo.EXPECT().Create(ctx, gomock.AssignableToTypeOf(&domainuser.User{})).Return(nil, dbDownErr)
 			},
 			setupHasher: func(hasher *mockPasswordHasher) {
 				hasher.On("Hash", "password123").Return("hashed_123", nil)
 			},
-			wantErr: dbDownErr,
+			wantErrCheck: func(err error) bool { return errors.Is(err, dbDownErr) },
 			assertResult: func(t *testing.T, resp *dto.UserResponse) {
 				assert.Nil(t, resp)
 			},
@@ -150,9 +150,9 @@ func TestUserUseCase_Create(t *testing.T) {
 			uc := NewUserUseCase(repo, hasher, notifier, tokenGen)
 			resp, err := uc.Create(ctx, tt.req)
 
-			if tt.wantErr != nil {
+			if tt.wantErrCheck != nil {
 				require.Error(t, err)
-				assert.Equal(t, tt.wantErr, err)
+				assert.True(t, tt.wantErrCheck(err))
 			} else {
 				require.NoError(t, err)
 			}
@@ -212,7 +212,7 @@ func TestUserUseCase_Create_EmailExistsDoesNotPersist(t *testing.T) {
 		Password: "password123",
 	})
 
-	assert.ErrorIs(t, err, domainuser.ErrEmailExists)
+	assert.True(t, domainuser.IsEmailExists(err))
 	assert.Nil(t, resp)
 	hasher.AssertNotCalled(t, "Hash", mock.Anything)
 	notifier.AssertNotCalled(t, "SendWelcomeEmail", mock.Anything, mock.Anything, mock.Anything)

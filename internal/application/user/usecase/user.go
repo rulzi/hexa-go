@@ -33,16 +33,16 @@ func NewUserUseCase(
 
 func validateCreateUserRequest(req dto.CreateUserRequest) error {
 	if req.Name == "" {
-		return domainuser.ErrNameRequired
+		return domainuser.NewNameRequired()
 	}
 	if req.Email == "" {
-		return domainuser.ErrEmailRequired
+		return domainuser.NewEmailRequired()
 	}
 	if req.Password == "" {
-		return domainuser.ErrPasswordRequired
+		return domainuser.NewPasswordRequired()
 	}
 	if len(req.Password) < 6 {
-		return domainuser.ErrPasswordTooShort
+		return domainuser.NewPasswordTooShort()
 	}
 	return nil
 }
@@ -55,7 +55,7 @@ func (uc *UserUseCase) Create(ctx context.Context, req dto.CreateUserRequest) (*
 
 	existingUser, err := uc.userRepo.GetByEmail(ctx, req.Email)
 	if err == nil && existingUser != nil {
-		return nil, domainuser.ErrEmailExists
+		return nil, domainuser.NewEmailExists()
 	}
 
 	hashedPassword, err := uc.passwordHasher.Hash(req.Password)
@@ -99,7 +99,7 @@ func (uc *UserUseCase) Get(ctx context.Context, id int64) (*dto.UserResponse, er
 	}
 
 	if userEntity == nil {
-		return nil, domainuser.ErrUserNotFound
+		return nil, domainuser.NewUserNotFound()
 	}
 
 	return &dto.UserResponse{
@@ -157,13 +157,13 @@ func (uc *UserUseCase) Update(ctx context.Context, id int64, req dto.UpdateUserR
 	}
 
 	if existingUser == nil {
-		return nil, domainuser.ErrUserNotFound
+		return nil, domainuser.NewUserNotFound()
 	}
 
 	if req.Email != existingUser.Email {
 		emailUser, err := uc.userRepo.GetByEmail(ctx, req.Email)
 		if err == nil && emailUser != nil {
-			return nil, domainuser.ErrEmailExists
+			return nil, domainuser.NewEmailExists()
 		}
 	}
 
@@ -205,7 +205,7 @@ func (uc *UserUseCase) Delete(ctx context.Context, id int64) error {
 	}
 
 	if existingUser == nil {
-		return domainuser.ErrUserNotFound
+		return domainuser.NewUserNotFound()
 	}
 
 	return uc.userRepo.Delete(ctx, id)
@@ -215,15 +215,15 @@ func (uc *UserUseCase) Delete(ctx context.Context, id int64) error {
 func (uc *UserUseCase) Login(ctx context.Context, req dto.LoginRequest) (*dto.LoginResponse, error) {
 	userEntity, err := uc.userRepo.GetByEmail(ctx, req.Email)
 	if err != nil {
-		return nil, domainuser.ErrInvalidCredentials
+		return nil, domainuser.NewInvalidCredentials()
 	}
 
 	if userEntity == nil {
-		return nil, domainuser.ErrInvalidCredentials
+		return nil, domainuser.NewInvalidCredentials()
 	}
 
 	if !uc.passwordHasher.Verify(userEntity.Password, req.Password) {
-		return nil, domainuser.ErrInvalidCredentials
+		return nil, domainuser.NewInvalidCredentials()
 	}
 
 	token, err := uc.tokenGen.Generate(userEntity.ID, userEntity.Email)

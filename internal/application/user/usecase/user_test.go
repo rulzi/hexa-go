@@ -67,7 +67,7 @@ func TestUserUseCase_Get_UserNotFound(t *testing.T) {
 	result, err := uc.Get(ctx, userID)
 
 	assert.Error(t, err)
-	assert.Equal(t, domainuser.ErrUserNotFound, err)
+	assert.True(t, domainuser.IsUserNotFound(err))
 	assert.Nil(t, result)
 }
 
@@ -146,7 +146,7 @@ func TestUserUseCase_Update_UserNotFound(t *testing.T) {
 	result, err := uc.Update(ctx, userID, req)
 
 	assert.Error(t, err)
-	assert.Equal(t, domainuser.ErrUserNotFound, err)
+	assert.True(t, domainuser.IsUserNotFound(err))
 	assert.Nil(t, result)
 	repo.AssertNotCalled(t, "Update")
 }
@@ -186,7 +186,7 @@ func TestUserUseCase_Delete_UserNotFound(t *testing.T) {
 	err := uc.Delete(ctx, userID)
 
 	assert.Error(t, err)
-	assert.Equal(t, domainuser.ErrUserNotFound, err)
+	assert.True(t, domainuser.IsUserNotFound(err))
 	repo.AssertNotCalled(t, "Delete")
 }
 
@@ -236,7 +236,7 @@ func TestUserUseCase_Login_InvalidCredentials(t *testing.T) {
 	result, err := uc.Login(ctx, req)
 
 	assert.Error(t, err)
-	assert.Equal(t, domainuser.ErrInvalidCredentials, err)
+	assert.True(t, domainuser.IsInvalidCredentials(err))
 	assert.Nil(t, result)
 	passwordHasher.AssertNotCalled(t, "Verify")
 	tokenGen.AssertNotCalled(t, "Generate")

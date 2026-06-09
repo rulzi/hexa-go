@@ -198,7 +198,7 @@ func TestMySQLRepository_GetByID(t *testing.T) {
 			if tt.wantErr {
 				assert.Error(t, err)
 				if tt.name == "user not found" {
-					assert.Equal(t, domainuser.ErrUserNotFound, err)
+					assert.True(t, domainuser.IsUserNotFound(err))
 				}
 				if tt.check != nil {
 					tt.check(t, result)
@@ -290,7 +290,7 @@ func TestMySQLRepository_GetByEmail(t *testing.T) {
 			if tt.wantErr {
 				assert.Error(t, err)
 				if tt.name == "user not found" {
-					assert.Equal(t, domainuser.ErrUserNotFound, err)
+					assert.True(t, domainuser.IsUserNotFound(err))
 				}
 				if tt.check != nil {
 					tt.check(t, result)
@@ -461,7 +461,7 @@ func TestMySQLRepository_Delete(t *testing.T) {
 			if tt.wantErr {
 				assert.Error(t, err)
 				if tt.name == "user not found" {
-					assert.Equal(t, domainuser.ErrUserNotFound, err)
+					assert.True(t, domainuser.IsUserNotFound(err))
 				}
 			} else {
 				assert.NoError(t, err)
