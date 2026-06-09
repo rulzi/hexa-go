@@ -4,6 +4,7 @@
 *.dll
 *.so
 *.dylib
+bin/
 
 # Test binary, built with `go test -c`
 *.test
@@ -17,9 +18,18 @@ vendor/
 # Go workspace file
 go.work
 
-# Environment variables
+# Environment variables and secrets (never commit)
 .env
-.env.local
+.env.*
+!.env.example
+!.env.*.example
+docker.env
+*.env
+!*.env.example
+secrets/
+*.pem
+*.key
+*.crt
 
 # IDE
 .idea/

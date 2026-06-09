@@ -3,8 +3,14 @@ package config
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/joho/godotenv"
+)
+
+const (
+	minJWTSecretLength = 32
+	defaultJWTSecret   = "your-secret-key-change-in-production"
 )
 
 // Config holds all configuration for the application
@@ -63,12 +69,12 @@ type LoggerConfig struct {
 	EnableConsole bool
 }
 
-// Load loads configuration from environment variables
-func Load() *Config {
-	// Load .env file (ignore error if file doesn't exist)
+// Load loads configuration from environment variables and validates required values.
+func Load() (*Config, error) {
+	// Optional: load .env for local development (ignored if file is missing).
 	_ = godotenv.Load()
 
-	return &Config{
+	cfg := &Config{
 		Server: ServerConfig{
 			Port:  getEnv("SERVER_PORT", "8080"),
 			Host:  getEnv("SERVER_HOST", "0.0.0.0"),
@@ -78,17 +84,17 @@ func Load() *Config {
 			Host:     getEnv("DB_HOST", "localhost"),
 			Port:     getEnv("DB_PORT", "3306"),
 			User:     getEnv("DB_USER", "root"),
-			Password: getEnv("DB_PASSWORD", ""),
+			Password: os.Getenv("DB_PASSWORD"),
 			DBName:   getEnv("DB_NAME", "hexa_go"),
 		},
 		Redis: RedisConfig{
 			Host:     getEnv("REDIS_HOST", "localhost"),
 			Port:     getEnv("REDIS_PORT", "6379"),
-			Password: getEnv("REDIS_PASSWORD", ""),
+			Password: os.Getenv("REDIS_PASSWORD"),
 		},
 		JWT: JWTConfig{
-			Secret:     getEnv("JWT_SECRET", "your-secret-key-change-in-production"),
-			Expiration: getEnvInt("JWT_EXPIRATION", 24), // 24 hours default
+			Secret:     os.Getenv("JWT_SECRET"),
+			Expiration: getEnvInt("JWT_EXPIRATION", 24),
 		},
 		Storage: StorageConfig{
 			BasePath: getEnv("STORAGE_BASE_PATH", "./storage"),
@@ -103,6 +109,51 @@ func Load() *Config {
 			ReportCaller:  getEnvBool("LOG_REPORT_CALLER", false),
 		},
 	}
+
+	if err := cfg.Validate(); err != nil {
+		return nil, err
+	}
+
+	return cfg, nil
+}
+
+// Validate checks that required environment variables are set with safe values.
+func (c *Config) Validate() error {
+	var errs []string
+
+	if c.Server.Debug {
+		if c.JWT.Secret == "" {
+			c.JWT.Secret = defaultJWTSecret
+		}
+		return nil
+	}
+
+	if c.Database.Password == "" {
+		errs = append(errs, "DB_PASSWORD is required when DEBUG=false")
+	}
+
+	if err := validateJWTSecret(c.JWT.Secret); err != nil {
+		errs = append(errs, err.Error())
+	}
+
+	if len(errs) == 0 {
+		return nil
+	}
+
+	return fmt.Errorf("configuration validation failed:\n  - %s", strings.Join(errs, "\n  - "))
+}
+
+func validateJWTSecret(secret string) error {
+	if secret == "" {
+		return fmt.Errorf("JWT_SECRET is required when DEBUG=false")
+	}
+	if secret == defaultJWTSecret {
+		return fmt.Errorf("JWT_SECRET must be changed from the default placeholder value")
+	}
+	if len(secret) < minJWTSecretLength {
+		return fmt.Errorf("JWT_SECRET must be at least %d characters", minJWTSecretLength)
+	}
+	return nil
 }
 
 // getEnvInt gets an environment variable as integer or returns a default value

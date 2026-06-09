@@ -14,7 +14,11 @@ import (
 
 func main() {
 	// Load configuration
-	cfg := config.Load()
+	cfg, err := config.Load()
+	if err != nil {
+		fmt.Printf("Failed to load configuration: %v\n", err)
+		return
+	}
 
 	// Initialize logger with file support
 	appLogger, err := logger.NewLogger(logger.LoggerConfig{

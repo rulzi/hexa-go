@@ -51,12 +51,14 @@ docs/
 *.log
 logs/
 
-# Environment files
+# Environment files and secrets
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env.*
+!.env.*.example
+docker.env
+*.env
+!*.env.example
+secrets/
 
 # Temporary files
 tmp/

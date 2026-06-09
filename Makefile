@@ -31,10 +31,14 @@ docker-clean:
 	docker system prune -f
 
 docker-db-backup:
-	docker-compose exec mysql mysqldump -u hexa_user -phexapassword123 hexa_go > backup.sql
+	@test -f .env.docker || (echo "Create .env.docker from .env.docker.example first" && exit 1)
+	@set -a && . ./.env.docker && set +a && \
+	docker-compose exec mysql mysqldump -u "$$DB_USER" -p"$$DB_PASSWORD" "$$DB_NAME" > backup.sql
 
 docker-db-restore:
-	docker-compose exec -T mysql mysql -u hexa_user -phexapassword123 hexa_go < backup.sql
+	@test -f .env.docker || (echo "Create .env.docker from .env.docker.example first" && exit 1)
+	@set -a && . ./.env.docker && set +a && \
+	docker-compose exec -T mysql mysql -u "$$DB_USER" -p"$$DB_PASSWORD" "$$DB_NAME" < backup.sql
 
 run:
 	go run cmd/api/main.go

@@ -1,16 +1,22 @@
 version: '3.8'
 
+# Credentials are loaded from .env.docker (gitignored).
+# Setup: cp .env.docker.example .env.docker
+#
+# Alternative: Docker secrets (Swarm-compatible)
+#   mkdir -p secrets
+#   openssl rand -base64 32 > secrets/db_password.txt
+#   openssl rand -base64 48 > secrets/jwt_secret.txt
+#   chmod 600 secrets/*
+# Then uncomment the secrets block below and the secret mounts on `app`.
+
 services:
-  # MySQL Database
   mysql:
     image: mysql:8.0
     container_name: hexa-mysql
     restart: unless-stopped
-    environment:
-      MYSQL_ROOT_PASSWORD: rootpassword123
-      MYSQL_DATABASE: hexa_go
-      MYSQL_USER: hexa_user
-      MYSQL_PASSWORD: hexapassword123
+    env_file:
+      - .env.docker
     ports:
       - "3306:3306"
     volumes:
@@ -23,7 +29,6 @@ services:
       timeout: 20s
       retries: 10
 
-  # Redis Cache
   redis:
     image: redis:7-alpine
     container_name: hexa-redis
@@ -40,7 +45,6 @@ services:
       timeout: 3s
       retries: 5
 
-  # Go Application
   app:
     build:
       context: .
@@ -49,31 +53,11 @@ services:
     restart: unless-stopped
     ports:
       - "8080:8080"
-    environment:
-      # Server Configuration
-      SERVER_HOST: 0.0.0.0
-      SERVER_PORT: 8080
-      DEBUG: false
-      
-      # Database Configuration
-      DB_HOST: mysql
-      DB_PORT: 3306
-      DB_USER: hexa_user
-      DB_PASSWORD: hexapassword123
-      DB_NAME: hexa_go
-      
-      # Redis Configuration
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      REDIS_PASSWORD: ""
-      
-      # JWT Configuration
-      JWT_SECRET: your-super-secret-jwt-key-change-in-production-12345
-      JWT_EXPIRATION: 24
-      
-      # Storage Configuration
-      STORAGE_BASE_PATH: /app/storage
-      STORAGE_BASE_URL: http://localhost:8080
+    env_file:
+      - .env.docker
+    # secrets:
+    #   - db_password
+    #   - jwt_secret
     volumes:
       - storage_data:/app/storage
     networks:
@@ -99,3 +83,9 @@ volumes:
 networks:
   hexa-network:
     driver: bridge
+
+# secrets:
+#   db_password:
+#     file: ./secrets/db_password.txt
+#   jwt_secret:
+#     file: ./secrets/jwt_secret.txt
