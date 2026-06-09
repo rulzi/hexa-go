@@ -31,8 +31,28 @@ func NewUserUseCase(
 	}
 }
 
+func validateCreateUserRequest(req dto.CreateUserRequest) error {
+	if req.Name == "" {
+		return domainuser.ErrNameRequired
+	}
+	if req.Email == "" {
+		return domainuser.ErrEmailRequired
+	}
+	if req.Password == "" {
+		return domainuser.ErrPasswordRequired
+	}
+	if len(req.Password) < 6 {
+		return domainuser.ErrPasswordTooShort
+	}
+	return nil
+}
+
 // Create creates a new user
 func (uc *UserUseCase) Create(ctx context.Context, req dto.CreateUserRequest) (*dto.UserResponse, error) {
+	if err := validateCreateUserRequest(req); err != nil {
+		return nil, err
+	}
+
 	existingUser, err := uc.userRepo.GetByEmail(ctx, req.Email)
 	if err == nil && existingUser != nil {
 		return nil, domainuser.ErrEmailExists

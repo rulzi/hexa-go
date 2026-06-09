@@ -13,6 +13,8 @@ var (
 	ErrEmailRequired = errors.New("email is required")
 	// ErrPasswordRequired is returned when user password is missing
 	ErrPasswordRequired = errors.New("password is required")
+	// ErrPasswordTooShort is returned when password is shorter than the minimum length
+	ErrPasswordTooShort = errors.New("password must be at least 6 characters")
 	// ErrInvalidEmail is returned when email format is invalid
 	ErrInvalidEmail = errors.New("invalid email format")
 	// ErrInvalidCredentials is returned when login credentials are invalid

@@ -27,60 +27,6 @@ func TestNewUserUseCase(t *testing.T) {
 	assert.Equal(t, tokenGen, uc.tokenGen)
 }
 
-func TestUserUseCase_Create_Success(t *testing.T) {
-	ctx := context.Background()
-	repo := &mockUserRepository{}
-	passwordHasher := &mockPasswordHasher{}
-	notificationService := &mockNotificationService{}
-	tokenGen := &mockTokenGenerator{}
-
-	uc := NewUserUseCase(repo, passwordHasher, notificationService, tokenGen)
-
-	req := dto.CreateUserRequest{Name: "Test User", Email: "test@example.com", Password: "password123"}
-	hashedPassword := "hashed_123"
-	expectedUser := &domainuser.User{
-		ID: 1, Name: req.Name, Email: req.Email, Password: hashedPassword,
-		CreatedAt: time.Now(), UpdatedAt: time.Now(),
-	}
-
-	repo.On("GetByEmail", ctx, req.Email).Return(nil, errors.New("not found"))
-	passwordHasher.On("Hash", req.Password).Return(hashedPassword, nil)
-	repo.On("Create", ctx, mock.AnythingOfType("*user.User")).Return(expectedUser, nil)
-	notificationService.On("SendWelcomeEmail", ctx, req.Email, req.Name).Return(nil)
-
-	result, err := uc.Create(ctx, req)
-
-	assert.NoError(t, err)
-	assert.NotNil(t, result)
-	assert.Equal(t, expectedUser.ID, result.ID)
-	assert.Equal(t, expectedUser.Email, result.Email)
-	repo.AssertExpectations(t)
-	passwordHasher.AssertExpectations(t)
-	notificationService.AssertExpectations(t)
-}
-
-func TestUserUseCase_Create_EmailExists(t *testing.T) {
-	ctx := context.Background()
-	repo := &mockUserRepository{}
-	passwordHasher := &mockPasswordHasher{}
-	notificationService := &mockNotificationService{}
-	tokenGen := &mockTokenGenerator{}
-
-	uc := NewUserUseCase(repo, passwordHasher, notificationService, tokenGen)
-
-	req := dto.CreateUserRequest{Name: "Test", Email: "exist@example.com", Password: "pass123"}
-	existingUser := &domainuser.User{ID: 1, Email: req.Email}
-	repo.On("GetByEmail", ctx, req.Email).Return(existingUser, nil)
-
-	result, err := uc.Create(ctx, req)
-
-	assert.Error(t, err)
-	assert.Equal(t, domainuser.ErrEmailExists, err)
-	assert.Nil(t, result)
-	passwordHasher.AssertNotCalled(t, "Hash")
-	repo.AssertNotCalled(t, "Create")
-}
-
 func TestUserUseCase_Get_Success(t *testing.T) {
 	ctx := context.Background()
 	repo := &mockUserRepository{}

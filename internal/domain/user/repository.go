@@ -2,6 +2,8 @@ package user
 
 import "context"
 
+//go:generate mockgen -destination=mocks/mock_repository.go -package=mocks github.com/rulzi/hexa-go/internal/domain/user Repository
+
 // Repository is the driven port (interface) for user persistence
 // This defines what the domain needs, not how it's implemented
 type Repository interface {
