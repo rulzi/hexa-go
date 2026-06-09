@@ -6,7 +6,7 @@ import (
 )
 
 // SetupDefaultMiddlewares applies default middlewares to the router
-func SetupDefaultMiddlewares(engine *gin.Engine, appLogger logger.Logger) {
+func SetupDefaultMiddlewares(engine *gin.Engine, appLogger logger.Logger, corsCfg CORSConfig) {
 	// Recovery middleware - catches panics and returns proper error responses
 	engine.Use(RecoveryMiddleware(appLogger))
 
@@ -17,5 +17,5 @@ func SetupDefaultMiddlewares(engine *gin.Engine, appLogger logger.Logger) {
 	engine.Use(LoggingMiddleware(appLogger))
 
 	// CORS middleware - handles cross-origin requests
-	engine.Use(CORSMiddleware())
+	engine.Use(CORSMiddleware(corsCfg))
 }

@@ -18,8 +18,9 @@ type Router struct {
 	mediaHandler    *httpmedia.Handler
 	healthHandler   *httphealth.Handler
 	tokenValidator  userport.TokenValidator
-	storageBasePath string
-	logger          logger.Logger
+	storageBasePath  string
+	corsAllowedOrigins []string
+	logger           logger.Logger
 }
 
 // NewRouter creates a new router
@@ -30,16 +31,18 @@ func NewRouter(
 	healthHandler *httphealth.Handler,
 	tokenValidator userport.TokenValidator,
 	storageBasePath string,
+	corsAllowedOrigins []string,
 	appLogger logger.Logger,
 ) *Router {
 	return &Router{
-		userHandler:     userHandler,
-		articleHandler:  articleHandler,
-		mediaHandler:    mediaHandler,
-		healthHandler:   healthHandler,
-		tokenValidator:  tokenValidator,
-		storageBasePath: storageBasePath,
-		logger:          appLogger,
+		userHandler:        userHandler,
+		articleHandler:     articleHandler,
+		mediaHandler:       mediaHandler,
+		healthHandler:      healthHandler,
+		tokenValidator:     tokenValidator,
+		storageBasePath:    storageBasePath,
+		corsAllowedOrigins: corsAllowedOrigins,
+		logger:             appLogger,
 	}
 }
 
@@ -50,7 +53,9 @@ func (r *Router) SetupRoutes(engine *gin.Engine) {
 	engine.MaxMultipartMemory = maxMultipartMemory
 
 	// Apply default middlewares
-	middleware.SetupDefaultMiddlewares(engine, r.logger)
+	middleware.SetupDefaultMiddlewares(engine, r.logger, middleware.CORSConfig{
+		AllowedOrigins: r.corsAllowedOrigins,
+	})
 
 	api := engine.Group("/api/v1")
 	{

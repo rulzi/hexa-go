@@ -25,9 +25,10 @@ type Config struct {
 
 // ServerConfig holds server configuration
 type ServerConfig struct {
-	Port  string
-	Host  string
-	Debug bool
+	Port               string
+	Host               string
+	Debug              bool
+	CORSAllowedOrigins []string
 }
 
 // DatabaseConfig holds database configuration
@@ -81,9 +82,10 @@ func Load() (*Config, error) {
 
 	cfg := &Config{
 		Server: ServerConfig{
-			Port:  getEnv("SERVER_PORT", "8080"),
-			Host:  getEnv("SERVER_HOST", "0.0.0.0"),
-			Debug: getEnvBool("DEBUG", false),
+			Port:               getEnv("SERVER_PORT", "8080"),
+			Host:               getEnv("SERVER_HOST", "0.0.0.0"),
+			Debug:              getEnvBool("DEBUG", false),
+			CORSAllowedOrigins: parseCSVEnv("CORS_ALLOWED_ORIGINS"),
 		},
 		Database: DatabaseConfig{
 			Host:     getEnv("DB_HOST", "localhost"),
@@ -214,6 +216,24 @@ func (c *DatabaseConfig) GetDSN() string {
 // GetAddr returns the Redis address string
 func (c *RedisConfig) GetAddr() string {
 	return fmt.Sprintf("%s:%s", c.Host, c.Port)
+}
+
+// parseCSVEnv parses a comma-separated environment variable into a trimmed slice.
+func parseCSVEnv(key string) []string {
+	value := strings.TrimSpace(os.Getenv(key))
+	if value == "" {
+		return nil
+	}
+
+	parts := strings.Split(value, ",")
+	result := make([]string, 0, len(parts))
+	for _, part := range parts {
+		part = strings.TrimSpace(part)
+		if part != "" {
+			result = append(result, part)
+		}
+	}
+	return result
 }
 
 // getEnv gets an environment variable or returns a default value

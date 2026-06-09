@@ -25,7 +25,7 @@ type Container struct {
 }
 
 // NewContainer creates a new dependency injection container
-func NewContainer(database *sql.DB, redisClient *redis.Client, appLogger logger.Logger, jwtSecret string, jwtExpiration int, storageCfg config.StorageConfig) (*Container, error) {
+func NewContainer(database *sql.DB, redisClient *redis.Client, appLogger logger.Logger, jwtSecret string, jwtExpiration int, serverCfg config.ServerConfig, storageCfg config.StorageConfig) (*Container, error) {
 	// Initialize domain containers
 	userContainer := diuser.NewContainer(database, appLogger, jwtSecret, jwtExpiration)
 	articleContainer := diarticle.NewContainer(database, redisClient, appLogger)
@@ -43,6 +43,7 @@ func NewContainer(database *sql.DB, redisClient *redis.Client, appLogger logger.
 		healthHandler,
 		userContainer.TokenValidator,
 		storageCfg.BasePath,
+		serverCfg.CORSAllowedOrigins,
 		appLogger,
 	)
 
