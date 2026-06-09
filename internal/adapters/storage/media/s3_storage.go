@@ -57,9 +57,12 @@ func NewS3StorageAdapter(cfg S3Config) (*S3StorageAdapter, error) {
 
 // Save uploads a file and returns the object key.
 func (s *S3StorageAdapter) Save(ctx context.Context, filename string, file io.Reader) (string, error) {
-	key := generateStoragePath(filename)
+	key, err := generateStoragePath(filename)
+	if err != nil {
+		return "", fmt.Errorf("invalid filename: %w", err)
+	}
 
-	_, err := s.client.PutObject(ctx, &s3.PutObjectInput{
+	_, err = s.client.PutObject(ctx, &s3.PutObjectInput{
 		Bucket: aws.String(s.bucket),
 		Key:    aws.String(key),
 		Body:   file,

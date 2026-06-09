@@ -2,6 +2,7 @@ package media
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"strconv"
 
@@ -52,30 +53,19 @@ func (h *Handler) handleUseCaseError(c *gin.Context, err error, fields map[strin
 
 // Create handles POST /media (multipart/form-data with file field)
 func (h *Handler) Create(c *gin.Context) {
-	file, err := c.FormFile("file")
+	filename, reader, err := h.parseUploadFile(c)
 	if err != nil {
-		response.ErrorResponseBadRequest(c, "file is required")
+		response.ErrorResponseBadRequest(c, err.Error())
 		return
 	}
 
-	src, err := file.Open()
+	resp, err := h.mediaUseCase.Create(c.Request.Context(), filename, reader)
 	if err != nil {
-		response.ErrorResponseBadRequest(c, "failed to open file")
-		return
-	}
-	defer func() {
-		if err := src.Close(); err != nil {
-			h.logger.WarnWithFields("failed to close file after create", map[string]interface{}{"error": err.Error()})
-		}
-	}()
-
-	resp, err := h.mediaUseCase.Create(c.Request.Context(), file.Filename, src)
-	if err != nil {
-		h.handleUseCaseError(c, err, map[string]interface{}{"filename": file.Filename}, "media create failed")
+		h.handleUseCaseError(c, err, map[string]interface{}{"filename": filename}, "media create failed")
 		return
 	}
 
-	h.logger.InfoWithFields("media created", map[string]interface{}{"media_id": resp.ID, "filename": file.Filename})
+	h.logger.InfoWithFields("media created", map[string]interface{}{"media_id": resp.ID, "filename": filename})
 	response.SuccessResponseCreated(c, "Media created successfully", resp)
 }
 
@@ -118,31 +108,39 @@ func (h *Handler) Update(c *gin.Context) {
 		return
 	}
 
+	filename, reader, err := h.parseUploadFile(c)
+	if err != nil {
+		response.ErrorResponseBadRequest(c, err.Error())
+		return
+	}
+
+	resp, err := h.mediaUseCase.Update(c.Request.Context(), id, filename, reader)
+	if err != nil {
+		h.handleUseCaseError(c, err, map[string]interface{}{"media_id": id, "filename": filename}, "media update failed")
+		return
+	}
+
+	h.logger.InfoWithFields("media updated", map[string]interface{}{"media_id": id, "filename": filename})
+	response.SuccessResponseOK(c, "Media updated successfully", resp)
+}
+
+func (h *Handler) parseUploadFile(c *gin.Context) (string, io.Reader, error) {
 	file, err := c.FormFile("file")
 	if err != nil {
-		response.ErrorResponseBadRequest(c, "file is required")
-		return
+		return "", nil, fmt.Errorf("file is required")
 	}
 
 	src, err := file.Open()
 	if err != nil {
-		response.ErrorResponseBadRequest(c, "failed to open file")
-		return
+		return "", nil, fmt.Errorf("failed to open file")
 	}
 	defer func() {
-		if err := src.Close(); err != nil {
-			h.logger.WarnWithFields("failed to close file after update", map[string]interface{}{"error": err.Error()})
+		if closeErr := src.Close(); closeErr != nil {
+			h.logger.WarnWithFields("failed to close uploaded file", map[string]interface{}{"error": closeErr.Error()})
 		}
 	}()
 
-	resp, err := h.mediaUseCase.Update(c.Request.Context(), id, file.Filename, src)
-	if err != nil {
-		h.handleUseCaseError(c, err, map[string]interface{}{"media_id": id, "filename": file.Filename}, "media update failed")
-		return
-	}
-
-	h.logger.InfoWithFields("media updated", map[string]interface{}{"media_id": id, "filename": file.Filename})
-	response.SuccessResponseOK(c, "Media updated successfully", resp)
+	return validateUpload(file, src)
 }
 
 // Delete handles DELETE /media/:id

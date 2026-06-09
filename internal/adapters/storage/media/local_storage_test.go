@@ -125,27 +125,14 @@ func TestLocalStorageAdapter_Save_GeneratesUniqueFilename(t *testing.T) {
 	assert.NoError(t, err2)
 }
 
-func TestLocalStorageAdapter_Save_HandlesFilesWithoutExtension(t *testing.T) {
+func TestLocalStorageAdapter_Save_RejectsFilesWithoutExtension(t *testing.T) {
 	ctx := context.Background()
 	tmpDir := t.TempDir()
 	storage, err := NewLocalStorageAdapter(tmpDir)
 	assert.NoError(t, err)
 
-	filename := "testfile"
-	content := "test content"
-	file := strings.NewReader(content)
-
-	path, err := storage.Save(ctx, filename, file)
-
-	assert.NoError(t, err)
-	assert.NotEmpty(t, path)
-	// Path should contain the base filename (file without extension has no extension to check)
-	assert.Contains(t, path, "testfile")
-
-	// Verify file was created
-	fullPath := filepath.Join(tmpDir, path)
-	_, err = os.Stat(fullPath)
-	assert.NoError(t, err)
+	_, err = storage.Save(ctx, "testfile", strings.NewReader("test content"))
+	assert.ErrorIs(t, err, ErrExtensionNotAllowed)
 }
 
 func TestLocalStorageAdapter_Save_HandlesEmptyFile(t *testing.T) {
@@ -154,7 +141,7 @@ func TestLocalStorageAdapter_Save_HandlesEmptyFile(t *testing.T) {
 	storage, err := NewLocalStorageAdapter(tmpDir)
 	assert.NoError(t, err)
 
-	filename := "empty.txt"
+	filename := "empty.jpg"
 	file := strings.NewReader("")
 
 	path, err := storage.Save(ctx, filename, file)
@@ -379,8 +366,6 @@ func TestLocalStorageAdapter_Save_DifferentFileTypes(t *testing.T) {
 		{"image.jpg", "jpeg content"},
 		{"image.png", "png content"},
 		{"document.pdf", "pdf content"},
-		{"video.mp4", "video content"},
-		{"data.json", "json content"},
 	}
 
 	for _, tc := range testCases {
@@ -414,7 +399,7 @@ func TestLocalStorageAdapter_Save_LargeFile(t *testing.T) {
 
 	// Create a larger file (1MB)
 	largeContent := strings.Repeat("A", 1024*1024)
-	filename := "large.bin"
+	filename := "large.pdf"
 	file := strings.NewReader(largeContent)
 
 	path, err := storage.Save(ctx, filename, file)
@@ -460,20 +445,24 @@ func TestLocalStorageAdapter_Save_HandlesSpecialCharactersInFilename(t *testing.
 	storage, err := NewLocalStorageAdapter(tmpDir)
 	assert.NoError(t, err)
 
-	testCases := []string{
-		"file with spaces.jpg",
-		"file-with-dashes.jpg",
-		"file_with_underscores.jpg",
-		"file123.jpg",
+	testCases := []struct {
+		filename       string
+		expectedInPath string
+	}{
+		{"file with spaces.jpg", "file_with_spaces"},
+		{"file-with-dashes.jpg", "file-with-dashes"},
+		{"file_with_underscores.jpg", "file_with_underscores"},
+		{"file123.jpg", "file123"},
 	}
 
-	for _, filename := range testCases {
-		t.Run(filename, func(t *testing.T) {
+	for _, tc := range testCases {
+		t.Run(tc.filename, func(t *testing.T) {
 			content := "test content"
 			file := strings.NewReader(content)
-			path, err := storage.Save(ctx, filename, file)
+			path, err := storage.Save(ctx, tc.filename, file)
 			assert.NoError(t, err)
 			assert.NotEmpty(t, path)
+			assert.Contains(t, path, tc.expectedInPath)
 
 			// Verify file exists
 			fullPath := filepath.Join(tmpDir, path)
@@ -481,4 +470,14 @@ func TestLocalStorageAdapter_Save_HandlesSpecialCharactersInFilename(t *testing.
 			assert.NoError(t, err)
 		})
 	}
+}
+
+func TestLocalStorageAdapter_Save_RejectsDisallowedExtension(t *testing.T) {
+	ctx := context.Background()
+	tmpDir := t.TempDir()
+	storage, err := NewLocalStorageAdapter(tmpDir)
+	assert.NoError(t, err)
+
+	_, err = storage.Save(ctx, "malware.php", strings.NewReader("<?php"))
+	assert.Error(t, err)
 }

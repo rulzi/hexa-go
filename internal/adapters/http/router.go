@@ -43,8 +43,12 @@ func NewRouter(
 	}
 }
 
+const maxMultipartMemory = httpmedia.MaxUploadSize
+
 // SetupRoutes configures all HTTP routes
 func (r *Router) SetupRoutes(engine *gin.Engine) {
+	engine.MaxMultipartMemory = maxMultipartMemory
+
 	// Apply default middlewares
 	middleware.SetupDefaultMiddlewares(engine, r.logger)
 

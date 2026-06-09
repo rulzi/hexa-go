@@ -70,8 +70,13 @@ func setupTestRouter(handler *Handler) *gin.Engine {
 	return router
 }
 
+var minimalJPEG = []byte{
+	0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10, 0x4A, 0x46, 0x49, 0x46, 0x00, 0x01,
+	0x01, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00, 0xFF, 0xD9,
+}
+
 // createMultipartFormData creates a multipart form with a file field
-func createMultipartFormData(filename, content string) (*bytes.Buffer, string, error) {
+func createMultipartFormData(filename string, content []byte) (*bytes.Buffer, string, error) {
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 
@@ -80,7 +85,7 @@ func createMultipartFormData(filename, content string) (*bytes.Buffer, string, e
 		return nil, "", err
 	}
 
-	_, err = part.Write([]byte(content))
+	_, err = part.Write(content)
 	if err != nil {
 		return nil, "", err
 	}
@@ -105,7 +110,7 @@ func TestHandler_Create_Success(t *testing.T) {
 	handler := NewHandler(uc, testLogger)
 
 	filename := "test.jpg"
-	fileContent := "test file content"
+	fileContent := minimalJPEG
 	expectedResp := &dto.MediaResponse{
 		ID:        1,
 		Name:      filename,
@@ -163,7 +168,7 @@ func TestHandler_Create_BadRequest_ValidationError(t *testing.T) {
 	handler := NewHandler(uc, testLogger)
 
 	filename := "test.jpg"
-	fileContent := "test file content"
+	fileContent := minimalJPEG
 
 	// Create multipart form
 	body, contentType, err := createMultipartFormData(filename, fileContent)
@@ -189,7 +194,7 @@ func TestHandler_Create_InternalServerError(t *testing.T) {
 	handler := NewHandler(uc, testLogger)
 
 	filename := "test.jpg"
-	fileContent := "test file content"
+	fileContent := minimalJPEG
 
 	// Create multipart form
 	body, contentType, err := createMultipartFormData(filename, fileContent)
@@ -393,7 +398,7 @@ func TestHandler_Update_Success(t *testing.T) {
 
 	mediaID := int64(1)
 	filename := "updated.jpg"
-	fileContent := "updated file content"
+	fileContent := minimalJPEG
 	expectedResp := &dto.MediaResponse{
 		ID:        mediaID,
 		Name:      filename,
@@ -433,7 +438,7 @@ func TestHandler_Update_BadRequest_InvalidID(t *testing.T) {
 	handler := NewHandler(uc, testLogger)
 
 	filename := "updated.jpg"
-	fileContent := "updated file content"
+	fileContent := minimalJPEG
 
 	// Create multipart form
 	body, contentType, err := createMultipartFormData(filename, fileContent)
@@ -475,7 +480,7 @@ func TestHandler_Update_BadRequest_ValidationError(t *testing.T) {
 
 	mediaID := int64(1)
 	filename := "updated.jpg"
-	fileContent := "updated file content"
+	fileContent := minimalJPEG
 
 	// Create multipart form
 	body, contentType, err := createMultipartFormData(filename, fileContent)
@@ -502,7 +507,7 @@ func TestHandler_Update_NotFound(t *testing.T) {
 
 	mediaID := int64(999)
 	filename := "updated.jpg"
-	fileContent := "updated file content"
+	fileContent := minimalJPEG
 
 	// Create multipart form
 	body, contentType, err := createMultipartFormData(filename, fileContent)
@@ -529,7 +534,7 @@ func TestHandler_Update_InternalServerError(t *testing.T) {
 
 	mediaID := int64(1)
 	filename := "updated.jpg"
-	fileContent := "updated file content"
+	fileContent := minimalJPEG
 
 	// Create multipart form
 	body, contentType, err := createMultipartFormData(filename, fileContent)

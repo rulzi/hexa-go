@@ -27,8 +27,15 @@ func NewLocalStorageAdapter(basePath string) (*LocalStorageAdapter, error) {
 
 // Save saves a file and returns the storage path.
 func (s *LocalStorageAdapter) Save(ctx context.Context, filename string, file io.Reader) (string, error) {
-	relPath := generateStoragePath(filename)
+	relPath, err := generateStoragePath(filename)
+	if err != nil {
+		return "", fmt.Errorf("invalid filename: %w", err)
+	}
+
 	fullPath := filepath.Join(s.basePath, relPath)
+	if err := validateResolvedPath(s.basePath, fullPath); err != nil {
+		return "", err
+	}
 
 	if err := os.MkdirAll(filepath.Dir(fullPath), 0755); err != nil {
 		return "", fmt.Errorf("failed to create directory: %w", err)
@@ -57,6 +64,9 @@ func (s *LocalStorageAdapter) Save(ctx context.Context, filename string, file io
 // Delete deletes a file by path.
 func (s *LocalStorageAdapter) Delete(ctx context.Context, path string) error {
 	fullPath := filepath.Join(s.basePath, path)
+	if err := validateResolvedPath(s.basePath, fullPath); err != nil {
+		return err
+	}
 
 	if _, err := os.Stat(fullPath); os.IsNotExist(err) {
 		return nil
@@ -72,6 +82,9 @@ func (s *LocalStorageAdapter) Delete(ctx context.Context, path string) error {
 // Get retrieves a file by path.
 func (s *LocalStorageAdapter) Get(ctx context.Context, path string) (io.ReadCloser, error) {
 	fullPath := filepath.Join(s.basePath, path)
+	if err := validateResolvedPath(s.basePath, fullPath); err != nil {
+		return nil, err
+	}
 
 	file, err := os.Open(fullPath)
 	if err != nil {
