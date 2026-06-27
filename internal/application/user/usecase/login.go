@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/rulzi/hexa-go/internal/application/user/dto"
-	userentity "github.com/rulzi/hexa-go/internal/domain/user/entity"
+	userauth "github.com/rulzi/hexa-go/internal/domain/user/auth"
 )
 
 // LoginUser handles user authentication
@@ -18,32 +18,26 @@ func newLoginUser(deps userDeps) *LoginUser {
 
 // Execute authenticates user and returns token
 func (uc *LoginUser) Execute(ctx context.Context, req dto.LoginRequest) (*dto.LoginResponse, error) {
-	userEntity, err := uc.deps.userRepo.GetByEmail(ctx, req.Email)
-	if err != nil {
-		return nil, userentity.NewInvalidCredentials()
-	}
-
-	if userEntity == nil {
-		return nil, userentity.NewInvalidCredentials()
-	}
-
-	if !uc.deps.passwordHasher.Verify(userEntity.Password, req.Password) {
-		return nil, userentity.NewInvalidCredentials()
-	}
-
-	token, err := uc.deps.tokenGen.Generate(userEntity.ID, userEntity.Email)
+	result, err := userauth.Authenticate(
+		ctx,
+		req.Email,
+		req.Password,
+		uc.deps.userRepo,
+		uc.deps.passwordHasher,
+		uc.deps.tokenGen,
+	)
 	if err != nil {
 		return nil, err
 	}
 
 	return &dto.LoginResponse{
-		Token: token,
+		Token: result.Token,
 		User: dto.UserResponse{
-			ID:        userEntity.ID,
-			Name:      userEntity.Name,
-			Email:     userEntity.Email,
-			CreatedAt: userEntity.CreatedAt,
-			UpdatedAt: userEntity.UpdatedAt,
+			ID:        result.User.ID,
+			Name:      result.User.Name,
+			Email:     result.User.Email,
+			CreatedAt: result.User.CreatedAt,
+			UpdatedAt: result.User.UpdatedAt,
 		},
 	}, nil
 }
