@@ -5,15 +5,31 @@ import (
 
 	"github.com/rulzi/hexa-go/internal/application/user/dto"
 	userauth "github.com/rulzi/hexa-go/internal/domain/user/auth"
+	userport "github.com/rulzi/hexa-go/internal/domain/user/port"
 )
+
+type loginUserDeps struct {
+	userRepo       userport.Repository
+	passwordHasher userport.PasswordHasher
+	tokenGen       userport.TokenGenerator
+}
 
 // LoginUser handles user authentication
 type LoginUser struct {
-	deps userDeps
+	deps loginUserDeps
 }
 
-func newLoginUser(deps userDeps) *LoginUser {
-	return &LoginUser{deps: deps}
+// NewLoginUser creates a new LoginUser use case.
+func NewLoginUser(
+	userRepo userport.Repository,
+	passwordHasher userport.PasswordHasher,
+	tokenGen userport.TokenGenerator,
+) *LoginUser {
+	return &LoginUser{deps: loginUserDeps{
+		userRepo:       userRepo,
+		passwordHasher: passwordHasher,
+		tokenGen:       tokenGen,
+	}}
 }
 
 // Execute authenticates user and returns token

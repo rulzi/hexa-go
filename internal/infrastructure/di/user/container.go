@@ -19,7 +19,6 @@ type Container struct {
 	TokenValidator      userport.TokenValidator
 	PasswordHasher      userport.PasswordHasher
 	NotificationService userport.NotificationService
-	UserUC              *usecase.UserUseCase
 	Handler             *httpuser.Handler
 }
 
@@ -32,9 +31,14 @@ func NewContainer(database *sql.DB, appLogger logger.Logger, jwtSecret string, j
 
 	notificationService := userexternal.NewEmailSenderImpl(appLogger)
 
-	userUseCase := usecase.NewUserUseCase(userRepo, passwordHasher, notificationService, jwtAdapter)
-
-	userHandler := httpuser.NewHandler(userUseCase, appLogger)
+	userHandler := httpuser.NewHandler(httpuser.Deps{
+		Create: usecase.NewCreateUser(userRepo, passwordHasher, notificationService),
+		Get:    usecase.NewGetUser(userRepo),
+		List:   usecase.NewListUser(userRepo),
+		Update: usecase.NewUpdateUser(userRepo, passwordHasher),
+		Delete: usecase.NewDeleteUser(userRepo),
+		Login:  usecase.NewLoginUser(userRepo, passwordHasher, jwtAdapter),
+	}, appLogger)
 
 	return &Container{
 		Repo:                userRepo,
@@ -42,7 +46,6 @@ func NewContainer(database *sql.DB, appLogger logger.Logger, jwtSecret string, j
 		TokenValidator:      jwtAdapter,
 		PasswordHasher:      passwordHasher,
 		NotificationService: notificationService,
-		UserUC:              userUseCase,
 		Handler:             userHandler,
 	}
 }

@@ -4,15 +4,25 @@ import (
 	"context"
 
 	"github.com/rulzi/hexa-go/internal/application/media/dto"
+	mediaport "github.com/rulzi/hexa-go/internal/domain/media/port"
 )
+
+type listMediaDeps struct {
+	mediaRepo mediaport.Repository
+	baseURL   string
+}
 
 // ListMedia handles media listing with pagination
 type ListMedia struct {
-	deps mediaDeps
+	deps listMediaDeps
 }
 
-func newListMedia(deps mediaDeps) *ListMedia {
-	return &ListMedia{deps: deps}
+// NewListMedia creates a new ListMedia use case.
+func NewListMedia(mediaRepo mediaport.Repository, baseURL string) *ListMedia {
+	return &ListMedia{deps: listMediaDeps{
+		mediaRepo: mediaRepo,
+		baseURL:   baseURL,
+	}}
 }
 
 // Execute lists media with pagination

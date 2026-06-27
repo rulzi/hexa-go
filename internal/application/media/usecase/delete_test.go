@@ -13,9 +13,8 @@ func TestDeleteMedia_Execute_Success(t *testing.T) {
 	ctx := context.Background()
 	repo := &mockMediaRepository{}
 	storage := &mockMediaStorage{}
-	baseURL := "http://localhost:8080"
 
-	uc := NewMediaUseCase(repo, storage, baseURL)
+	uc := NewDeleteMedia(repo, storage)
 
 	mediaID := int64(1)
 	existingMedia := &mediaentity.Media{
@@ -26,7 +25,7 @@ func TestDeleteMedia_Execute_Success(t *testing.T) {
 	storage.On("Delete", ctx, existingMedia.Path).Return(nil)
 	repo.On("Delete", ctx, mediaID).Return(nil)
 
-	err := uc.Delete.Execute(ctx, mediaID)
+	err := uc.Execute(ctx, mediaID)
 
 	assert.NoError(t, err)
 	repo.AssertExpectations(t)
@@ -37,14 +36,13 @@ func TestDeleteMedia_Execute_MediaNotFound(t *testing.T) {
 	ctx := context.Background()
 	repo := &mockMediaRepository{}
 	storage := &mockMediaStorage{}
-	baseURL := "http://localhost:8080"
 
-	uc := NewMediaUseCase(repo, storage, baseURL)
+	uc := NewDeleteMedia(repo, storage)
 
 	mediaID := int64(999)
 	repo.On("GetByID", ctx, mediaID).Return(nil, nil)
 
-	err := uc.Delete.Execute(ctx, mediaID)
+	err := uc.Execute(ctx, mediaID)
 
 	assert.Error(t, err)
 	assert.True(t, mediaentity.IsMediaNotFound(err))

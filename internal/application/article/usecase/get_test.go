@@ -14,9 +14,8 @@ func TestGetArticle_Execute_SuccessFromCache(t *testing.T) {
 	ctx := context.Background()
 	repo := &mockArticleRepository{}
 	cache := &mockArticleCache{}
-	listCache := &mockArticleListCache{}
 
-	uc := NewArticleUseCase(repo, cache, listCache)
+	uc := NewGetArticle(repo, cache)
 
 	articleID := int64(1)
 	cachedArticle := &articleentity.Article{
@@ -25,7 +24,7 @@ func TestGetArticle_Execute_SuccessFromCache(t *testing.T) {
 	}
 	cache.On("Get", ctx, articleID).Return(cachedArticle, nil)
 
-	result, err := uc.Get.Execute(ctx, articleID)
+	result, err := uc.Execute(ctx, articleID)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
@@ -39,9 +38,8 @@ func TestGetArticle_Execute_SuccessFromRepository(t *testing.T) {
 	ctx := context.Background()
 	repo := &mockArticleRepository{}
 	cache := &mockArticleCache{}
-	listCache := &mockArticleListCache{}
 
-	uc := NewArticleUseCase(repo, cache, listCache)
+	uc := NewGetArticle(repo, cache)
 
 	articleID := int64(1)
 	articleEntity := &articleentity.Article{
@@ -52,7 +50,7 @@ func TestGetArticle_Execute_SuccessFromRepository(t *testing.T) {
 	repo.On("GetByID", ctx, articleID).Return(articleEntity, nil)
 	cache.On("Set", ctx, articleID, articleEntity).Return(nil)
 
-	result, err := uc.Get.Execute(ctx, articleID)
+	result, err := uc.Execute(ctx, articleID)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
@@ -65,15 +63,14 @@ func TestGetArticle_Execute_ArticleNotFound(t *testing.T) {
 	ctx := context.Background()
 	repo := &mockArticleRepository{}
 	cache := &mockArticleCache{}
-	listCache := &mockArticleListCache{}
 
-	uc := NewArticleUseCase(repo, cache, listCache)
+	uc := NewGetArticle(repo, cache)
 
 	articleID := int64(1)
 	cache.On("Get", ctx, articleID).Return(nil, errors.New("cache miss"))
 	repo.On("GetByID", ctx, articleID).Return(nil, nil)
 
-	result, err := uc.Get.Execute(ctx, articleID)
+	result, err := uc.Execute(ctx, articleID)
 
 	assert.Error(t, err)
 	assert.True(t, articleentity.IsArticleNotFound(err))
@@ -84,7 +81,7 @@ func TestGetArticle_Execute_WithNilCache(t *testing.T) {
 	ctx := context.Background()
 	repo := &mockArticleRepository{}
 
-	uc := NewArticleUseCase(repo, nil, nil)
+	uc := NewGetArticle(repo, nil)
 
 	articleID := int64(1)
 	articleEntity := &articleentity.Article{
@@ -93,7 +90,7 @@ func TestGetArticle_Execute_WithNilCache(t *testing.T) {
 	}
 	repo.On("GetByID", ctx, articleID).Return(articleEntity, nil)
 
-	result, err := uc.Get.Execute(ctx, articleID)
+	result, err := uc.Execute(ctx, articleID)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, result)

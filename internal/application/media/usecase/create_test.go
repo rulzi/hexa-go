@@ -18,7 +18,7 @@ func TestCreateMedia_Execute_Success(t *testing.T) {
 	storage := &mockMediaStorage{}
 	baseURL := "http://localhost:8080"
 
-	uc := NewMediaUseCase(repo, storage, baseURL)
+	uc := NewCreateMedia(repo, storage, baseURL)
 
 	filename := "test.jpg"
 	file := strings.NewReader("test file content")
@@ -31,7 +31,7 @@ func TestCreateMedia_Execute_Success(t *testing.T) {
 	storage.On("Save", ctx, filename, mock.Anything).Return(storagePath, nil)
 	repo.On("Create", ctx, mock.Anything).Return(expectedMedia, nil)
 
-	result, err := uc.Create.Execute(ctx, filename, file)
+	result, err := uc.Execute(ctx, filename, file)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
@@ -48,13 +48,13 @@ func TestCreateMedia_Execute_StorageError(t *testing.T) {
 	storage := &mockMediaStorage{}
 	baseURL := "http://localhost:8080"
 
-	uc := NewMediaUseCase(repo, storage, baseURL)
+	uc := NewCreateMedia(repo, storage, baseURL)
 
 	filename := "test.jpg"
 	file := strings.NewReader("content")
 	storage.On("Save", ctx, filename, mock.Anything).Return("", errors.New("storage error"))
 
-	result, err := uc.Create.Execute(ctx, filename, file)
+	result, err := uc.Execute(ctx, filename, file)
 
 	assert.Error(t, err)
 	assert.Nil(t, result)

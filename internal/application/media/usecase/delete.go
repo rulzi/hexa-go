@@ -4,15 +4,25 @@ import (
 	"context"
 
 	mediaentity "github.com/rulzi/hexa-go/internal/domain/media/entity"
+	mediaport "github.com/rulzi/hexa-go/internal/domain/media/port"
 )
+
+type deleteMediaDeps struct {
+	mediaRepo mediaport.Repository
+	storage   mediaport.Storage
+}
 
 // DeleteMedia handles media deletion
 type DeleteMedia struct {
-	deps mediaDeps
+	deps deleteMediaDeps
 }
 
-func newDeleteMedia(deps mediaDeps) *DeleteMedia {
-	return &DeleteMedia{deps: deps}
+// NewDeleteMedia creates a new DeleteMedia use case.
+func NewDeleteMedia(mediaRepo mediaport.Repository, storage mediaport.Storage) *DeleteMedia {
+	return &DeleteMedia{deps: deleteMediaDeps{
+		mediaRepo: mediaRepo,
+		storage:   storage,
+	}}
 }
 
 // Execute deletes a media

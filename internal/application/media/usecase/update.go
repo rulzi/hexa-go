@@ -7,15 +7,27 @@ import (
 
 	"github.com/rulzi/hexa-go/internal/application/media/dto"
 	mediaentity "github.com/rulzi/hexa-go/internal/domain/media/entity"
+	mediaport "github.com/rulzi/hexa-go/internal/domain/media/port"
 )
+
+type updateMediaDeps struct {
+	mediaRepo mediaport.Repository
+	storage   mediaport.Storage
+	baseURL   string
+}
 
 // UpdateMedia handles media updates
 type UpdateMedia struct {
-	deps mediaDeps
+	deps updateMediaDeps
 }
 
-func newUpdateMedia(deps mediaDeps) *UpdateMedia {
-	return &UpdateMedia{deps: deps}
+// NewUpdateMedia creates a new UpdateMedia use case.
+func NewUpdateMedia(mediaRepo mediaport.Repository, storage mediaport.Storage, baseURL string) *UpdateMedia {
+	return &UpdateMedia{deps: updateMediaDeps{
+		mediaRepo: mediaRepo,
+		storage:   storage,
+		baseURL:   baseURL,
+	}}
 }
 
 // Execute updates a media

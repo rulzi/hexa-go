@@ -17,18 +17,15 @@ func TestDeleteUser_Execute_Success(t *testing.T) {
 
 	ctx := context.Background()
 	repo := usermocks.NewMockRepository(ctrl)
-	passwordHasher := usermocks.NewMockPasswordHasher(ctrl)
-	notificationService := usermocks.NewMockNotificationService(ctrl)
-	tokenGen := usermocks.NewMockTokenGenerator(ctrl)
 
-	uc := NewUserUseCase(repo, passwordHasher, notificationService, tokenGen)
+	uc := NewDeleteUser(repo)
 
 	userID := int64(1)
 	existingUser := &userentity.User{ID: userID, Name: "Test", Email: "test@example.com", CreatedAt: time.Now(), UpdatedAt: time.Now()}
 	repo.EXPECT().GetByID(ctx, userID).Return(existingUser, nil)
 	repo.EXPECT().Delete(ctx, userID).Return(nil)
 
-	err := uc.Delete.Execute(ctx, userID)
+	err := uc.Execute(ctx, userID)
 
 	assert.NoError(t, err)
 }
@@ -39,16 +36,13 @@ func TestDeleteUser_Execute_UserNotFound(t *testing.T) {
 
 	ctx := context.Background()
 	repo := usermocks.NewMockRepository(ctrl)
-	passwordHasher := usermocks.NewMockPasswordHasher(ctrl)
-	notificationService := usermocks.NewMockNotificationService(ctrl)
-	tokenGen := usermocks.NewMockTokenGenerator(ctrl)
 
-	uc := NewUserUseCase(repo, passwordHasher, notificationService, tokenGen)
+	uc := NewDeleteUser(repo)
 
 	userID := int64(999)
 	repo.EXPECT().GetByID(ctx, userID).Return(nil, nil)
 
-	err := uc.Delete.Execute(ctx, userID)
+	err := uc.Execute(ctx, userID)
 
 	assert.Error(t, err)
 	assert.True(t, userentity.IsUserNotFound(err))

@@ -17,11 +17,8 @@ func TestListUser_Execute_Success(t *testing.T) {
 
 	ctx := context.Background()
 	repo := usermocks.NewMockRepository(ctrl)
-	passwordHasher := usermocks.NewMockPasswordHasher(ctrl)
-	notificationService := usermocks.NewMockNotificationService(ctrl)
-	tokenGen := usermocks.NewMockTokenGenerator(ctrl)
 
-	uc := NewUserUseCase(repo, passwordHasher, notificationService, tokenGen)
+	uc := NewListUser(repo)
 
 	limit, offset := 10, 0
 	users := []*userentity.User{
@@ -31,7 +28,7 @@ func TestListUser_Execute_Success(t *testing.T) {
 	repo.EXPECT().List(ctx, limit, offset).Return(users, nil)
 	repo.EXPECT().Count(ctx).Return(total, nil)
 
-	result, err := uc.List.Execute(ctx, limit, offset)
+	result, err := uc.Execute(ctx, limit, offset)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, result)

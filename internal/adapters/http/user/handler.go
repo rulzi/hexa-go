@@ -8,7 +8,6 @@ import (
 	"github.com/rulzi/hexa-go/internal/adapters/http/errmapper"
 	"github.com/rulzi/hexa-go/internal/adapters/http/response"
 	"github.com/rulzi/hexa-go/internal/application/user/dto"
-	"github.com/rulzi/hexa-go/internal/application/user/usecase"
 	domainerrs "github.com/rulzi/hexa-go/internal/domain/errs"
 	"github.com/rulzi/hexa-go/internal/infrastructure/logger"
 )
@@ -54,19 +53,7 @@ type Handler struct {
 }
 
 // NewHandler creates a new Handler
-func NewHandler(userUseCase *usecase.UserUseCase, appLogger logger.Logger) *Handler {
-	return NewHandlerWithDeps(Deps{
-		Create: userUseCase.Create,
-		Get:    userUseCase.Get,
-		List:   userUseCase.List,
-		Update: userUseCase.Update,
-		Delete: userUseCase.Delete,
-		Login:  userUseCase.Login,
-	}, appLogger)
-}
-
-// NewHandlerWithDeps creates a new Handler with explicit dependencies
-func NewHandlerWithDeps(deps Deps, appLogger logger.Logger) *Handler {
+func NewHandler(deps Deps, appLogger logger.Logger) *Handler {
 	return &Handler{
 		deps:   deps,
 		logger: appLogger,

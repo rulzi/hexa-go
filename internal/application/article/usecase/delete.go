@@ -4,15 +4,27 @@ import (
 	"context"
 
 	articleentity "github.com/rulzi/hexa-go/internal/domain/article/entity"
+	articleport "github.com/rulzi/hexa-go/internal/domain/article/port"
 )
+
+type deleteArticleDeps struct {
+	articleRepo articleport.Repository
+	cache       articleport.Cache
+	listCache   ArticleListCache
+}
 
 // DeleteArticle handles article deletion
 type DeleteArticle struct {
-	deps articleDeps
+	deps deleteArticleDeps
 }
 
-func newDeleteArticle(deps articleDeps) *DeleteArticle {
-	return &DeleteArticle{deps: deps}
+// NewDeleteArticle creates a new DeleteArticle use case.
+func NewDeleteArticle(articleRepo articleport.Repository, cache articleport.Cache, listCache ArticleListCache) *DeleteArticle {
+	return &DeleteArticle{deps: deleteArticleDeps{
+		articleRepo: articleRepo,
+		cache:       cache,
+		listCache:   listCache,
+	}}
 }
 
 // Execute deletes an article

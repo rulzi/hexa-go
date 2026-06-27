@@ -7,15 +7,27 @@ import (
 
 	"github.com/rulzi/hexa-go/internal/application/media/dto"
 	mediaentity "github.com/rulzi/hexa-go/internal/domain/media/entity"
+	mediaport "github.com/rulzi/hexa-go/internal/domain/media/port"
 )
+
+type createMediaDeps struct {
+	mediaRepo mediaport.Repository
+	storage   mediaport.Storage
+	baseURL   string
+}
 
 // CreateMedia handles media creation
 type CreateMedia struct {
-	deps mediaDeps
+	deps createMediaDeps
 }
 
-func newCreateMedia(deps mediaDeps) *CreateMedia {
-	return &CreateMedia{deps: deps}
+// NewCreateMedia creates a new CreateMedia use case.
+func NewCreateMedia(mediaRepo mediaport.Repository, storage mediaport.Storage, baseURL string) *CreateMedia {
+	return &CreateMedia{deps: createMediaDeps{
+		mediaRepo: mediaRepo,
+		storage:   storage,
+		baseURL:   baseURL,
+	}}
 }
 
 // Execute creates a new media

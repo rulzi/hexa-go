@@ -6,15 +6,25 @@ import (
 
 	"github.com/rulzi/hexa-go/internal/application/user/dto"
 	userentity "github.com/rulzi/hexa-go/internal/domain/user/entity"
+	userport "github.com/rulzi/hexa-go/internal/domain/user/port"
 )
+
+type updateUserDeps struct {
+	userRepo       userport.Repository
+	passwordHasher userport.PasswordHasher
+}
 
 // UpdateUser handles user updates
 type UpdateUser struct {
-	deps userDeps
+	deps updateUserDeps
 }
 
-func newUpdateUser(deps userDeps) *UpdateUser {
-	return &UpdateUser{deps: deps}
+// NewUpdateUser creates a new UpdateUser use case.
+func NewUpdateUser(userRepo userport.Repository, passwordHasher userport.PasswordHasher) *UpdateUser {
+	return &UpdateUser{deps: updateUserDeps{
+		userRepo:       userRepo,
+		passwordHasher: passwordHasher,
+	}}
 }
 
 // Execute updates a user

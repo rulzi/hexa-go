@@ -16,9 +16,8 @@ func TestCreateArticle_Execute_Success(t *testing.T) {
 	ctx := context.Background()
 	repo := &mockArticleRepository{}
 	cache := &mockArticleCache{}
-	listCache := &mockArticleListCache{}
 
-	uc := NewArticleUseCase(repo, cache, listCache)
+	uc := NewCreateArticle(repo, cache)
 
 	req := dto.CreateArticleRequest{
 		Title:    "Test Article",
@@ -38,7 +37,7 @@ func TestCreateArticle_Execute_Success(t *testing.T) {
 	repo.On("Create", ctx, mock.Anything).Return(expectedArticle, nil)
 	cache.On("InvalidateList", ctx).Return(nil)
 
-	result, err := uc.Create.Execute(ctx, req)
+	result, err := uc.Execute(ctx, req)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
@@ -55,9 +54,8 @@ func TestCreateArticle_Execute_ValidationError(t *testing.T) {
 	ctx := context.Background()
 	repo := &mockArticleRepository{}
 	cache := &mockArticleCache{}
-	listCache := &mockArticleListCache{}
 
-	uc := NewArticleUseCase(repo, cache, listCache)
+	uc := NewCreateArticle(repo, cache)
 
 	tests := []struct {
 		name string
@@ -70,7 +68,7 @@ func TestCreateArticle_Execute_ValidationError(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := uc.Create.Execute(ctx, tt.req)
+			result, err := uc.Execute(ctx, tt.req)
 			assert.Error(t, err)
 			assert.Nil(t, result)
 			repo.AssertNotCalled(t, "Create")
@@ -82,15 +80,14 @@ func TestCreateArticle_Execute_RepositoryError(t *testing.T) {
 	ctx := context.Background()
 	repo := &mockArticleRepository{}
 	cache := &mockArticleCache{}
-	listCache := &mockArticleListCache{}
 
-	uc := NewArticleUseCase(repo, cache, listCache)
+	uc := NewCreateArticle(repo, cache)
 
 	req := dto.CreateArticleRequest{Title: "Test Article", Content: "Test Content", AuthorID: 1}
 	repoError := errors.New("repository error")
 	repo.On("Create", ctx, mock.Anything).Return(nil, repoError)
 
-	result, err := uc.Create.Execute(ctx, req)
+	result, err := uc.Execute(ctx, req)
 
 	assert.Error(t, err)
 	assert.Equal(t, repoError, err)
@@ -103,7 +100,7 @@ func TestCreateArticle_Execute_WithNilCache(t *testing.T) {
 	ctx := context.Background()
 	repo := &mockArticleRepository{}
 
-	uc := NewArticleUseCase(repo, nil, nil)
+	uc := NewCreateArticle(repo, nil)
 
 	req := dto.CreateArticleRequest{Title: "Test Article", Content: "Test Content", AuthorID: 1}
 	expectedArticle := &articleentity.Article{
@@ -116,7 +113,7 @@ func TestCreateArticle_Execute_WithNilCache(t *testing.T) {
 	}
 	repo.On("Create", ctx, mock.Anything).Return(expectedArticle, nil)
 
-	result, err := uc.Create.Execute(ctx, req)
+	result, err := uc.Execute(ctx, req)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, result)

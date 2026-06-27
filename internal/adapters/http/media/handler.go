@@ -10,7 +10,6 @@ import (
 	"github.com/rulzi/hexa-go/internal/adapters/http/errmapper"
 	"github.com/rulzi/hexa-go/internal/adapters/http/response"
 	"github.com/rulzi/hexa-go/internal/application/media/dto"
-	"github.com/rulzi/hexa-go/internal/application/media/usecase"
 	domainerrs "github.com/rulzi/hexa-go/internal/domain/errs"
 	"github.com/rulzi/hexa-go/internal/infrastructure/logger"
 )
@@ -51,18 +50,7 @@ type Handler struct {
 }
 
 // NewHandler creates a new Handler
-func NewHandler(mediaUseCase *usecase.MediaUseCase, appLogger logger.Logger) *Handler {
-	return NewHandlerWithDeps(Deps{
-		Create: mediaUseCase.Create,
-		Get:    mediaUseCase.Get,
-		List:   mediaUseCase.List,
-		Update: mediaUseCase.Update,
-		Delete: mediaUseCase.Delete,
-	}, appLogger)
-}
-
-// NewHandlerWithDeps creates a new Handler with explicit dependencies
-func NewHandlerWithDeps(deps Deps, appLogger logger.Logger) *Handler {
+func NewHandler(deps Deps, appLogger logger.Logger) *Handler {
 	return &Handler{
 		deps:   deps,
 		logger: appLogger,

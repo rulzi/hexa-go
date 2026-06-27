@@ -83,7 +83,7 @@ func newTestHandler() (*Handler, *articleTestMocks) {
 		Update: &mockUpdateArticle{},
 		Delete: &mockDeleteArticle{},
 	}
-	handler := NewHandlerWithDeps(Deps{
+	handler := NewHandler(Deps{
 		Create: mocks.Create,
 		Get:    mocks.Get,
 		List:   mocks.List,

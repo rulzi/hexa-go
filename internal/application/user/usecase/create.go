@@ -6,15 +6,31 @@ import (
 
 	"github.com/rulzi/hexa-go/internal/application/user/dto"
 	userentity "github.com/rulzi/hexa-go/internal/domain/user/entity"
+	userport "github.com/rulzi/hexa-go/internal/domain/user/port"
 )
+
+type createUserDeps struct {
+	userRepo            userport.Repository
+	passwordHasher      userport.PasswordHasher
+	notificationService userport.NotificationService
+}
 
 // CreateUser handles user creation
 type CreateUser struct {
-	deps userDeps
+	deps createUserDeps
 }
 
-func newCreateUser(deps userDeps) *CreateUser {
-	return &CreateUser{deps: deps}
+// NewCreateUser creates a new CreateUser use case.
+func NewCreateUser(
+	userRepo userport.Repository,
+	passwordHasher userport.PasswordHasher,
+	notificationService userport.NotificationService,
+) *CreateUser {
+	return &CreateUser{deps: createUserDeps{
+		userRepo:            userRepo,
+		passwordHasher:      passwordHasher,
+		notificationService: notificationService,
+	}}
 }
 
 // Execute creates a new user

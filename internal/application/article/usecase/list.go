@@ -4,15 +4,32 @@ import (
 	"context"
 
 	"github.com/rulzi/hexa-go/internal/application/article/dto"
+	articleport "github.com/rulzi/hexa-go/internal/domain/article/port"
 )
+
+// ArticleListCache defines the interface for article list caching (DTO-based for performance)
+type ArticleListCache interface {
+	GetArticleList(ctx context.Context, limit, offset int) (*dto.ListArticlesResponse, error)
+	SetArticleList(ctx context.Context, limit, offset int, listResp *dto.ListArticlesResponse) error
+	InvalidateArticleList(ctx context.Context) error
+}
+
+type listArticleDeps struct {
+	articleRepo articleport.Repository
+	listCache   ArticleListCache
+}
 
 // ListArticle handles article listing with pagination
 type ListArticle struct {
-	deps articleDeps
+	deps listArticleDeps
 }
 
-func newListArticle(deps articleDeps) *ListArticle {
-	return &ListArticle{deps: deps}
+// NewListArticle creates a new ListArticle use case.
+func NewListArticle(articleRepo articleport.Repository, listCache ArticleListCache) *ListArticle {
+	return &ListArticle{deps: listArticleDeps{
+		articleRepo: articleRepo,
+		listCache:   listCache,
+	}}
 }
 
 // Execute lists articles with pagination

@@ -15,9 +15,8 @@ import (
 
 // Container holds all article domain dependencies
 type Container struct {
-	Repo      articleport.Repository
-	ArticleUC *usecase.ArticleUseCase
-	Handler   *httparticle.Handler
+	Repo    articleport.Repository
+	Handler *httparticle.Handler
 }
 
 // NewContainer creates a new article domain container
@@ -32,13 +31,16 @@ func NewContainer(database *sql.DB, redisClient *redis.Client, appLogger logger.
 		dtoCache = dtoCacheAdapter
 	}
 
-	articleUseCase := usecase.NewArticleUseCase(articleRepo, domainCache, dtoCache)
-
-	articleHandler := httparticle.NewHandler(articleUseCase, appLogger)
+	articleHandler := httparticle.NewHandler(httparticle.Deps{
+		Create: usecase.NewCreateArticle(articleRepo, domainCache),
+		Get:    usecase.NewGetArticle(articleRepo, domainCache),
+		List:   usecase.NewListArticle(articleRepo, dtoCache),
+		Update: usecase.NewUpdateArticle(articleRepo, domainCache, dtoCache),
+		Delete: usecase.NewDeleteArticle(articleRepo, domainCache, dtoCache),
+	}, appLogger)
 
 	return &Container{
-		Repo:      articleRepo,
-		ArticleUC: articleUseCase,
-		Handler:   articleHandler,
+		Repo:    articleRepo,
+		Handler: articleHandler,
 	}
 }

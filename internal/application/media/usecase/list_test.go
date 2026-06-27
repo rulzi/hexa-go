@@ -12,10 +12,9 @@ import (
 func TestListMedia_Execute_Success(t *testing.T) {
 	ctx := context.Background()
 	repo := &mockMediaRepository{}
-	storage := &mockMediaStorage{}
 	baseURL := "http://localhost:8080"
 
-	uc := NewMediaUseCase(repo, storage, baseURL)
+	uc := NewListMedia(repo, baseURL)
 
 	limit, offset := 10, 0
 	mediaList := []*mediaentity.Media{
@@ -25,7 +24,7 @@ func TestListMedia_Execute_Success(t *testing.T) {
 	repo.On("List", ctx, limit, offset).Return(mediaList, nil)
 	repo.On("Count", ctx).Return(total, nil)
 
-	result, err := uc.List.Execute(ctx, limit, offset)
+	result, err := uc.Execute(ctx, limit, offset)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
@@ -38,15 +37,14 @@ func TestListMedia_Execute_Success(t *testing.T) {
 func TestListMedia_Execute_DefaultPagination(t *testing.T) {
 	ctx := context.Background()
 	repo := &mockMediaRepository{}
-	storage := &mockMediaStorage{}
 	baseURL := "http://localhost:8080"
 
-	uc := NewMediaUseCase(repo, storage, baseURL)
+	uc := NewListMedia(repo, baseURL)
 
 	repo.On("List", ctx, 10, 0).Return([]*mediaentity.Media{}, nil)
 	repo.On("Count", ctx).Return(int64(0), nil)
 
-	result, err := uc.List.Execute(ctx, -1, -1)
+	result, err := uc.Execute(ctx, -1, -1)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, result)

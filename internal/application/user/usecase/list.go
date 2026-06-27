@@ -4,15 +4,21 @@ import (
 	"context"
 
 	"github.com/rulzi/hexa-go/internal/application/user/dto"
+	userport "github.com/rulzi/hexa-go/internal/domain/user/port"
 )
+
+type listUserDeps struct {
+	userRepo userport.Repository
+}
 
 // ListUser handles user listing with pagination
 type ListUser struct {
-	deps userDeps
+	deps listUserDeps
 }
 
-func newListUser(deps userDeps) *ListUser {
-	return &ListUser{deps: deps}
+// NewListUser creates a new ListUser use case.
+func NewListUser(userRepo userport.Repository) *ListUser {
+	return &ListUser{deps: listUserDeps{userRepo: userRepo}}
 }
 
 // Execute lists users with pagination

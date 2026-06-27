@@ -134,7 +134,6 @@ func TestUserUseCase_Create(t *testing.T) {
 			repo := usermocks.NewMockRepository(ctrl)
 			hasher := usermocks.NewMockPasswordHasher(ctrl)
 			notifier := usermocks.NewMockNotificationService(ctrl)
-			tokenGen := usermocks.NewMockTokenGenerator(ctrl)
 
 			if tt.setupRepo != nil {
 				tt.setupRepo(repo)
@@ -146,8 +145,8 @@ func TestUserUseCase_Create(t *testing.T) {
 				tt.setupNotifier(notifier)
 			}
 
-			uc := NewUserUseCase(repo, hasher, notifier, tokenGen)
-			resp, err := uc.Create.Execute(ctx, tt.req)
+			uc := NewCreateUser(repo, hasher, notifier)
+			resp, err := uc.Execute(ctx, tt.req)
 
 			if tt.wantErrCheck != nil {
 				require.Error(t, err)
@@ -172,7 +171,7 @@ func TestUserUseCase_Create_ValidationDoesNotTouchRepository(t *testing.T) {
 	hasher := usermocks.NewMockPasswordHasher(ctrl)
 	notifier := usermocks.NewMockNotificationService(ctrl)
 
-	uc := NewUserUseCase(repo, hasher, notifier, usermocks.NewMockTokenGenerator(ctrl))
+	uc := NewCreateUser(repo, hasher, notifier)
 
 	invalidRequests := []dto.CreateUserRequest{
 		{Name: "Test", Email: "", Password: "password123"},
@@ -180,7 +179,7 @@ func TestUserUseCase_Create_ValidationDoesNotTouchRepository(t *testing.T) {
 	}
 
 	for _, req := range invalidRequests {
-		resp, err := uc.Create.Execute(ctx, req)
+		resp, err := uc.Execute(ctx, req)
 		assert.Error(t, err)
 		assert.Nil(t, resp)
 	}
@@ -198,8 +197,8 @@ func TestUserUseCase_Create_EmailExistsDoesNotPersist(t *testing.T) {
 	existing := &userentity.User{ID: 1, Email: "exist@example.com"}
 	repo.EXPECT().GetByEmail(ctx, "exist@example.com").Return(existing, nil)
 
-	uc := NewUserUseCase(repo, hasher, notifier, usermocks.NewMockTokenGenerator(ctrl))
-	resp, err := uc.Create.Execute(ctx, dto.CreateUserRequest{
+	uc := NewCreateUser(repo, hasher, notifier)
+	resp, err := uc.Execute(ctx, dto.CreateUserRequest{
 		Name:     "Test",
 		Email:    "exist@example.com",
 		Password: "password123",

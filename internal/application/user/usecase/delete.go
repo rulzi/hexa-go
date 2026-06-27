@@ -4,15 +4,21 @@ import (
 	"context"
 
 	userentity "github.com/rulzi/hexa-go/internal/domain/user/entity"
+	userport "github.com/rulzi/hexa-go/internal/domain/user/port"
 )
+
+type deleteUserDeps struct {
+	userRepo userport.Repository
+}
 
 // DeleteUser handles user deletion
 type DeleteUser struct {
-	deps userDeps
+	deps deleteUserDeps
 }
 
-func newDeleteUser(deps userDeps) *DeleteUser {
-	return &DeleteUser{deps: deps}
+// NewDeleteUser creates a new DeleteUser use case.
+func NewDeleteUser(userRepo userport.Repository) *DeleteUser {
+	return &DeleteUser{deps: deleteUserDeps{userRepo: userRepo}}
 }
 
 // Execute deletes a user

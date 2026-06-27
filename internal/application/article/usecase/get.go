@@ -5,15 +5,25 @@ import (
 
 	"github.com/rulzi/hexa-go/internal/application/article/dto"
 	articleentity "github.com/rulzi/hexa-go/internal/domain/article/entity"
+	articleport "github.com/rulzi/hexa-go/internal/domain/article/port"
 )
+
+type getArticleDeps struct {
+	articleRepo articleport.Repository
+	cache       articleport.Cache
+}
 
 // GetArticle handles article retrieval by ID
 type GetArticle struct {
-	deps articleDeps
+	deps getArticleDeps
 }
 
-func newGetArticle(deps articleDeps) *GetArticle {
-	return &GetArticle{deps: deps}
+// NewGetArticle creates a new GetArticle use case.
+func NewGetArticle(articleRepo articleport.Repository, cache articleport.Cache) *GetArticle {
+	return &GetArticle{deps: getArticleDeps{
+		articleRepo: articleRepo,
+		cache:       cache,
+	}}
 }
 
 // Execute retrieves an article by ID

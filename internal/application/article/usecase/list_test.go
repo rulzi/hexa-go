@@ -15,10 +15,9 @@ import (
 func TestListArticle_Execute_SuccessFromCache(t *testing.T) {
 	ctx := context.Background()
 	repo := &mockArticleRepository{}
-	cache := &mockArticleCache{}
 	listCache := &mockArticleListCache{}
 
-	uc := NewArticleUseCase(repo, cache, listCache)
+	uc := NewListArticle(repo, listCache)
 
 	limit, offset := 10, 0
 	cachedResponse := &dto.ListArticlesResponse{
@@ -29,7 +28,7 @@ func TestListArticle_Execute_SuccessFromCache(t *testing.T) {
 	}
 	listCache.On("GetArticleList", ctx, limit, offset).Return(cachedResponse, nil)
 
-	result, err := uc.List.Execute(ctx, limit, offset)
+	result, err := uc.Execute(ctx, limit, offset)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
@@ -42,10 +41,9 @@ func TestListArticle_Execute_SuccessFromCache(t *testing.T) {
 func TestListArticle_Execute_SuccessFromRepository(t *testing.T) {
 	ctx := context.Background()
 	repo := &mockArticleRepository{}
-	cache := &mockArticleCache{}
 	listCache := &mockArticleListCache{}
 
-	uc := NewArticleUseCase(repo, cache, listCache)
+	uc := NewListArticle(repo, listCache)
 
 	limit, offset := 10, 0
 	articles := []*articleentity.Article{
@@ -58,7 +56,7 @@ func TestListArticle_Execute_SuccessFromRepository(t *testing.T) {
 	repo.On("Count", ctx).Return(total, nil)
 	listCache.On("SetArticleList", ctx, limit, offset, mock.AnythingOfType("*dto.ListArticlesResponse")).Return(nil)
 
-	result, err := uc.List.Execute(ctx, limit, offset)
+	result, err := uc.Execute(ctx, limit, offset)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
@@ -71,17 +69,16 @@ func TestListArticle_Execute_SuccessFromRepository(t *testing.T) {
 func TestListArticle_Execute_DefaultPagination(t *testing.T) {
 	ctx := context.Background()
 	repo := &mockArticleRepository{}
-	cache := &mockArticleCache{}
 	listCache := &mockArticleListCache{}
 
-	uc := NewArticleUseCase(repo, cache, listCache)
+	uc := NewListArticle(repo, listCache)
 
 	listCache.On("GetArticleList", ctx, 10, 0).Return(nil, errors.New("cache miss"))
 	repo.On("List", ctx, 10, 0).Return([]*articleentity.Article{}, nil)
 	repo.On("Count", ctx).Return(int64(0), nil)
 	listCache.On("SetArticleList", ctx, 10, 0, mock.AnythingOfType("*dto.ListArticlesResponse")).Return(nil)
 
-	result, err := uc.List.Execute(ctx, -1, -1)
+	result, err := uc.Execute(ctx, -1, -1)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
@@ -92,9 +89,8 @@ func TestListArticle_Execute_DefaultPagination(t *testing.T) {
 func TestListArticle_Execute_WithNilListCache(t *testing.T) {
 	ctx := context.Background()
 	repo := &mockArticleRepository{}
-	cache := &mockArticleCache{}
 
-	uc := NewArticleUseCase(repo, cache, nil)
+	uc := NewListArticle(repo, nil)
 
 	limit, offset := 10, 0
 	articles := []*articleentity.Article{
@@ -104,7 +100,7 @@ func TestListArticle_Execute_WithNilListCache(t *testing.T) {
 	repo.On("List", ctx, limit, offset).Return(articles, nil)
 	repo.On("Count", ctx).Return(total, nil)
 
-	result, err := uc.List.Execute(ctx, limit, offset)
+	result, err := uc.Execute(ctx, limit, offset)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, result)

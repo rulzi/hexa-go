@@ -17,7 +17,6 @@ import (
 type Container struct {
 	Repo    mediaport.Repository
 	Storage mediaport.StoragePort
-	MediaUC *usecase.MediaUseCase
 	Handler *httpmedia.Handler
 }
 
@@ -30,13 +29,17 @@ func NewContainer(database *sql.DB, appLogger logger.Logger, storageCfg config.S
 		return nil, err
 	}
 
-	mediaUseCase := usecase.NewMediaUseCase(mediaRepo, storage, storageCfg.BaseURL)
-	mediaHandler := httpmedia.NewHandler(mediaUseCase, appLogger)
+	mediaHandler := httpmedia.NewHandler(httpmedia.Deps{
+		Create: usecase.NewCreateMedia(mediaRepo, storage, storageCfg.BaseURL),
+		Get:    usecase.NewGetMedia(mediaRepo, storageCfg.BaseURL),
+		List:   usecase.NewListMedia(mediaRepo, storageCfg.BaseURL),
+		Update: usecase.NewUpdateMedia(mediaRepo, storage, storageCfg.BaseURL),
+		Delete: usecase.NewDeleteMedia(mediaRepo, storage),
+	}, appLogger)
 
 	return &Container{
 		Repo:    mediaRepo,
 		Storage: storage,
-		MediaUC: mediaUseCase,
 		Handler: mediaHandler,
 	}, nil
 }

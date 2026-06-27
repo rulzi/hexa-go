@@ -15,7 +15,7 @@ func TestDeleteArticle_Execute_Success(t *testing.T) {
 	cache := &mockArticleCache{}
 	listCache := &mockArticleListCache{}
 
-	uc := NewArticleUseCase(repo, cache, listCache)
+	uc := NewDeleteArticle(repo, cache, listCache)
 
 	articleID := int64(1)
 	existingArticle := &articleentity.Article{
@@ -27,7 +27,7 @@ func TestDeleteArticle_Execute_Success(t *testing.T) {
 	cache.On("InvalidateList", ctx).Return(nil)
 	listCache.On("InvalidateArticleList", ctx).Return(nil)
 
-	err := uc.Delete.Execute(ctx, articleID)
+	err := uc.Execute(ctx, articleID)
 
 	assert.NoError(t, err)
 	repo.AssertExpectations(t)
@@ -41,12 +41,12 @@ func TestDeleteArticle_Execute_ArticleNotFound(t *testing.T) {
 	cache := &mockArticleCache{}
 	listCache := &mockArticleListCache{}
 
-	uc := NewArticleUseCase(repo, cache, listCache)
+	uc := NewDeleteArticle(repo, cache, listCache)
 
 	articleID := int64(1)
 	repo.On("GetByID", ctx, articleID).Return(nil, nil)
 
-	err := uc.Delete.Execute(ctx, articleID)
+	err := uc.Execute(ctx, articleID)
 
 	assert.Error(t, err)
 	assert.True(t, articleentity.IsArticleNotFound(err))
@@ -58,7 +58,7 @@ func TestDeleteArticle_Execute_WithNilCache(t *testing.T) {
 	repo := &mockArticleRepository{}
 	listCache := &mockArticleListCache{}
 
-	uc := NewArticleUseCase(repo, nil, listCache)
+	uc := NewDeleteArticle(repo, nil, listCache)
 
 	articleID := int64(1)
 	existingArticle := &articleentity.Article{
@@ -68,7 +68,7 @@ func TestDeleteArticle_Execute_WithNilCache(t *testing.T) {
 	repo.On("Delete", ctx, articleID).Return(nil)
 	listCache.On("InvalidateArticleList", ctx).Return(nil)
 
-	err := uc.Delete.Execute(ctx, articleID)
+	err := uc.Execute(ctx, articleID)
 
 	assert.NoError(t, err)
 	repo.AssertExpectations(t)

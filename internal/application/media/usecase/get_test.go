@@ -12,10 +12,9 @@ import (
 func TestGetMedia_Execute_Success(t *testing.T) {
 	ctx := context.Background()
 	repo := &mockMediaRepository{}
-	storage := &mockMediaStorage{}
 	baseURL := "http://localhost:8080"
 
-	uc := NewMediaUseCase(repo, storage, baseURL)
+	uc := NewGetMedia(repo, baseURL)
 
 	mediaID := int64(1)
 	mediaEntity := &mediaentity.Media{
@@ -24,7 +23,7 @@ func TestGetMedia_Execute_Success(t *testing.T) {
 	}
 	repo.On("GetByID", ctx, mediaID).Return(mediaEntity, nil)
 
-	result, err := uc.Get.Execute(ctx, mediaID)
+	result, err := uc.Execute(ctx, mediaID)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
@@ -36,15 +35,14 @@ func TestGetMedia_Execute_Success(t *testing.T) {
 func TestGetMedia_Execute_MediaNotFound(t *testing.T) {
 	ctx := context.Background()
 	repo := &mockMediaRepository{}
-	storage := &mockMediaStorage{}
 	baseURL := "http://localhost:8080"
 
-	uc := NewMediaUseCase(repo, storage, baseURL)
+	uc := NewGetMedia(repo, baseURL)
 
 	mediaID := int64(999)
 	repo.On("GetByID", ctx, mediaID).Return(nil, nil)
 
-	result, err := uc.Get.Execute(ctx, mediaID)
+	result, err := uc.Execute(ctx, mediaID)
 
 	assert.Error(t, err)
 	assert.True(t, mediaentity.IsMediaNotFound(err))

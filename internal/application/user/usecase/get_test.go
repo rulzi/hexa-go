@@ -17,11 +17,8 @@ func TestGetUser_Execute_Success(t *testing.T) {
 
 	ctx := context.Background()
 	repo := usermocks.NewMockRepository(ctrl)
-	passwordHasher := usermocks.NewMockPasswordHasher(ctrl)
-	notificationService := usermocks.NewMockNotificationService(ctrl)
-	tokenGen := usermocks.NewMockTokenGenerator(ctrl)
 
-	uc := NewUserUseCase(repo, passwordHasher, notificationService, tokenGen)
+	uc := NewGetUser(repo)
 
 	userID := int64(1)
 	userEntity := &userentity.User{
@@ -30,7 +27,7 @@ func TestGetUser_Execute_Success(t *testing.T) {
 	}
 	repo.EXPECT().GetByID(ctx, userID).Return(userEntity, nil)
 
-	result, err := uc.Get.Execute(ctx, userID)
+	result, err := uc.Execute(ctx, userID)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
@@ -44,16 +41,13 @@ func TestGetUser_Execute_UserNotFound(t *testing.T) {
 
 	ctx := context.Background()
 	repo := usermocks.NewMockRepository(ctrl)
-	passwordHasher := usermocks.NewMockPasswordHasher(ctrl)
-	notificationService := usermocks.NewMockNotificationService(ctrl)
-	tokenGen := usermocks.NewMockTokenGenerator(ctrl)
 
-	uc := NewUserUseCase(repo, passwordHasher, notificationService, tokenGen)
+	uc := NewGetUser(repo)
 
 	userID := int64(999)
 	repo.EXPECT().GetByID(ctx, userID).Return(nil, nil)
 
-	result, err := uc.Get.Execute(ctx, userID)
+	result, err := uc.Execute(ctx, userID)
 
 	assert.Error(t, err)
 	assert.True(t, userentity.IsUserNotFound(err))

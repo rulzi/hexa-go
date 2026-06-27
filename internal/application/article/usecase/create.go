@@ -6,15 +6,25 @@ import (
 
 	"github.com/rulzi/hexa-go/internal/application/article/dto"
 	articleentity "github.com/rulzi/hexa-go/internal/domain/article/entity"
+	articleport "github.com/rulzi/hexa-go/internal/domain/article/port"
 )
+
+type createArticleDeps struct {
+	articleRepo articleport.Repository
+	cache       articleport.Cache
+}
 
 // CreateArticle handles article creation
 type CreateArticle struct {
-	deps articleDeps
+	deps createArticleDeps
 }
 
-func newCreateArticle(deps articleDeps) *CreateArticle {
-	return &CreateArticle{deps: deps}
+// NewCreateArticle creates a new CreateArticle use case.
+func NewCreateArticle(articleRepo articleport.Repository, cache articleport.Cache) *CreateArticle {
+	return &CreateArticle{deps: createArticleDeps{
+		articleRepo: articleRepo,
+		cache:       cache,
+	}}
 }
 
 // Execute creates a new article

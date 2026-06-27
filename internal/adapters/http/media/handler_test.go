@@ -85,7 +85,7 @@ func newTestHandler() (*Handler, *mediaTestMocks) {
 		Update: &mockUpdateMedia{},
 		Delete: &mockDeleteMedia{},
 	}
-	handler := NewHandlerWithDeps(Deps{
+	handler := NewHandler(Deps{
 		Create: mocks.Create,
 		Get:    mocks.Get,
 		List:   mocks.List,

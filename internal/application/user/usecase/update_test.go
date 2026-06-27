@@ -20,10 +20,8 @@ func TestUpdateUser_Execute_Success(t *testing.T) {
 	ctx := context.Background()
 	repo := usermocks.NewMockRepository(ctrl)
 	passwordHasher := usermocks.NewMockPasswordHasher(ctrl)
-	notificationService := usermocks.NewMockNotificationService(ctrl)
-	tokenGen := usermocks.NewMockTokenGenerator(ctrl)
 
-	uc := NewUserUseCase(repo, passwordHasher, notificationService, tokenGen)
+	uc := NewUpdateUser(repo, passwordHasher)
 
 	userID := int64(1)
 	existingUser := &userentity.User{
@@ -40,7 +38,7 @@ func TestUpdateUser_Execute_Success(t *testing.T) {
 	repo.EXPECT().GetByEmail(ctx, req.Email).Return(nil, errors.New("not found"))
 	repo.EXPECT().Update(ctx, gomock.AssignableToTypeOf(&userentity.User{})).Return(updatedUser, nil)
 
-	result, err := uc.Update.Execute(ctx, userID, req)
+	result, err := uc.Execute(ctx, userID, req)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
@@ -55,16 +53,14 @@ func TestUpdateUser_Execute_UserNotFound(t *testing.T) {
 	ctx := context.Background()
 	repo := usermocks.NewMockRepository(ctrl)
 	passwordHasher := usermocks.NewMockPasswordHasher(ctrl)
-	notificationService := usermocks.NewMockNotificationService(ctrl)
-	tokenGen := usermocks.NewMockTokenGenerator(ctrl)
 
-	uc := NewUserUseCase(repo, passwordHasher, notificationService, tokenGen)
+	uc := NewUpdateUser(repo, passwordHasher)
 
 	userID := int64(999)
 	req := dto.UpdateUserRequest{Name: "New", Email: "new@example.com"}
 	repo.EXPECT().GetByID(ctx, userID).Return(nil, nil)
 
-	result, err := uc.Update.Execute(ctx, userID, req)
+	result, err := uc.Execute(ctx, userID, req)
 
 	assert.Error(t, err)
 	assert.True(t, userentity.IsUserNotFound(err))

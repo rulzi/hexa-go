@@ -5,15 +5,25 @@ import (
 
 	"github.com/rulzi/hexa-go/internal/application/media/dto"
 	mediaentity "github.com/rulzi/hexa-go/internal/domain/media/entity"
+	mediaport "github.com/rulzi/hexa-go/internal/domain/media/port"
 )
+
+type getMediaDeps struct {
+	mediaRepo mediaport.Repository
+	baseURL   string
+}
 
 // GetMedia handles media retrieval by ID
 type GetMedia struct {
-	deps mediaDeps
+	deps getMediaDeps
 }
 
-func newGetMedia(deps mediaDeps) *GetMedia {
-	return &GetMedia{deps: deps}
+// NewGetMedia creates a new GetMedia use case.
+func NewGetMedia(mediaRepo mediaport.Repository, baseURL string) *GetMedia {
+	return &GetMedia{deps: getMediaDeps{
+		mediaRepo: mediaRepo,
+		baseURL:   baseURL,
+	}}
 }
 
 // Execute retrieves a media by ID

@@ -6,15 +6,27 @@ import (
 
 	"github.com/rulzi/hexa-go/internal/application/article/dto"
 	articleentity "github.com/rulzi/hexa-go/internal/domain/article/entity"
+	articleport "github.com/rulzi/hexa-go/internal/domain/article/port"
 )
+
+type updateArticleDeps struct {
+	articleRepo articleport.Repository
+	cache       articleport.Cache
+	listCache   ArticleListCache
+}
 
 // UpdateArticle handles article updates
 type UpdateArticle struct {
-	deps articleDeps
+	deps updateArticleDeps
 }
 
-func newUpdateArticle(deps articleDeps) *UpdateArticle {
-	return &UpdateArticle{deps: deps}
+// NewUpdateArticle creates a new UpdateArticle use case.
+func NewUpdateArticle(articleRepo articleport.Repository, cache articleport.Cache, listCache ArticleListCache) *UpdateArticle {
+	return &UpdateArticle{deps: updateArticleDeps{
+		articleRepo: articleRepo,
+		cache:       cache,
+		listCache:   listCache,
+	}}
 }
 
 // Execute updates an article

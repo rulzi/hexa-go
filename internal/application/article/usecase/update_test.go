@@ -17,7 +17,7 @@ func TestUpdateArticle_Execute_Success(t *testing.T) {
 	cache := &mockArticleCache{}
 	listCache := &mockArticleListCache{}
 
-	uc := NewArticleUseCase(repo, cache, listCache)
+	uc := NewUpdateArticle(repo, cache, listCache)
 
 	articleID := int64(1)
 	existingArticle := &articleentity.Article{
@@ -36,7 +36,7 @@ func TestUpdateArticle_Execute_Success(t *testing.T) {
 	cache.On("InvalidateList", ctx).Return(nil)
 	listCache.On("InvalidateArticleList", ctx).Return(nil)
 
-	result, err := uc.Update.Execute(ctx, articleID, req)
+	result, err := uc.Execute(ctx, articleID, req)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
@@ -53,13 +53,13 @@ func TestUpdateArticle_Execute_ArticleNotFound(t *testing.T) {
 	cache := &mockArticleCache{}
 	listCache := &mockArticleListCache{}
 
-	uc := NewArticleUseCase(repo, cache, listCache)
+	uc := NewUpdateArticle(repo, cache, listCache)
 
 	articleID := int64(1)
 	req := dto.UpdateArticleRequest{Title: "New Title", Content: "New Content"}
 	repo.On("GetByID", ctx, articleID).Return(nil, nil)
 
-	result, err := uc.Update.Execute(ctx, articleID, req)
+	result, err := uc.Execute(ctx, articleID, req)
 
 	assert.Error(t, err)
 	assert.True(t, articleentity.IsArticleNotFound(err))
@@ -73,7 +73,7 @@ func TestUpdateArticle_Execute_ValidationError(t *testing.T) {
 	cache := &mockArticleCache{}
 	listCache := &mockArticleListCache{}
 
-	uc := NewArticleUseCase(repo, cache, listCache)
+	uc := NewUpdateArticle(repo, cache, listCache)
 
 	articleID := int64(1)
 	existingArticle := &articleentity.Article{
@@ -90,7 +90,7 @@ func TestUpdateArticle_Execute_ValidationError(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			repo.On("GetByID", ctx, articleID).Return(existingArticle, nil)
-			result, err := uc.Update.Execute(ctx, articleID, tt.req)
+			result, err := uc.Execute(ctx, articleID, tt.req)
 			assert.Error(t, err)
 			assert.Nil(t, result)
 			repo.AssertNotCalled(t, "Update")

@@ -95,7 +95,7 @@ func newTestHandler() (*Handler, *userTestMocks) {
 		Delete: &mockDeleteUser{},
 		Login:  &mockLoginUser{},
 	}
-	handler := NewHandlerWithDeps(Deps{
+	handler := NewHandler(Deps{
 		Create: mocks.Create,
 		Get:    mocks.Get,
 		List:   mocks.List,

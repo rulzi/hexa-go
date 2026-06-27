@@ -17,7 +17,7 @@ func TestUpdateMedia_Execute_Success(t *testing.T) {
 	storage := &mockMediaStorage{}
 	baseURL := "http://localhost:8080"
 
-	uc := NewMediaUseCase(repo, storage, baseURL)
+	uc := NewUpdateMedia(repo, storage, baseURL)
 
 	mediaID := int64(1)
 	existingMedia := &mediaentity.Media{
@@ -35,7 +35,7 @@ func TestUpdateMedia_Execute_Success(t *testing.T) {
 	repo.On("Update", ctx, mock.Anything).Return(updatedMedia, nil)
 	storage.On("Delete", ctx, existingMedia.Path).Return(nil)
 
-	result, err := uc.Update.Execute(ctx, mediaID, "new.jpg", strings.NewReader("new content"))
+	result, err := uc.Execute(ctx, mediaID, "new.jpg", strings.NewReader("new content"))
 
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
@@ -50,12 +50,12 @@ func TestUpdateMedia_Execute_MediaNotFound(t *testing.T) {
 	storage := &mockMediaStorage{}
 	baseURL := "http://localhost:8080"
 
-	uc := NewMediaUseCase(repo, storage, baseURL)
+	uc := NewUpdateMedia(repo, storage, baseURL)
 
 	mediaID := int64(999)
 	repo.On("GetByID", ctx, mediaID).Return(nil, nil)
 
-	result, err := uc.Update.Execute(ctx, mediaID, "new.jpg", strings.NewReader("x"))
+	result, err := uc.Execute(ctx, mediaID, "new.jpg", strings.NewReader("x"))
 
 	assert.Error(t, err)
 	assert.True(t, mediaentity.IsMediaNotFound(err))

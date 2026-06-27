@@ -5,15 +5,21 @@ import (
 
 	"github.com/rulzi/hexa-go/internal/application/user/dto"
 	userentity "github.com/rulzi/hexa-go/internal/domain/user/entity"
+	userport "github.com/rulzi/hexa-go/internal/domain/user/port"
 )
+
+type getUserDeps struct {
+	userRepo userport.Repository
+}
 
 // GetUser handles user retrieval by ID
 type GetUser struct {
-	deps userDeps
+	deps getUserDeps
 }
 
-func newGetUser(deps userDeps) *GetUser {
-	return &GetUser{deps: deps}
+// NewGetUser creates a new GetUser use case.
+func NewGetUser(userRepo userport.Repository) *GetUser {
+	return &GetUser{deps: getUserDeps{userRepo: userRepo}}
 }
 
 // Execute retrieves a user by ID
