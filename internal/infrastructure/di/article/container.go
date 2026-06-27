@@ -23,20 +23,20 @@ type Container struct {
 func NewContainer(database *sql.DB, redisClient *redis.Client, appLogger logger.Logger) *Container {
 	articleRepo := articledb.NewMySQLRepository(database, appLogger)
 
-	var domainCache articleport.Cache
-	var dtoCache usecase.ArticleListCache
+	var articleCache usecase.ArticleCache
+	var listCache usecase.ArticleListCache
 	if redisClient != nil {
-		dtoCacheAdapter := articlecache.NewRedisCache(redisClient, 5*time.Minute)
-		domainCache = articlecache.NewDomainCacheAdapter(dtoCacheAdapter)
-		dtoCache = dtoCacheAdapter
+		redisCache := articlecache.NewRedisCache(redisClient, 5*time.Minute)
+		articleCache = redisCache
+		listCache = redisCache
 	}
 
 	articleHandler := httparticle.NewHandler(httparticle.Deps{
-		Create: usecase.NewCreateArticle(articleRepo, domainCache),
-		Get:    usecase.NewGetArticle(articleRepo, domainCache),
-		List:   usecase.NewListArticle(articleRepo, dtoCache),
-		Update: usecase.NewUpdateArticle(articleRepo, domainCache, dtoCache),
-		Delete: usecase.NewDeleteArticle(articleRepo, domainCache, dtoCache),
+		Create: usecase.NewCreateArticle(articleRepo, articleCache),
+		Get:    usecase.NewGetArticle(articleRepo, articleCache),
+		List:   usecase.NewListArticle(articleRepo, listCache),
+		Update: usecase.NewUpdateArticle(articleRepo, articleCache, listCache),
+		Delete: usecase.NewDeleteArticle(articleRepo, articleCache, listCache),
 	}, appLogger)
 
 	return &Container{

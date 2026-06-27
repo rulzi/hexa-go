@@ -9,6 +9,7 @@ import (
 	"github.com/rulzi/hexa-go/internal/application/user/dto"
 	userentity "github.com/rulzi/hexa-go/internal/domain/user/entity"
 	usermocks "github.com/rulzi/hexa-go/internal/domain/user/port/mocks"
+	"github.com/rulzi/hexa-go/internal/infrastructure/logger"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
@@ -145,7 +146,7 @@ func TestUserUseCase_Create(t *testing.T) {
 				tt.setupNotifier(notifier)
 			}
 
-			uc := NewCreateUser(repo, hasher, notifier)
+			uc := NewCreateUser(repo, hasher, notifier, logger.NewSimpleLogger())
 			resp, err := uc.Execute(ctx, tt.req)
 
 			if tt.wantErrCheck != nil {
@@ -171,7 +172,7 @@ func TestUserUseCase_Create_ValidationDoesNotTouchRepository(t *testing.T) {
 	hasher := usermocks.NewMockPasswordHasher(ctrl)
 	notifier := usermocks.NewMockNotificationService(ctrl)
 
-	uc := NewCreateUser(repo, hasher, notifier)
+	uc := NewCreateUser(repo, hasher, notifier, logger.NewSimpleLogger())
 
 	invalidRequests := []dto.CreateUserRequest{
 		{Name: "Test", Email: "", Password: "password123"},
@@ -197,7 +198,7 @@ func TestUserUseCase_Create_EmailExistsDoesNotPersist(t *testing.T) {
 	existing := &userentity.User{ID: 1, Email: "exist@example.com"}
 	repo.EXPECT().GetByEmail(ctx, "exist@example.com").Return(existing, nil)
 
-	uc := NewCreateUser(repo, hasher, notifier)
+	uc := NewCreateUser(repo, hasher, notifier, logger.NewSimpleLogger())
 	resp, err := uc.Execute(ctx, dto.CreateUserRequest{
 		Name:     "Test",
 		Email:    "exist@example.com",

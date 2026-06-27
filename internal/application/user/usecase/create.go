@@ -7,12 +7,14 @@ import (
 	"github.com/rulzi/hexa-go/internal/application/user/dto"
 	userentity "github.com/rulzi/hexa-go/internal/domain/user/entity"
 	userport "github.com/rulzi/hexa-go/internal/domain/user/port"
+	"github.com/rulzi/hexa-go/internal/infrastructure/logger"
 )
 
 type createUserDeps struct {
 	userRepo            userport.Repository
 	passwordHasher      userport.PasswordHasher
 	notificationService userport.NotificationService
+	logger              logger.Logger
 }
 
 // CreateUser handles user creation
@@ -25,11 +27,13 @@ func NewCreateUser(
 	userRepo userport.Repository,
 	passwordHasher userport.PasswordHasher,
 	notificationService userport.NotificationService,
+	appLogger logger.Logger,
 ) *CreateUser {
 	return &CreateUser{deps: createUserDeps{
 		userRepo:            userRepo,
 		passwordHasher:      passwordHasher,
 		notificationService: notificationService,
+		logger:              appLogger,
 	}}
 }
 
@@ -66,7 +70,12 @@ func (uc *CreateUser) Execute(ctx context.Context, req dto.CreateUserRequest) (*
 		return nil, err
 	}
 
-	_ = uc.deps.notificationService.SendWelcomeEmail(ctx, createdUser.Email, createdUser.Name)
+	if err := uc.deps.notificationService.SendWelcomeEmail(ctx, createdUser.Email, createdUser.Name); err != nil {
+		uc.deps.logger.WarnWithFields("failed to send welcome email", map[string]interface{}{
+			"email": createdUser.Email,
+			"error": err.Error(),
+		})
+	}
 
 	return &dto.UserResponse{
 		ID:        createdUser.ID,

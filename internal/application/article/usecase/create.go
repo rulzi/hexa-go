@@ -11,7 +11,7 @@ import (
 
 type createArticleDeps struct {
 	articleRepo articleport.Repository
-	cache       articleport.Cache
+	cache       ArticleCache
 }
 
 // CreateArticle handles article creation
@@ -20,7 +20,7 @@ type CreateArticle struct {
 }
 
 // NewCreateArticle creates a new CreateArticle use case.
-func NewCreateArticle(articleRepo articleport.Repository, cache articleport.Cache) *CreateArticle {
+func NewCreateArticle(articleRepo articleport.Repository, cache ArticleCache) *CreateArticle {
 	return &CreateArticle{deps: createArticleDeps{
 		articleRepo: articleRepo,
 		cache:       cache,

@@ -9,7 +9,7 @@ import (
 
 type deleteArticleDeps struct {
 	articleRepo articleport.Repository
-	cache       articleport.Cache
+	cache       ArticleCache
 	listCache   ArticleListCache
 }
 
@@ -19,7 +19,7 @@ type DeleteArticle struct {
 }
 
 // NewDeleteArticle creates a new DeleteArticle use case.
-func NewDeleteArticle(articleRepo articleport.Repository, cache articleport.Cache, listCache ArticleListCache) *DeleteArticle {
+func NewDeleteArticle(articleRepo articleport.Repository, cache ArticleCache, listCache ArticleListCache) *DeleteArticle {
 	return &DeleteArticle{deps: deleteArticleDeps{
 		articleRepo: articleRepo,
 		cache:       cache,

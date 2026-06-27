@@ -10,6 +10,7 @@ import (
 	"github.com/rulzi/hexa-go/internal/application/user/dto"
 	domainerrs "github.com/rulzi/hexa-go/internal/domain/errs"
 	"github.com/rulzi/hexa-go/internal/infrastructure/logger"
+	"github.com/rulzi/hexa-go/internal/pkg/pagination"
 )
 
 type createUseCase interface {
@@ -111,8 +112,7 @@ func (h *Handler) Get(c *gin.Context) {
 
 // List handles GET /users
 func (h *Handler) List(c *gin.Context) {
-	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
-	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
+	limit, offset := pagination.Parse(c.DefaultQuery("limit", "10"), c.DefaultQuery("offset", "0"))
 
 	resp, err := h.deps.List.Execute(c.Request.Context(), limit, offset)
 	if err != nil {

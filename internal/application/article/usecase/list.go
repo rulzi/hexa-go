@@ -7,13 +7,6 @@ import (
 	articleport "github.com/rulzi/hexa-go/internal/domain/article/port"
 )
 
-// ArticleListCache defines the interface for article list caching (DTO-based for performance)
-type ArticleListCache interface {
-	GetArticleList(ctx context.Context, limit, offset int) (*dto.ListArticlesResponse, error)
-	SetArticleList(ctx context.Context, limit, offset int, listResp *dto.ListArticlesResponse) error
-	InvalidateArticleList(ctx context.Context) error
-}
-
 type listArticleDeps struct {
 	articleRepo articleport.Repository
 	listCache   ArticleListCache

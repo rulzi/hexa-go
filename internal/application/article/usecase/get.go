@@ -10,7 +10,7 @@ import (
 
 type getArticleDeps struct {
 	articleRepo articleport.Repository
-	cache       articleport.Cache
+	cache       ArticleCache
 }
 
 // GetArticle handles article retrieval by ID
@@ -19,7 +19,7 @@ type GetArticle struct {
 }
 
 // NewGetArticle creates a new GetArticle use case.
-func NewGetArticle(articleRepo articleport.Repository, cache articleport.Cache) *GetArticle {
+func NewGetArticle(articleRepo articleport.Repository, cache ArticleCache) *GetArticle {
 	return &GetArticle{deps: getArticleDeps{
 		articleRepo: articleRepo,
 		cache:       cache,

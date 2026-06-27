@@ -32,7 +32,7 @@ func NewContainer(database *sql.DB, appLogger logger.Logger, jwtSecret string, j
 	notificationService := userexternal.NewEmailSenderImpl(appLogger)
 
 	userHandler := httpuser.NewHandler(httpuser.Deps{
-		Create: usecase.NewCreateUser(userRepo, passwordHasher, notificationService),
+		Create: usecase.NewCreateUser(userRepo, passwordHasher, notificationService, appLogger),
 		Get:    usecase.NewGetUser(userRepo),
 		List:   usecase.NewListUser(userRepo),
 		Update: usecase.NewUpdateUser(userRepo, passwordHasher),

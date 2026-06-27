@@ -11,7 +11,7 @@ import (
 
 type updateArticleDeps struct {
 	articleRepo articleport.Repository
-	cache       articleport.Cache
+	cache       ArticleCache
 	listCache   ArticleListCache
 }
 
@@ -21,7 +21,7 @@ type UpdateArticle struct {
 }
 
 // NewUpdateArticle creates a new UpdateArticle use case.
-func NewUpdateArticle(articleRepo articleport.Repository, cache articleport.Cache, listCache ArticleListCache) *UpdateArticle {
+func NewUpdateArticle(articleRepo articleport.Repository, cache ArticleCache, listCache ArticleListCache) *UpdateArticle {
 	return &UpdateArticle{deps: updateArticleDeps{
 		articleRepo: articleRepo,
 		cache:       cache,
