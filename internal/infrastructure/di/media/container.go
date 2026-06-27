@@ -9,18 +9,16 @@ import (
 	mediastorage "github.com/rulzi/hexa-go/internal/adapters/storage/media"
 	"github.com/rulzi/hexa-go/internal/application/media/usecase"
 	mediaport "github.com/rulzi/hexa-go/internal/domain/media/port"
-	mediaservice "github.com/rulzi/hexa-go/internal/domain/media/service"
 	"github.com/rulzi/hexa-go/internal/infrastructure/config"
 	"github.com/rulzi/hexa-go/internal/infrastructure/logger"
 )
 
 // Container holds all media domain dependencies
 type Container struct {
-	Repo      mediaport.Repository
-	Storage   mediaport.StoragePort
-	Service   *mediaservice.Service
-	MediaUC   *usecase.MediaUseCase
-	Handler   *httpmedia.Handler
+	Repo    mediaport.Repository
+	Storage mediaport.StoragePort
+	MediaUC *usecase.MediaUseCase
+	Handler *httpmedia.Handler
 }
 
 // NewContainer creates a new media domain container
@@ -32,14 +30,12 @@ func NewContainer(database *sql.DB, appLogger logger.Logger, storageCfg config.S
 		return nil, err
 	}
 
-	mediaService := mediaservice.NewService(mediaRepo)
-	mediaUseCase := usecase.NewMediaUseCase(mediaRepo, mediaService, storage, storageCfg.BaseURL)
+	mediaUseCase := usecase.NewMediaUseCase(mediaRepo, storage, storageCfg.BaseURL)
 	mediaHandler := httpmedia.NewHandler(mediaUseCase, appLogger)
 
 	return &Container{
 		Repo:    mediaRepo,
 		Storage: storage,
-		Service: mediaService,
 		MediaUC: mediaUseCase,
 		Handler: mediaHandler,
 	}, nil

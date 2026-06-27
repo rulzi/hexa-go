@@ -6,18 +6,16 @@ import (
 	"time"
 
 	mediaentity "github.com/rulzi/hexa-go/internal/domain/media/entity"
-	mediaservice "github.com/rulzi/hexa-go/internal/domain/media/service"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestListMedia_Execute_Success(t *testing.T) {
 	ctx := context.Background()
 	repo := &mockMediaRepository{}
-	service := mediaservice.NewService(repo)
 	storage := &mockMediaStorage{}
 	baseURL := "http://localhost:8080"
 
-	uc := NewMediaUseCase(repo, service, storage, baseURL)
+	uc := NewMediaUseCase(repo, storage, baseURL)
 
 	limit, offset := 10, 0
 	mediaList := []*mediaentity.Media{
@@ -40,11 +38,10 @@ func TestListMedia_Execute_Success(t *testing.T) {
 func TestListMedia_Execute_DefaultPagination(t *testing.T) {
 	ctx := context.Background()
 	repo := &mockMediaRepository{}
-	service := mediaservice.NewService(repo)
 	storage := &mockMediaStorage{}
 	baseURL := "http://localhost:8080"
 
-	uc := NewMediaUseCase(repo, service, storage, baseURL)
+	uc := NewMediaUseCase(repo, storage, baseURL)
 
 	repo.On("List", ctx, 10, 0).Return([]*mediaentity.Media{}, nil)
 	repo.On("Count", ctx).Return(int64(0), nil)

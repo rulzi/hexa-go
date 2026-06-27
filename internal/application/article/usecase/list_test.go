@@ -8,7 +8,6 @@ import (
 
 	"github.com/rulzi/hexa-go/internal/application/article/dto"
 	articleentity "github.com/rulzi/hexa-go/internal/domain/article/entity"
-	articleservice "github.com/rulzi/hexa-go/internal/domain/article/service"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -16,11 +15,10 @@ import (
 func TestListArticle_Execute_SuccessFromCache(t *testing.T) {
 	ctx := context.Background()
 	repo := &mockArticleRepository{}
-	service := articleservice.NewService(repo)
 	cache := &mockArticleCache{}
 	listCache := &mockArticleListCache{}
 
-	uc := NewArticleUseCase(repo, service, cache, listCache)
+	uc := NewArticleUseCase(repo, cache, listCache)
 
 	limit, offset := 10, 0
 	cachedResponse := &dto.ListArticlesResponse{
@@ -44,11 +42,10 @@ func TestListArticle_Execute_SuccessFromCache(t *testing.T) {
 func TestListArticle_Execute_SuccessFromRepository(t *testing.T) {
 	ctx := context.Background()
 	repo := &mockArticleRepository{}
-	service := articleservice.NewService(repo)
 	cache := &mockArticleCache{}
 	listCache := &mockArticleListCache{}
 
-	uc := NewArticleUseCase(repo, service, cache, listCache)
+	uc := NewArticleUseCase(repo, cache, listCache)
 
 	limit, offset := 10, 0
 	articles := []*articleentity.Article{
@@ -74,11 +71,10 @@ func TestListArticle_Execute_SuccessFromRepository(t *testing.T) {
 func TestListArticle_Execute_DefaultPagination(t *testing.T) {
 	ctx := context.Background()
 	repo := &mockArticleRepository{}
-	service := articleservice.NewService(repo)
 	cache := &mockArticleCache{}
 	listCache := &mockArticleListCache{}
 
-	uc := NewArticleUseCase(repo, service, cache, listCache)
+	uc := NewArticleUseCase(repo, cache, listCache)
 
 	listCache.On("GetArticleList", ctx, 10, 0).Return(nil, errors.New("cache miss"))
 	repo.On("List", ctx, 10, 0).Return([]*articleentity.Article{}, nil)
@@ -96,10 +92,9 @@ func TestListArticle_Execute_DefaultPagination(t *testing.T) {
 func TestListArticle_Execute_WithNilListCache(t *testing.T) {
 	ctx := context.Background()
 	repo := &mockArticleRepository{}
-	service := articleservice.NewService(repo)
 	cache := &mockArticleCache{}
 
-	uc := NewArticleUseCase(repo, service, cache, nil)
+	uc := NewArticleUseCase(repo, cache, nil)
 
 	limit, offset := 10, 0
 	articles := []*articleentity.Article{

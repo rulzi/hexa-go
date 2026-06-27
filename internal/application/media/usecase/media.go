@@ -2,14 +2,12 @@ package usecase
 
 import (
 	mediaport "github.com/rulzi/hexa-go/internal/domain/media/port"
-	mediaservice "github.com/rulzi/hexa-go/internal/domain/media/service"
 )
 
 type mediaDeps struct {
-	mediaRepo    mediaport.Repository
-	mediaService *mediaservice.Service
-	storage      mediaport.Storage
-	baseURL      string
+	mediaRepo mediaport.Repository
+	storage   mediaport.Storage
+	baseURL   string
 }
 
 // MediaUseCase groups all media use case operations
@@ -24,15 +22,13 @@ type MediaUseCase struct {
 // NewMediaUseCase creates a new MediaUseCase
 func NewMediaUseCase(
 	mediaRepo mediaport.Repository,
-	mediaService *mediaservice.Service,
 	storage mediaport.Storage,
 	baseURL string,
 ) *MediaUseCase {
 	deps := mediaDeps{
-		mediaRepo:    mediaRepo,
-		mediaService: mediaService,
-		storage:      storage,
-		baseURL:      baseURL,
+		mediaRepo: mediaRepo,
+		storage:   storage,
+		baseURL:   baseURL,
 	}
 
 	return &MediaUseCase{

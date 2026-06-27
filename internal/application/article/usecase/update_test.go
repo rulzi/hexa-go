@@ -7,7 +7,6 @@ import (
 
 	"github.com/rulzi/hexa-go/internal/application/article/dto"
 	articleentity "github.com/rulzi/hexa-go/internal/domain/article/entity"
-	articleservice "github.com/rulzi/hexa-go/internal/domain/article/service"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -15,11 +14,10 @@ import (
 func TestUpdateArticle_Execute_Success(t *testing.T) {
 	ctx := context.Background()
 	repo := &mockArticleRepository{}
-	service := articleservice.NewService(repo)
 	cache := &mockArticleCache{}
 	listCache := &mockArticleListCache{}
 
-	uc := NewArticleUseCase(repo, service, cache, listCache)
+	uc := NewArticleUseCase(repo, cache, listCache)
 
 	articleID := int64(1)
 	existingArticle := &articleentity.Article{
@@ -52,11 +50,10 @@ func TestUpdateArticle_Execute_Success(t *testing.T) {
 func TestUpdateArticle_Execute_ArticleNotFound(t *testing.T) {
 	ctx := context.Background()
 	repo := &mockArticleRepository{}
-	service := articleservice.NewService(repo)
 	cache := &mockArticleCache{}
 	listCache := &mockArticleListCache{}
 
-	uc := NewArticleUseCase(repo, service, cache, listCache)
+	uc := NewArticleUseCase(repo, cache, listCache)
 
 	articleID := int64(1)
 	req := dto.UpdateArticleRequest{Title: "New Title", Content: "New Content"}
@@ -73,11 +70,10 @@ func TestUpdateArticle_Execute_ArticleNotFound(t *testing.T) {
 func TestUpdateArticle_Execute_ValidationError(t *testing.T) {
 	ctx := context.Background()
 	repo := &mockArticleRepository{}
-	service := articleservice.NewService(repo)
 	cache := &mockArticleCache{}
 	listCache := &mockArticleListCache{}
 
-	uc := NewArticleUseCase(repo, service, cache, listCache)
+	uc := NewArticleUseCase(repo, cache, listCache)
 
 	articleID := int64(1)
 	existingArticle := &articleentity.Article{

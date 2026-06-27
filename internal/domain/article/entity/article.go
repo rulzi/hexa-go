@@ -4,12 +4,12 @@ import "time"
 
 // Article represents the article entity in the domain
 type Article struct {
-	ID        int64     `json:"id"`
-	Title     string    `json:"title"`
-	Content   string    `json:"content"`
-	AuthorID  int64     `json:"author_id"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	ID        int64
+	Title     string
+	Content   string
+	AuthorID  int64
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }
 
 // Validate validates the article entity

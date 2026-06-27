@@ -6,18 +6,16 @@ import (
 	"time"
 
 	mediaentity "github.com/rulzi/hexa-go/internal/domain/media/entity"
-	mediaservice "github.com/rulzi/hexa-go/internal/domain/media/service"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestGetMedia_Execute_Success(t *testing.T) {
 	ctx := context.Background()
 	repo := &mockMediaRepository{}
-	service := mediaservice.NewService(repo)
 	storage := &mockMediaStorage{}
 	baseURL := "http://localhost:8080"
 
-	uc := NewMediaUseCase(repo, service, storage, baseURL)
+	uc := NewMediaUseCase(repo, storage, baseURL)
 
 	mediaID := int64(1)
 	mediaEntity := &mediaentity.Media{
@@ -38,11 +36,10 @@ func TestGetMedia_Execute_Success(t *testing.T) {
 func TestGetMedia_Execute_MediaNotFound(t *testing.T) {
 	ctx := context.Background()
 	repo := &mockMediaRepository{}
-	service := mediaservice.NewService(repo)
 	storage := &mockMediaStorage{}
 	baseURL := "http://localhost:8080"
 
-	uc := NewMediaUseCase(repo, service, storage, baseURL)
+	uc := NewMediaUseCase(repo, storage, baseURL)
 
 	mediaID := int64(999)
 	repo.On("GetByID", ctx, mediaID).Return(nil, nil)

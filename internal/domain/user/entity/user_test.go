@@ -147,3 +147,76 @@ func TestUser_Validate(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateRegistration(t *testing.T) {
+	tests := []struct {
+		name         string
+		userName     string
+		email        string
+		password     string
+		wantErrCheck func(error) bool
+	}{
+		{
+			name:         "valid registration",
+			userName:     "John Doe",
+			email:        "john@example.com",
+			password:     "password123",
+			wantErrCheck: nil,
+		},
+		{
+			name:         "missing email",
+			userName:     "John Doe",
+			email:        "",
+			password:     "password123",
+			wantErrCheck: IsEmailRequired,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := ValidateRegistration(tt.userName, tt.email, tt.password)
+			if tt.wantErrCheck == nil {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+				assert.True(t, tt.wantErrCheck(err))
+			}
+		})
+	}
+}
+
+func TestValidatePassword(t *testing.T) {
+	tests := []struct {
+		name         string
+		password     string
+		wantErrCheck func(error) bool
+	}{
+		{
+			name:         "valid password",
+			password:     "password123",
+			wantErrCheck: nil,
+		},
+		{
+			name:         "empty password",
+			password:     "",
+			wantErrCheck: IsPasswordRequired,
+		},
+		{
+			name:         "password too short",
+			password:     "12345",
+			wantErrCheck: IsPasswordTooShort,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := ValidatePassword(tt.password)
+			if tt.wantErrCheck == nil {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+				assert.True(t, tt.wantErrCheck(err))
+			}
+		})
+	}
+}

@@ -10,24 +10,20 @@ import (
 	articledb "github.com/rulzi/hexa-go/internal/adapters/repository/article"
 	"github.com/rulzi/hexa-go/internal/application/article/usecase"
 	articleport "github.com/rulzi/hexa-go/internal/domain/article/port"
-	articleservice "github.com/rulzi/hexa-go/internal/domain/article/service"
 	"github.com/rulzi/hexa-go/internal/infrastructure/logger"
 )
 
 // Container holds all article domain dependencies
 type Container struct {
-	Repo        articleport.Repository
-	Service     *articleservice.Service
-	ArticleUC   *usecase.ArticleUseCase
-	Handler     *httparticle.Handler
+	Repo      articleport.Repository
+	ArticleUC *usecase.ArticleUseCase
+	Handler   *httparticle.Handler
 }
 
 // NewContainer creates a new article domain container
 func NewContainer(database *sql.DB, redisClient *redis.Client, appLogger logger.Logger) *Container {
-	// Initialize repository (driven adapter)
 	articleRepo := articledb.NewMySQLRepository(database, appLogger)
 
-	// Initialize cache (driven adapter)
 	var domainCache articleport.Cache
 	var dtoCache usecase.ArticleListCache
 	if redisClient != nil {
@@ -36,18 +32,12 @@ func NewContainer(database *sql.DB, redisClient *redis.Client, appLogger logger.
 		dtoCache = dtoCacheAdapter
 	}
 
-	// Initialize domain service
-	articleService := articleservice.NewService(articleRepo)
+	articleUseCase := usecase.NewArticleUseCase(articleRepo, domainCache, dtoCache)
 
-	// Initialize use case (application layer)
-	articleUseCase := usecase.NewArticleUseCase(articleRepo, articleService, domainCache, dtoCache)
-
-	// Initialize HTTP handler (driving adapter)
 	articleHandler := httparticle.NewHandler(articleUseCase, appLogger)
 
 	return &Container{
 		Repo:      articleRepo,
-		Service:   articleService,
 		ArticleUC: articleUseCase,
 		Handler:   articleHandler,
 	}

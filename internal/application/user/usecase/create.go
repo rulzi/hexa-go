@@ -17,25 +17,9 @@ func newCreateUser(deps userDeps) *CreateUser {
 	return &CreateUser{deps: deps}
 }
 
-func validateCreateUserRequest(req dto.CreateUserRequest) error {
-	if req.Name == "" {
-		return userentity.NewNameRequired()
-	}
-	if req.Email == "" {
-		return userentity.NewEmailRequired()
-	}
-	if req.Password == "" {
-		return userentity.NewPasswordRequired()
-	}
-	if len(req.Password) < 6 {
-		return userentity.NewPasswordTooShort()
-	}
-	return nil
-}
-
 // Execute creates a new user
 func (uc *CreateUser) Execute(ctx context.Context, req dto.CreateUserRequest) (*dto.UserResponse, error) {
-	if err := validateCreateUserRequest(req); err != nil {
+	if err := userentity.ValidateRegistration(req.Name, req.Email, req.Password); err != nil {
 		return nil, err
 	}
 

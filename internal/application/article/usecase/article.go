@@ -5,7 +5,6 @@ import (
 
 	"github.com/rulzi/hexa-go/internal/application/article/dto"
 	articleport "github.com/rulzi/hexa-go/internal/domain/article/port"
-	articleservice "github.com/rulzi/hexa-go/internal/domain/article/service"
 )
 
 // ArticleListCache defines the interface for article list caching (DTO-based for performance)
@@ -16,10 +15,9 @@ type ArticleListCache interface {
 }
 
 type articleDeps struct {
-	articleRepo    articleport.Repository
-	articleService *articleservice.Service
-	cache          articleport.Cache
-	listCache      ArticleListCache
+	articleRepo articleport.Repository
+	cache       articleport.Cache
+	listCache   ArticleListCache
 }
 
 // ArticleUseCase groups all article use case operations
@@ -34,15 +32,13 @@ type ArticleUseCase struct {
 // NewArticleUseCase creates a new ArticleUseCase
 func NewArticleUseCase(
 	articleRepo articleport.Repository,
-	articleService *articleservice.Service,
 	cache articleport.Cache,
 	listCache ArticleListCache,
 ) *ArticleUseCase {
 	deps := articleDeps{
-		articleRepo:    articleRepo,
-		articleService: articleService,
-		cache:          cache,
-		listCache:      listCache,
+		articleRepo: articleRepo,
+		cache:       cache,
+		listCache:   listCache,
 	}
 
 	return &ArticleUseCase{

@@ -8,7 +8,6 @@ import (
 
 	"github.com/rulzi/hexa-go/internal/application/article/dto"
 	articleentity "github.com/rulzi/hexa-go/internal/domain/article/entity"
-	articleservice "github.com/rulzi/hexa-go/internal/domain/article/service"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -16,11 +15,10 @@ import (
 func TestCreateArticle_Execute_Success(t *testing.T) {
 	ctx := context.Background()
 	repo := &mockArticleRepository{}
-	service := articleservice.NewService(repo)
 	cache := &mockArticleCache{}
 	listCache := &mockArticleListCache{}
 
-	uc := NewArticleUseCase(repo, service, cache, listCache)
+	uc := NewArticleUseCase(repo, cache, listCache)
 
 	req := dto.CreateArticleRequest{
 		Title:    "Test Article",
@@ -56,11 +54,10 @@ func TestCreateArticle_Execute_Success(t *testing.T) {
 func TestCreateArticle_Execute_ValidationError(t *testing.T) {
 	ctx := context.Background()
 	repo := &mockArticleRepository{}
-	service := articleservice.NewService(repo)
 	cache := &mockArticleCache{}
 	listCache := &mockArticleListCache{}
 
-	uc := NewArticleUseCase(repo, service, cache, listCache)
+	uc := NewArticleUseCase(repo, cache, listCache)
 
 	tests := []struct {
 		name string
@@ -84,11 +81,10 @@ func TestCreateArticle_Execute_ValidationError(t *testing.T) {
 func TestCreateArticle_Execute_RepositoryError(t *testing.T) {
 	ctx := context.Background()
 	repo := &mockArticleRepository{}
-	service := articleservice.NewService(repo)
 	cache := &mockArticleCache{}
 	listCache := &mockArticleListCache{}
 
-	uc := NewArticleUseCase(repo, service, cache, listCache)
+	uc := NewArticleUseCase(repo, cache, listCache)
 
 	req := dto.CreateArticleRequest{Title: "Test Article", Content: "Test Content", AuthorID: 1}
 	repoError := errors.New("repository error")
@@ -106,9 +102,8 @@ func TestCreateArticle_Execute_RepositoryError(t *testing.T) {
 func TestCreateArticle_Execute_WithNilCache(t *testing.T) {
 	ctx := context.Background()
 	repo := &mockArticleRepository{}
-	service := articleservice.NewService(repo)
 
-	uc := NewArticleUseCase(repo, service, nil, nil)
+	uc := NewArticleUseCase(repo, nil, nil)
 
 	req := dto.CreateArticleRequest{Title: "Test Article", Content: "Test Content", AuthorID: 1}
 	expectedArticle := &articleentity.Article{

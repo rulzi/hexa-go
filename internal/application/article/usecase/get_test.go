@@ -7,18 +7,16 @@ import (
 	"time"
 
 	articleentity "github.com/rulzi/hexa-go/internal/domain/article/entity"
-	articleservice "github.com/rulzi/hexa-go/internal/domain/article/service"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestGetArticle_Execute_SuccessFromCache(t *testing.T) {
 	ctx := context.Background()
 	repo := &mockArticleRepository{}
-	service := articleservice.NewService(repo)
 	cache := &mockArticleCache{}
 	listCache := &mockArticleListCache{}
 
-	uc := NewArticleUseCase(repo, service, cache, listCache)
+	uc := NewArticleUseCase(repo, cache, listCache)
 
 	articleID := int64(1)
 	cachedArticle := &articleentity.Article{
@@ -40,11 +38,10 @@ func TestGetArticle_Execute_SuccessFromCache(t *testing.T) {
 func TestGetArticle_Execute_SuccessFromRepository(t *testing.T) {
 	ctx := context.Background()
 	repo := &mockArticleRepository{}
-	service := articleservice.NewService(repo)
 	cache := &mockArticleCache{}
 	listCache := &mockArticleListCache{}
 
-	uc := NewArticleUseCase(repo, service, cache, listCache)
+	uc := NewArticleUseCase(repo, cache, listCache)
 
 	articleID := int64(1)
 	articleEntity := &articleentity.Article{
@@ -67,11 +64,10 @@ func TestGetArticle_Execute_SuccessFromRepository(t *testing.T) {
 func TestGetArticle_Execute_ArticleNotFound(t *testing.T) {
 	ctx := context.Background()
 	repo := &mockArticleRepository{}
-	service := articleservice.NewService(repo)
 	cache := &mockArticleCache{}
 	listCache := &mockArticleListCache{}
 
-	uc := NewArticleUseCase(repo, service, cache, listCache)
+	uc := NewArticleUseCase(repo, cache, listCache)
 
 	articleID := int64(1)
 	cache.On("Get", ctx, articleID).Return(nil, errors.New("cache miss"))
@@ -87,9 +83,8 @@ func TestGetArticle_Execute_ArticleNotFound(t *testing.T) {
 func TestGetArticle_Execute_WithNilCache(t *testing.T) {
 	ctx := context.Background()
 	repo := &mockArticleRepository{}
-	service := articleservice.NewService(repo)
 
-	uc := NewArticleUseCase(repo, service, nil, nil)
+	uc := NewArticleUseCase(repo, nil, nil)
 
 	articleID := int64(1)
 	articleEntity := &articleentity.Article{

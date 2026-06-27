@@ -40,6 +40,10 @@ func (uc *UpdateUser) Execute(ctx context.Context, id int64, req dto.UpdateUserR
 	existingUser.UpdatedAt = time.Now()
 
 	if req.Password != "" {
+		if err := userentity.ValidatePassword(req.Password); err != nil {
+			return nil, err
+		}
+
 		hashedPassword, err := uc.deps.passwordHasher.Hash(req.Password)
 		if err != nil {
 			return nil, err

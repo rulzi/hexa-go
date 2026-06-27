@@ -6,18 +6,16 @@ import (
 	"time"
 
 	articleentity "github.com/rulzi/hexa-go/internal/domain/article/entity"
-	articleservice "github.com/rulzi/hexa-go/internal/domain/article/service"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestDeleteArticle_Execute_Success(t *testing.T) {
 	ctx := context.Background()
 	repo := &mockArticleRepository{}
-	service := articleservice.NewService(repo)
 	cache := &mockArticleCache{}
 	listCache := &mockArticleListCache{}
 
-	uc := NewArticleUseCase(repo, service, cache, listCache)
+	uc := NewArticleUseCase(repo, cache, listCache)
 
 	articleID := int64(1)
 	existingArticle := &articleentity.Article{
@@ -40,11 +38,10 @@ func TestDeleteArticle_Execute_Success(t *testing.T) {
 func TestDeleteArticle_Execute_ArticleNotFound(t *testing.T) {
 	ctx := context.Background()
 	repo := &mockArticleRepository{}
-	service := articleservice.NewService(repo)
 	cache := &mockArticleCache{}
 	listCache := &mockArticleListCache{}
 
-	uc := NewArticleUseCase(repo, service, cache, listCache)
+	uc := NewArticleUseCase(repo, cache, listCache)
 
 	articleID := int64(1)
 	repo.On("GetByID", ctx, articleID).Return(nil, nil)
@@ -59,10 +56,9 @@ func TestDeleteArticle_Execute_ArticleNotFound(t *testing.T) {
 func TestDeleteArticle_Execute_WithNilCache(t *testing.T) {
 	ctx := context.Background()
 	repo := &mockArticleRepository{}
-	service := articleservice.NewService(repo)
 	listCache := &mockArticleListCache{}
 
-	uc := NewArticleUseCase(repo, service, nil, listCache)
+	uc := NewArticleUseCase(repo, nil, listCache)
 
 	articleID := int64(1)
 	existingArticle := &articleentity.Article{
