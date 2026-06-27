@@ -42,13 +42,8 @@ func (uc *DeleteArticle) Execute(ctx context.Context, id int64) error {
 		return err
 	}
 
-	if uc.deps.cache != nil {
-		_ = uc.deps.cache.Delete(ctx, id)
-		_ = uc.deps.cache.InvalidateList(ctx)
-	}
-	if uc.deps.listCache != nil {
-		_ = uc.deps.listCache.InvalidateArticleList(ctx)
-	}
+	_ = uc.deps.cache.Delete(ctx, id)
+	_ = uc.deps.listCache.InvalidateList(ctx)
 
 	return nil
 }

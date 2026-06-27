@@ -6,7 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/rulzi/hexa-go/internal/application/article/dto"
 	articleentity "github.com/rulzi/hexa-go/internal/domain/article/entity"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -20,20 +19,20 @@ func TestListArticle_Execute_SuccessFromCache(t *testing.T) {
 	uc := NewListArticle(repo, listCache)
 
 	limit, offset := 10, 0
-	cachedResponse := &dto.ListArticlesResponse{
-		Articles: []dto.ArticleResponse{
+	cachedPage := &ArticleListPage{
+		Articles: []*articleentity.Article{
 			{ID: 1, Title: "Cached Article", Content: "Cached Content", AuthorID: 1, CreatedAt: time.Now(), UpdatedAt: time.Now()},
 		},
-		Total: 1, Limit: limit, Offset: offset,
+		Total: 1,
 	}
-	listCache.On("GetArticleList", ctx, limit, offset).Return(cachedResponse, nil)
+	listCache.On("GetList", ctx, limit, offset).Return(cachedPage, nil)
 
 	result, err := uc.Execute(ctx, limit, offset)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
-	assert.Equal(t, cachedResponse.Total, result.Total)
-	assert.Equal(t, len(cachedResponse.Articles), len(result.Articles))
+	assert.Equal(t, cachedPage.Total, result.Total)
+	assert.Equal(t, len(cachedPage.Articles), len(result.Articles))
 	listCache.AssertExpectations(t)
 	repo.AssertNotCalled(t, "List")
 }
@@ -51,10 +50,10 @@ func TestListArticle_Execute_SuccessFromRepository(t *testing.T) {
 		{ID: 2, Title: "Article 2", Content: "Content 2", AuthorID: 1, CreatedAt: time.Now(), UpdatedAt: time.Now()},
 	}
 	total := int64(2)
-	listCache.On("GetArticleList", ctx, limit, offset).Return(nil, errors.New("cache miss"))
+	listCache.On("GetList", ctx, limit, offset).Return(nil, errors.New("cache miss"))
 	repo.On("List", ctx, limit, offset).Return(articles, nil)
 	repo.On("Count", ctx).Return(total, nil)
-	listCache.On("SetArticleList", ctx, limit, offset, mock.AnythingOfType("*dto.ListArticlesResponse")).Return(nil)
+	listCache.On("SetList", ctx, limit, offset, mock.AnythingOfType("*usecase.ArticleListPage")).Return(nil)
 
 	result, err := uc.Execute(ctx, limit, offset)
 
@@ -73,10 +72,10 @@ func TestListArticle_Execute_DefaultPagination(t *testing.T) {
 
 	uc := NewListArticle(repo, listCache)
 
-	listCache.On("GetArticleList", ctx, 10, 0).Return(nil, errors.New("cache miss"))
+	listCache.On("GetList", ctx, 10, 0).Return(nil, errors.New("cache miss"))
 	repo.On("List", ctx, 10, 0).Return([]*articleentity.Article{}, nil)
 	repo.On("Count", ctx).Return(int64(0), nil)
-	listCache.On("SetArticleList", ctx, 10, 0, mock.AnythingOfType("*dto.ListArticlesResponse")).Return(nil)
+	listCache.On("SetList", ctx, 10, 0, mock.AnythingOfType("*usecase.ArticleListPage")).Return(nil)
 
 	result, err := uc.Execute(ctx, -1, -1)
 
@@ -86,11 +85,11 @@ func TestListArticle_Execute_DefaultPagination(t *testing.T) {
 	assert.Equal(t, 0, result.Offset)
 }
 
-func TestListArticle_Execute_WithNilListCache(t *testing.T) {
+func TestListArticle_Execute_WithNoopCache(t *testing.T) {
 	ctx := context.Background()
 	repo := &mockArticleRepository{}
 
-	uc := NewListArticle(repo, nil)
+	uc := NewListArticle(repo, NoopCache{})
 
 	limit, offset := 10, 0
 	articles := []*articleentity.Article{

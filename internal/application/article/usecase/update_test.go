@@ -33,8 +33,7 @@ func TestUpdateArticle_Execute_Success(t *testing.T) {
 	repo.On("GetByID", ctx, articleID).Return(existingArticle, nil)
 	repo.On("Update", ctx, mock.Anything).Return(updatedArticle, nil)
 	cache.On("Delete", ctx, articleID).Return(nil)
-	cache.On("InvalidateList", ctx).Return(nil)
-	listCache.On("InvalidateArticleList", ctx).Return(nil)
+	listCache.On("InvalidateList", ctx).Return(nil)
 
 	result, err := uc.Execute(ctx, articleID, req)
 

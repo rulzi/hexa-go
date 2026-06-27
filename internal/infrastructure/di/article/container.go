@@ -23,8 +23,8 @@ type Container struct {
 func NewContainer(database *sql.DB, redisClient *redis.Client, appLogger logger.Logger) *Container {
 	articleRepo := articledb.NewMySQLRepository(database, appLogger)
 
-	var articleCache usecase.ArticleCache
-	var listCache usecase.ArticleListCache
+	var articleCache usecase.ArticleCache = usecase.NoopCache{}
+	var listCache usecase.ArticleListCache = usecase.NoopCache{}
 	if redisClient != nil {
 		redisCache := articlecache.NewRedisCache(redisClient, 5*time.Minute)
 		articleCache = redisCache

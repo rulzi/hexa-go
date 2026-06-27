@@ -96,11 +96,11 @@ func TestCreateArticle_Execute_RepositoryError(t *testing.T) {
 	cache.AssertNotCalled(t, "InvalidateList")
 }
 
-func TestCreateArticle_Execute_WithNilCache(t *testing.T) {
+func TestCreateArticle_Execute_WithNoopCache(t *testing.T) {
 	ctx := context.Background()
 	repo := &mockArticleRepository{}
 
-	uc := NewCreateArticle(repo, nil)
+	uc := NewCreateArticle(repo, NoopCache{})
 
 	req := dto.CreateArticleRequest{Title: "Test Article", Content: "Test Content", AuthorID: 1}
 	expectedArticle := &articleentity.Article{

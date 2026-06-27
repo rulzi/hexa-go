@@ -7,8 +7,13 @@ import (
 	"time"
 
 	"github.com/redis/go-redis/v9"
-	"github.com/rulzi/hexa-go/internal/application/article/dto"
+	articleusecase "github.com/rulzi/hexa-go/internal/application/article/usecase"
 	articleentity "github.com/rulzi/hexa-go/internal/domain/article/entity"
+)
+
+var (
+	_ articleusecase.ArticleCache     = (*RedisCache)(nil)
+	_ articleusecase.ArticleListCache = (*RedisCache)(nil)
 )
 
 // RedisCache handles caching for articles using Redis.
@@ -72,47 +77,6 @@ func (c *RedisCache) Delete(ctx context.Context, id int64) error {
 
 // InvalidateList invalidates all article list caches.
 func (c *RedisCache) InvalidateList(ctx context.Context) error {
-	return c.InvalidateArticleList(ctx)
-}
-
-// GetArticleList retrieves a list of articles from cache.
-func (c *RedisCache) GetArticleList(ctx context.Context, limit, offset int) (*dto.ListArticlesResponse, error) {
-	key := fmt.Sprintf("article:list:%d:%d", limit, offset)
-
-	val, err := c.client.Get(ctx, key).Result()
-	if err == redis.Nil {
-		return nil, nil
-	}
-	if err != nil {
-		return nil, fmt.Errorf("failed to get from cache: %w", err)
-	}
-
-	var listResp dto.ListArticlesResponse
-	if err := json.Unmarshal([]byte(val), &listResp); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal cached list: %w", err)
-	}
-
-	return &listResp, nil
-}
-
-// SetArticleList stores a list of articles in cache.
-func (c *RedisCache) SetArticleList(ctx context.Context, limit, offset int, listResp *dto.ListArticlesResponse) error {
-	key := fmt.Sprintf("article:list:%d:%d", limit, offset)
-
-	data, err := json.Marshal(listResp)
-	if err != nil {
-		return fmt.Errorf("failed to marshal article list: %w", err)
-	}
-
-	if err := c.client.Set(ctx, key, data, c.ttl).Err(); err != nil {
-		return fmt.Errorf("failed to set cache: %w", err)
-	}
-
-	return nil
-}
-
-// InvalidateArticleList invalidates all article list caches.
-func (c *RedisCache) InvalidateArticleList(ctx context.Context) error {
 	pattern := "article:list:*"
 	keys, err := c.client.Keys(ctx, pattern).Result()
 	if err != nil {
@@ -123,6 +87,42 @@ func (c *RedisCache) InvalidateArticleList(ctx context.Context) error {
 		if err := c.client.Del(ctx, keys...).Err(); err != nil {
 			return fmt.Errorf("failed to delete keys: %w", err)
 		}
+	}
+
+	return nil
+}
+
+// GetList retrieves a paginated list of article entities from cache.
+func (c *RedisCache) GetList(ctx context.Context, limit, offset int) (*articleusecase.ArticleListPage, error) {
+	key := fmt.Sprintf("article:list:%d:%d", limit, offset)
+
+	val, err := c.client.Get(ctx, key).Result()
+	if err == redis.Nil {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get from cache: %w", err)
+	}
+
+	var page articleusecase.ArticleListPage
+	if err := json.Unmarshal([]byte(val), &page); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal cached list: %w", err)
+	}
+
+	return &page, nil
+}
+
+// SetList stores a paginated list of article entities in cache.
+func (c *RedisCache) SetList(ctx context.Context, limit, offset int, page *articleusecase.ArticleListPage) error {
+	key := fmt.Sprintf("article:list:%d:%d", limit, offset)
+
+	data, err := json.Marshal(page)
+	if err != nil {
+		return fmt.Errorf("failed to marshal article list: %w", err)
+	}
+
+	if err := c.client.Set(ctx, key, data, c.ttl).Err(); err != nil {
+		return fmt.Errorf("failed to set cache: %w", err)
 	}
 
 	return nil

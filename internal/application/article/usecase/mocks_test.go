@@ -3,7 +3,6 @@ package usecase
 import (
 	"context"
 
-	"github.com/rulzi/hexa-go/internal/application/article/dto"
 	articleentity "github.com/rulzi/hexa-go/internal/domain/article/entity"
 	"github.com/stretchr/testify/mock"
 )
@@ -101,20 +100,20 @@ type mockArticleListCache struct {
 	mock.Mock
 }
 
-func (m *mockArticleListCache) GetArticleList(ctx context.Context, limit, offset int) (*dto.ListArticlesResponse, error) {
+func (m *mockArticleListCache) GetList(ctx context.Context, limit, offset int) (*ArticleListPage, error) {
 	args := m.Called(ctx, limit, offset)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*dto.ListArticlesResponse), args.Error(1)
+	return args.Get(0).(*ArticleListPage), args.Error(1)
 }
 
-func (m *mockArticleListCache) SetArticleList(ctx context.Context, limit, offset int, listResp *dto.ListArticlesResponse) error {
-	args := m.Called(ctx, limit, offset, listResp)
+func (m *mockArticleListCache) SetList(ctx context.Context, limit, offset int, page *ArticleListPage) error {
+	args := m.Called(ctx, limit, offset, page)
 	return args.Error(0)
 }
 
-func (m *mockArticleListCache) InvalidateArticleList(ctx context.Context) error {
+func (m *mockArticleListCache) InvalidateList(ctx context.Context) error {
 	args := m.Called(ctx)
 	return args.Error(0)
 }

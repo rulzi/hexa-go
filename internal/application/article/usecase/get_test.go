@@ -77,11 +77,11 @@ func TestGetArticle_Execute_ArticleNotFound(t *testing.T) {
 	assert.Nil(t, result)
 }
 
-func TestGetArticle_Execute_WithNilCache(t *testing.T) {
+func TestGetArticle_Execute_WithNoopCache(t *testing.T) {
 	ctx := context.Background()
 	repo := &mockArticleRepository{}
 
-	uc := NewGetArticle(repo, nil)
+	uc := NewGetArticle(repo, NoopCache{})
 
 	articleID := int64(1)
 	articleEntity := &articleentity.Article{

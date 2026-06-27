@@ -112,7 +112,7 @@ func (h *Handler) Get(c *gin.Context) {
 
 // List handles GET /users
 func (h *Handler) List(c *gin.Context) {
-	limit, offset := pagination.Parse(c.DefaultQuery("limit", "10"), c.DefaultQuery("offset", "0"))
+	limit, offset := pagination.Parse(c.Query("limit"), c.Query("offset"))
 
 	resp, err := h.deps.List.Execute(c.Request.Context(), limit, offset)
 	if err != nil {

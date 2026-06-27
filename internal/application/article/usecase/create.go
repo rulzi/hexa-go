@@ -46,9 +46,7 @@ func (uc *CreateArticle) Execute(ctx context.Context, req dto.CreateArticleReque
 		return nil, err
 	}
 
-	if uc.deps.cache != nil {
-		_ = uc.deps.cache.InvalidateList(ctx)
-	}
+	_ = uc.deps.cache.InvalidateList(ctx)
 
 	return &dto.ArticleResponse{
 		ID:        createdArticle.ID,

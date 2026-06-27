@@ -34,11 +34,9 @@ func (uc *ListArticle) Execute(ctx context.Context, limit, offset int) (*dto.Lis
 		offset = 0
 	}
 
-	if uc.deps.listCache != nil {
-		cached, err := uc.deps.listCache.GetArticleList(ctx, limit, offset)
-		if err == nil && cached != nil {
-			return cached, nil
-		}
+	cached, err := uc.deps.listCache.GetList(ctx, limit, offset)
+	if err == nil && cached != nil {
+		return listPageToResponse(cached, limit, offset), nil
 	}
 
 	articles, err := uc.deps.articleRepo.List(ctx, limit, offset)
@@ -51,8 +49,15 @@ func (uc *ListArticle) Execute(ctx context.Context, limit, offset int) (*dto.Lis
 		return nil, err
 	}
 
-	articleResponses := make([]dto.ArticleResponse, len(articles))
-	for i, a := range articles {
+	response := listPageToResponse(&ArticleListPage{Articles: articles, Total: total}, limit, offset)
+	_ = uc.deps.listCache.SetList(ctx, limit, offset, &ArticleListPage{Articles: articles, Total: total})
+
+	return response, nil
+}
+
+func listPageToResponse(page *ArticleListPage, limit, offset int) *dto.ListArticlesResponse {
+	articleResponses := make([]dto.ArticleResponse, len(page.Articles))
+	for i, a := range page.Articles {
 		articleResponses[i] = dto.ArticleResponse{
 			ID:        a.ID,
 			Title:     a.Title,
@@ -63,16 +68,10 @@ func (uc *ListArticle) Execute(ctx context.Context, limit, offset int) (*dto.Lis
 		}
 	}
 
-	response := &dto.ListArticlesResponse{
+	return &dto.ListArticlesResponse{
 		Articles: articleResponses,
-		Total:    total,
+		Total:    page.Total,
 		Limit:    limit,
 		Offset:   offset,
 	}
-
-	if uc.deps.listCache != nil {
-		_ = uc.deps.listCache.SetArticleList(ctx, limit, offset, response)
-	}
-
-	return response, nil
 }

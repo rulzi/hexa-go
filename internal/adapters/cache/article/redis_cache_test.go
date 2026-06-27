@@ -9,7 +9,7 @@ import (
 
 	"github.com/alicebob/miniredis/v2"
 	"github.com/redis/go-redis/v9"
-	"github.com/rulzi/hexa-go/internal/application/article/dto"
+	articleusecase "github.com/rulzi/hexa-go/internal/application/article/usecase"
 	articleentity "github.com/rulzi/hexa-go/internal/domain/article/entity"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -233,16 +233,16 @@ func TestRedisCache_Delete_RedisError(t *testing.T) {
 	assert.Error(t, err)
 }
 
-// Test GetArticleList - Success
-func TestRedisCache_GetArticleList_Success(t *testing.T) {
+// Test GetList - Success
+func TestRedisCache_GetList_Success(t *testing.T) {
 	cache, mr, cleanup := setupRedisCache(t, 5*time.Minute)
 	defer cleanup()
 
 	ctx := context.Background()
 	limit := 10
 	offset := 0
-	expectedList := &dto.ListArticlesResponse{
-		Articles: []dto.ArticleResponse{
+	expectedList := &articleusecase.ArticleListPage{
+		Articles: []*articleentity.Article{
 			{
 				ID:        1,
 				Title:     "Article 1",
@@ -260,9 +260,7 @@ func TestRedisCache_GetArticleList_Success(t *testing.T) {
 				UpdatedAt: time.Now(),
 			},
 		},
-		Total:  2,
-		Limit:  limit,
-		Offset: offset,
+		Total: 2,
 	}
 
 	// Set list in cache first
@@ -273,19 +271,17 @@ func TestRedisCache_GetArticleList_Success(t *testing.T) {
 	require.NoError(t, err)
 
 	// Get list from cache
-	result, err := cache.GetArticleList(ctx, limit, offset)
+	result, err := cache.GetList(ctx, limit, offset)
 	require.NoError(t, err)
 	require.NotNil(t, result)
 	assert.Equal(t, expectedList.Total, result.Total)
-	assert.Equal(t, expectedList.Limit, result.Limit)
-	assert.Equal(t, expectedList.Offset, result.Offset)
 	assert.Len(t, result.Articles, 2)
 	assert.Equal(t, expectedList.Articles[0].ID, result.Articles[0].ID)
 	assert.Equal(t, expectedList.Articles[1].ID, result.Articles[1].ID)
 }
 
-// Test GetArticleList - Cache Miss
-func TestRedisCache_GetArticleList_CacheMiss(t *testing.T) {
+// Test GetList - Cache Miss
+func TestRedisCache_GetList_CacheMiss(t *testing.T) {
 	cache, _, cleanup := setupRedisCache(t, 5*time.Minute)
 	defer cleanup()
 
@@ -294,13 +290,13 @@ func TestRedisCache_GetArticleList_CacheMiss(t *testing.T) {
 	offset := 100
 
 	// Try to get non-existent list
-	result, err := cache.GetArticleList(ctx, limit, offset)
+	result, err := cache.GetList(ctx, limit, offset)
 	require.NoError(t, err)
 	assert.Nil(t, result) // Cache miss should return nil, not error
 }
 
-// Test GetArticleList - Error (invalid JSON)
-func TestRedisCache_GetArticleList_InvalidJSON(t *testing.T) {
+// Test GetList - Error (invalid JSON)
+func TestRedisCache_GetList_InvalidJSON(t *testing.T) {
 	cache, mr, cleanup := setupRedisCache(t, 5*time.Minute)
 	defer cleanup()
 
@@ -314,22 +310,22 @@ func TestRedisCache_GetArticleList_InvalidJSON(t *testing.T) {
 	require.NoError(t, err)
 
 	// Try to get list - should fail on unmarshal
-	result, err := cache.GetArticleList(ctx, limit, offset)
+	result, err := cache.GetList(ctx, limit, offset)
 	assert.Error(t, err)
 	assert.Nil(t, result)
 	assert.Contains(t, err.Error(), "failed to unmarshal cached list")
 }
 
-// Test SetArticleList - Success
-func TestRedisCache_SetArticleList_Success(t *testing.T) {
+// Test SetList - Success
+func TestRedisCache_SetList_Success(t *testing.T) {
 	cache, mr, cleanup := setupRedisCache(t, 5*time.Minute)
 	defer cleanup()
 
 	ctx := context.Background()
 	limit := 10
 	offset := 0
-	list := &dto.ListArticlesResponse{
-		Articles: []dto.ArticleResponse{
+	list := &articleusecase.ArticleListPage{
+		Articles: []*articleentity.Article{
 			{
 				ID:        1,
 				Title:     "Article 1",
@@ -339,13 +335,11 @@ func TestRedisCache_SetArticleList_Success(t *testing.T) {
 				UpdatedAt: time.Now(),
 			},
 		},
-		Total:  1,
-		Limit:  limit,
-		Offset: offset,
+		Total: 1,
 	}
 
 	// Set list in cache
-	err := cache.SetArticleList(ctx, limit, offset, list)
+	err := cache.SetList(ctx, limit, offset, list)
 	require.NoError(t, err)
 
 	// Verify it was stored
@@ -355,41 +349,37 @@ func TestRedisCache_SetArticleList_Success(t *testing.T) {
 	assert.NotEmpty(t, val)
 
 	// Verify the content
-	var storedList dto.ListArticlesResponse
+	var storedList articleusecase.ArticleListPage
 	err = json.Unmarshal([]byte(val), &storedList)
 	require.NoError(t, err)
 	assert.Equal(t, list.Total, storedList.Total)
-	assert.Equal(t, list.Limit, storedList.Limit)
-	assert.Equal(t, list.Offset, storedList.Offset)
 	assert.Len(t, storedList.Articles, 1)
 }
 
-// Test SetArticleList - Error (Redis error)
-func TestRedisCache_SetArticleList_RedisError(t *testing.T) {
+// Test SetList - Error (Redis error)
+func TestRedisCache_SetList_RedisError(t *testing.T) {
 	cache, mr, cleanup := setupRedisCache(t, 5*time.Minute)
 	defer cleanup()
 
 	ctx := context.Background()
 	limit := 10
 	offset := 0
-	list := &dto.ListArticlesResponse{
-		Articles: []dto.ArticleResponse{},
+	list := &articleusecase.ArticleListPage{
+		Articles: []*articleentity.Article{},
 		Total:    0,
-		Limit:    limit,
-		Offset:   offset,
 	}
 
 	// Close Redis to simulate error
 	mr.Close()
 
 	// Try to set list - should fail
-	err := cache.SetArticleList(ctx, limit, offset, list)
+	err := cache.SetList(ctx, limit, offset, list)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to set cache")
 }
 
-// Test InvalidateArticleList - Success
-func TestRedisCache_InvalidateArticleList_Success(t *testing.T) {
+// Test InvalidateList - Success
+func TestRedisCache_InvalidateList_Success(t *testing.T) {
 	cache, mr, cleanup := setupRedisCache(t, 5*time.Minute)
 	defer cleanup()
 
@@ -409,7 +399,7 @@ func TestRedisCache_InvalidateArticleList_Success(t *testing.T) {
 	}
 
 	// Invalidate all article lists
-	err := cache.InvalidateArticleList(ctx)
+	err := cache.InvalidateList(ctx)
 	require.NoError(t, err)
 
 	// Verify all keys were deleted
@@ -427,7 +417,7 @@ func TestRedisCache_InvalidateArticleList_NoKeys(t *testing.T) {
 	ctx := context.Background()
 
 	// Invalidate when no keys exist - should succeed
-	err := cache.InvalidateArticleList(ctx)
+	err := cache.InvalidateList(ctx)
 	require.NoError(t, err)
 }
 
@@ -442,7 +432,7 @@ func TestRedisCache_InvalidateArticleList_KeysError(t *testing.T) {
 	mr.Close()
 
 	// Try to invalidate - should fail on Keys call
-	err := cache.InvalidateArticleList(ctx)
+	err := cache.InvalidateList(ctx)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to get keys")
 }
@@ -463,7 +453,7 @@ func TestRedisCache_InvalidateArticleList_DelError(t *testing.T) {
 	mr.Close()
 
 	// Try to invalidate - should fail on Del call
-	err = cache.InvalidateArticleList(ctx)
+	err = cache.InvalidateList(ctx)
 	assert.Error(t, err)
 }
 
@@ -533,8 +523,8 @@ func TestRedisCache_ArticleJSONMarshaling(t *testing.T) {
 }
 
 func TestRedisCache_ListJSONMarshaling(t *testing.T) {
-	list := &dto.ListArticlesResponse{
-		Articles: []dto.ArticleResponse{
+	list := &articleusecase.ArticleListPage{
+		Articles: []*articleentity.Article{
 			{
 				ID:        1,
 				Title:     "Article 1",
@@ -544,21 +534,17 @@ func TestRedisCache_ListJSONMarshaling(t *testing.T) {
 				UpdatedAt: time.Now(),
 			},
 		},
-		Total:  1,
-		Limit:  10,
-		Offset: 0,
+		Total: 1,
 	}
 
 	data, err := json.Marshal(list)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, data)
 
-	var unmarshaled dto.ListArticlesResponse
+	var unmarshaled articleusecase.ArticleListPage
 	err = json.Unmarshal(data, &unmarshaled)
 	assert.NoError(t, err)
 	assert.Equal(t, list.Total, unmarshaled.Total)
-	assert.Equal(t, list.Limit, unmarshaled.Limit)
-	assert.Equal(t, list.Offset, unmarshaled.Offset)
 	assert.Len(t, unmarshaled.Articles, 1)
 }
 
