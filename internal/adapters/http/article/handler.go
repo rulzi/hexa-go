@@ -8,30 +8,62 @@ import (
 	"github.com/rulzi/hexa-go/internal/adapters/http/errmapper"
 	"github.com/rulzi/hexa-go/internal/adapters/http/response"
 	"github.com/rulzi/hexa-go/internal/application/article/dto"
+	"github.com/rulzi/hexa-go/internal/application/article/usecase"
 	domainerrs "github.com/rulzi/hexa-go/internal/domain/errs"
 	"github.com/rulzi/hexa-go/internal/infrastructure/logger"
 )
 
-// UseCase is the interface for article operations
-type UseCase interface {
-	Create(ctx context.Context, req dto.CreateArticleRequest) (*dto.ArticleResponse, error)
-	Get(ctx context.Context, id int64) (*dto.ArticleResponse, error)
-	List(ctx context.Context, limit, offset int) (*dto.ListArticlesResponse, error)
-	Update(ctx context.Context, id int64, req dto.UpdateArticleRequest) (*dto.ArticleResponse, error)
-	Delete(ctx context.Context, id int64) error
+type createUseCase interface {
+	Execute(ctx context.Context, req dto.CreateArticleRequest) (*dto.ArticleResponse, error)
+}
+
+type getUseCase interface {
+	Execute(ctx context.Context, id int64) (*dto.ArticleResponse, error)
+}
+
+type listUseCase interface {
+	Execute(ctx context.Context, limit, offset int) (*dto.ListArticlesResponse, error)
+}
+
+type updateUseCase interface {
+	Execute(ctx context.Context, id int64, req dto.UpdateArticleRequest) (*dto.ArticleResponse, error)
+}
+
+type deleteUseCase interface {
+	Execute(ctx context.Context, id int64) error
+}
+
+// Deps holds article use case operations
+type Deps struct {
+	Create createUseCase
+	Get    getUseCase
+	List   listUseCase
+	Update updateUseCase
+	Delete deleteUseCase
 }
 
 // Handler handles HTTP requests for articles
 type Handler struct {
-	articleUseCase UseCase
-	logger         logger.Logger
+	deps   Deps
+	logger logger.Logger
 }
 
 // NewHandler creates a new Handler
-func NewHandler(articleUseCase UseCase, appLogger logger.Logger) *Handler {
+func NewHandler(articleUseCase *usecase.ArticleUseCase, appLogger logger.Logger) *Handler {
+	return NewHandlerWithDeps(Deps{
+		Create: articleUseCase.Create,
+		Get:    articleUseCase.Get,
+		List:   articleUseCase.List,
+		Update: articleUseCase.Update,
+		Delete: articleUseCase.Delete,
+	}, appLogger)
+}
+
+// NewHandlerWithDeps creates a new Handler with explicit dependencies
+func NewHandlerWithDeps(deps Deps, appLogger logger.Logger) *Handler {
 	return &Handler{
-		articleUseCase: articleUseCase,
-		logger:         appLogger,
+		deps:   deps,
+		logger: appLogger,
 	}
 }
 
@@ -57,7 +89,7 @@ func (h *Handler) Create(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.articleUseCase.Create(c.Request.Context(), req)
+	resp, err := h.deps.Create.Execute(c.Request.Context(), req)
 	if err != nil {
 		h.handleUseCaseError(c, err, map[string]interface{}{"title": req.Title}, "article create failed")
 		return
@@ -75,7 +107,7 @@ func (h *Handler) Get(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.articleUseCase.Get(c.Request.Context(), id)
+	resp, err := h.deps.Get.Execute(c.Request.Context(), id)
 	if err != nil {
 		h.handleUseCaseError(c, err, map[string]interface{}{"article_id": id}, "article get failed")
 		return
@@ -89,7 +121,7 @@ func (h *Handler) List(c *gin.Context) {
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
 	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
 
-	resp, err := h.articleUseCase.List(c.Request.Context(), limit, offset)
+	resp, err := h.deps.List.Execute(c.Request.Context(), limit, offset)
 	if err != nil {
 		h.handleUseCaseError(c, err, nil, "article list failed")
 		return
@@ -112,7 +144,7 @@ func (h *Handler) Update(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.articleUseCase.Update(c.Request.Context(), id, req)
+	resp, err := h.deps.Update.Execute(c.Request.Context(), id, req)
 	if err != nil {
 		h.handleUseCaseError(c, err, map[string]interface{}{"article_id": id}, "article update failed")
 		return
@@ -130,7 +162,7 @@ func (h *Handler) Delete(c *gin.Context) {
 		return
 	}
 
-	err = h.articleUseCase.Delete(c.Request.Context(), id)
+	err = h.deps.Delete.Execute(c.Request.Context(), id)
 	if err != nil {
 		h.handleUseCaseError(c, err, map[string]interface{}{"article_id": id}, "article delete failed")
 		return

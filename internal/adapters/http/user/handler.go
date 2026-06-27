@@ -8,31 +8,68 @@ import (
 	"github.com/rulzi/hexa-go/internal/adapters/http/errmapper"
 	"github.com/rulzi/hexa-go/internal/adapters/http/response"
 	"github.com/rulzi/hexa-go/internal/application/user/dto"
+	"github.com/rulzi/hexa-go/internal/application/user/usecase"
 	domainerrs "github.com/rulzi/hexa-go/internal/domain/errs"
 	"github.com/rulzi/hexa-go/internal/infrastructure/logger"
 )
 
-// UseCase is the interface for user operations
-type UseCase interface {
-	Create(ctx context.Context, req dto.CreateUserRequest) (*dto.UserResponse, error)
-	Get(ctx context.Context, id int64) (*dto.UserResponse, error)
-	List(ctx context.Context, limit, offset int) (*dto.ListUsersResponse, error)
-	Update(ctx context.Context, id int64, req dto.UpdateUserRequest) (*dto.UserResponse, error)
-	Delete(ctx context.Context, id int64) error
-	Login(ctx context.Context, req dto.LoginRequest) (*dto.LoginResponse, error)
+type createUseCase interface {
+	Execute(ctx context.Context, req dto.CreateUserRequest) (*dto.UserResponse, error)
+}
+
+type getUseCase interface {
+	Execute(ctx context.Context, id int64) (*dto.UserResponse, error)
+}
+
+type listUseCase interface {
+	Execute(ctx context.Context, limit, offset int) (*dto.ListUsersResponse, error)
+}
+
+type updateUseCase interface {
+	Execute(ctx context.Context, id int64, req dto.UpdateUserRequest) (*dto.UserResponse, error)
+}
+
+type deleteUseCase interface {
+	Execute(ctx context.Context, id int64) error
+}
+
+type loginUseCase interface {
+	Execute(ctx context.Context, req dto.LoginRequest) (*dto.LoginResponse, error)
+}
+
+// Deps holds user use case operations
+type Deps struct {
+	Create createUseCase
+	Get    getUseCase
+	List   listUseCase
+	Update updateUseCase
+	Delete deleteUseCase
+	Login  loginUseCase
 }
 
 // Handler handles HTTP requests for users
 type Handler struct {
-	userUseCase UseCase
-	logger      logger.Logger
+	deps   Deps
+	logger logger.Logger
 }
 
 // NewHandler creates a new Handler
-func NewHandler(userUseCase UseCase, appLogger logger.Logger) *Handler {
+func NewHandler(userUseCase *usecase.UserUseCase, appLogger logger.Logger) *Handler {
+	return NewHandlerWithDeps(Deps{
+		Create: userUseCase.Create,
+		Get:    userUseCase.Get,
+		List:   userUseCase.List,
+		Update: userUseCase.Update,
+		Delete: userUseCase.Delete,
+		Login:  userUseCase.Login,
+	}, appLogger)
+}
+
+// NewHandlerWithDeps creates a new Handler with explicit dependencies
+func NewHandlerWithDeps(deps Deps, appLogger logger.Logger) *Handler {
 	return &Handler{
-		userUseCase: userUseCase,
-		logger:      appLogger,
+		deps:   deps,
+		logger: appLogger,
 	}
 }
 
@@ -58,7 +95,7 @@ func (h *Handler) Create(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.userUseCase.Create(c.Request.Context(), req)
+	resp, err := h.deps.Create.Execute(c.Request.Context(), req)
 	if err != nil {
 		h.handleUseCaseError(c, err, map[string]interface{}{"email": req.Email}, "user create failed")
 		return
@@ -76,7 +113,7 @@ func (h *Handler) Get(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.userUseCase.Get(c.Request.Context(), id)
+	resp, err := h.deps.Get.Execute(c.Request.Context(), id)
 	if err != nil {
 		h.handleUseCaseError(c, err, map[string]interface{}{"user_id": id}, "user get failed")
 		return
@@ -90,7 +127,7 @@ func (h *Handler) List(c *gin.Context) {
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
 	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
 
-	resp, err := h.userUseCase.List(c.Request.Context(), limit, offset)
+	resp, err := h.deps.List.Execute(c.Request.Context(), limit, offset)
 	if err != nil {
 		h.handleUseCaseError(c, err, nil, "user list failed")
 		return
@@ -113,7 +150,7 @@ func (h *Handler) Update(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.userUseCase.Update(c.Request.Context(), id, req)
+	resp, err := h.deps.Update.Execute(c.Request.Context(), id, req)
 	if err != nil {
 		h.handleUseCaseError(c, err, map[string]interface{}{"user_id": id, "email": req.Email}, "user update failed")
 		return
@@ -131,7 +168,7 @@ func (h *Handler) Delete(c *gin.Context) {
 		return
 	}
 
-	err = h.userUseCase.Delete(c.Request.Context(), id)
+	err = h.deps.Delete.Execute(c.Request.Context(), id)
 	if err != nil {
 		h.handleUseCaseError(c, err, map[string]interface{}{"user_id": id}, "user delete failed")
 		return
@@ -149,7 +186,7 @@ func (h *Handler) Register(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.userUseCase.Create(c.Request.Context(), req)
+	resp, err := h.deps.Create.Execute(c.Request.Context(), req)
 	if err != nil {
 		h.handleUseCaseError(c, err, map[string]interface{}{"email": req.Email}, "register failed")
 		return
@@ -167,7 +204,7 @@ func (h *Handler) Login(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.userUseCase.Login(c.Request.Context(), req)
+	resp, err := h.deps.Login.Execute(c.Request.Context(), req)
 	if err != nil {
 		h.handleUseCaseError(c, err, map[string]interface{}{"email": req.Email}, "login failed")
 		return

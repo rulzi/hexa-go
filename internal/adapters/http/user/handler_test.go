@@ -20,12 +20,9 @@ import (
 
 var testLogger logger.Logger = logger.NewSimpleLogger()
 
-// mockUserUseCase is a mock implementation of UserUseCase
-type mockUserUseCase struct {
-	mock.Mock
-}
+type mockCreateUser struct{ mock.Mock }
 
-func (m *mockUserUseCase) Create(ctx context.Context, req dto.CreateUserRequest) (*dto.UserResponse, error) {
+func (m *mockCreateUser) Execute(ctx context.Context, req dto.CreateUserRequest) (*dto.UserResponse, error) {
 	args := m.Called(ctx, req)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -33,7 +30,9 @@ func (m *mockUserUseCase) Create(ctx context.Context, req dto.CreateUserRequest)
 	return args.Get(0).(*dto.UserResponse), args.Error(1)
 }
 
-func (m *mockUserUseCase) Get(ctx context.Context, id int64) (*dto.UserResponse, error) {
+type mockGetUser struct{ mock.Mock }
+
+func (m *mockGetUser) Execute(ctx context.Context, id int64) (*dto.UserResponse, error) {
 	args := m.Called(ctx, id)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -41,7 +40,9 @@ func (m *mockUserUseCase) Get(ctx context.Context, id int64) (*dto.UserResponse,
 	return args.Get(0).(*dto.UserResponse), args.Error(1)
 }
 
-func (m *mockUserUseCase) List(ctx context.Context, limit, offset int) (*dto.ListUsersResponse, error) {
+type mockListUser struct{ mock.Mock }
+
+func (m *mockListUser) Execute(ctx context.Context, limit, offset int) (*dto.ListUsersResponse, error) {
 	args := m.Called(ctx, limit, offset)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -49,7 +50,9 @@ func (m *mockUserUseCase) List(ctx context.Context, limit, offset int) (*dto.Lis
 	return args.Get(0).(*dto.ListUsersResponse), args.Error(1)
 }
 
-func (m *mockUserUseCase) Update(ctx context.Context, id int64, req dto.UpdateUserRequest) (*dto.UserResponse, error) {
+type mockUpdateUser struct{ mock.Mock }
+
+func (m *mockUpdateUser) Execute(ctx context.Context, id int64, req dto.UpdateUserRequest) (*dto.UserResponse, error) {
 	args := m.Called(ctx, id, req)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -57,17 +60,50 @@ func (m *mockUserUseCase) Update(ctx context.Context, id int64, req dto.UpdateUs
 	return args.Get(0).(*dto.UserResponse), args.Error(1)
 }
 
-func (m *mockUserUseCase) Delete(ctx context.Context, id int64) error {
+type mockDeleteUser struct{ mock.Mock }
+
+func (m *mockDeleteUser) Execute(ctx context.Context, id int64) error {
 	args := m.Called(ctx, id)
 	return args.Error(0)
 }
 
-func (m *mockUserUseCase) Login(ctx context.Context, req dto.LoginRequest) (*dto.LoginResponse, error) {
+type mockLoginUser struct{ mock.Mock }
+
+func (m *mockLoginUser) Execute(ctx context.Context, req dto.LoginRequest) (*dto.LoginResponse, error) {
 	args := m.Called(ctx, req)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*dto.LoginResponse), args.Error(1)
+}
+
+type userTestMocks struct {
+	Create *mockCreateUser
+	Get    *mockGetUser
+	List   *mockListUser
+	Update *mockUpdateUser
+	Delete *mockDeleteUser
+	Login  *mockLoginUser
+}
+
+func newTestHandler() (*Handler, *userTestMocks) {
+	mocks := &userTestMocks{
+		Create: &mockCreateUser{},
+		Get:    &mockGetUser{},
+		List:   &mockListUser{},
+		Update: &mockUpdateUser{},
+		Delete: &mockDeleteUser{},
+		Login:  &mockLoginUser{},
+	}
+	handler := NewHandlerWithDeps(Deps{
+		Create: mocks.Create,
+		Get:    mocks.Get,
+		List:   mocks.List,
+		Update: mocks.Update,
+		Delete: mocks.Delete,
+		Login:  mocks.Login,
+	}, testLogger)
+	return handler, mocks
 }
 
 func setupTestRouter(handler *Handler) *gin.Engine {
@@ -77,15 +113,13 @@ func setupTestRouter(handler *Handler) *gin.Engine {
 }
 
 func TestNewHandler(t *testing.T) {
-	uc := &mockUserUseCase{}
-	handler := NewHandler(uc, testLogger)
+	handler, mocks := newTestHandler()
 	assert.NotNil(t, handler)
-	assert.Equal(t, uc, handler.userUseCase)
+	assert.NotNil(t, mocks.Create)
 }
 
 func TestHandler_Create_Success(t *testing.T) {
-	uc := &mockUserUseCase{}
-	handler := NewHandler(uc, testLogger)
+	handler, mocks := newTestHandler()
 
 	reqBody := dto.CreateUserRequest{
 		Name:     "Test User",
@@ -101,7 +135,7 @@ func TestHandler_Create_Success(t *testing.T) {
 		UpdatedAt: time.Now(),
 	}
 
-	uc.On("Create", mock.Anything, reqBody).Return(expectedResp, nil)
+	mocks.Create.On("Execute", mock.Anything, reqBody).Return(expectedResp, nil)
 
 	router := setupTestRouter(handler)
 	router.POST("/users", handler.Create)
@@ -114,7 +148,7 @@ func TestHandler_Create_Success(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusCreated, w.Code)
-	uc.AssertExpectations(t)
+	mocks.Create.AssertExpectations(t); mocks.Get.AssertExpectations(t); mocks.List.AssertExpectations(t); mocks.Update.AssertExpectations(t); mocks.Delete.AssertExpectations(t); mocks.Login.AssertExpectations(t)
 
 	var response map[string]interface{}
 	err := json.Unmarshal(w.Body.Bytes(), &response)
@@ -124,8 +158,7 @@ func TestHandler_Create_Success(t *testing.T) {
 }
 
 func TestHandler_Create_BadRequest_InvalidJSON(t *testing.T) {
-	uc := &mockUserUseCase{}
-	handler := NewHandler(uc, testLogger)
+	handler, mocks := newTestHandler()
 
 	router := setupTestRouter(handler)
 	router.POST("/users", handler.Create)
@@ -137,12 +170,11 @@ func TestHandler_Create_BadRequest_InvalidJSON(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
-	uc.AssertNotCalled(t, "Create")
+	mocks.Create.AssertNotCalled(t, "Execute")
 }
 
 func TestHandler_Create_Conflict_EmailExists(t *testing.T) {
-	uc := &mockUserUseCase{}
-	handler := NewHandler(uc, testLogger)
+	handler, mocks := newTestHandler()
 
 	reqBody := dto.CreateUserRequest{
 		Name:     "Test User",
@@ -150,7 +182,7 @@ func TestHandler_Create_Conflict_EmailExists(t *testing.T) {
 		Password: "password123",
 	}
 
-	uc.On("Create", mock.Anything, reqBody).Return(nil, userentity.NewEmailExists())
+	mocks.Create.On("Execute", mock.Anything, reqBody).Return(nil, userentity.NewEmailExists())
 
 	router := setupTestRouter(handler)
 	router.POST("/users", handler.Create)
@@ -163,12 +195,11 @@ func TestHandler_Create_Conflict_EmailExists(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusConflict, w.Code)
-	uc.AssertExpectations(t)
+	mocks.Create.AssertExpectations(t); mocks.Get.AssertExpectations(t); mocks.List.AssertExpectations(t); mocks.Update.AssertExpectations(t); mocks.Delete.AssertExpectations(t); mocks.Login.AssertExpectations(t)
 }
 
 func TestHandler_Create_InternalServerError(t *testing.T) {
-	uc := &mockUserUseCase{}
-	handler := NewHandler(uc, testLogger)
+	handler, mocks := newTestHandler()
 
 	reqBody := dto.CreateUserRequest{
 		Name:     "Test User",
@@ -176,7 +207,7 @@ func TestHandler_Create_InternalServerError(t *testing.T) {
 		Password: "password123",
 	}
 
-	uc.On("Create", mock.Anything, reqBody).Return(nil, errors.New("database error"))
+	mocks.Create.On("Execute", mock.Anything, reqBody).Return(nil, errors.New("database error"))
 
 	router := setupTestRouter(handler)
 	router.POST("/users", handler.Create)
@@ -189,12 +220,11 @@ func TestHandler_Create_InternalServerError(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusInternalServerError, w.Code)
-	uc.AssertExpectations(t)
+	mocks.Create.AssertExpectations(t); mocks.Get.AssertExpectations(t); mocks.List.AssertExpectations(t); mocks.Update.AssertExpectations(t); mocks.Delete.AssertExpectations(t); mocks.Login.AssertExpectations(t)
 }
 
 func TestHandler_Get_Success(t *testing.T) {
-	uc := &mockUserUseCase{}
-	handler := NewHandler(uc, testLogger)
+	handler, mocks := newTestHandler()
 
 	userID := int64(1)
 	expectedResp := &dto.UserResponse{
@@ -205,7 +235,7 @@ func TestHandler_Get_Success(t *testing.T) {
 		UpdatedAt: time.Now(),
 	}
 
-	uc.On("Get", mock.Anything, userID).Return(expectedResp, nil)
+	mocks.Get.On("Execute", mock.Anything, userID).Return(expectedResp, nil)
 
 	router := setupTestRouter(handler)
 	router.GET("/users/:id", handler.Get)
@@ -216,7 +246,7 @@ func TestHandler_Get_Success(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusOK, w.Code)
-	uc.AssertExpectations(t)
+	mocks.Create.AssertExpectations(t); mocks.Get.AssertExpectations(t); mocks.List.AssertExpectations(t); mocks.Update.AssertExpectations(t); mocks.Delete.AssertExpectations(t); mocks.Login.AssertExpectations(t)
 
 	var response map[string]interface{}
 	err := json.Unmarshal(w.Body.Bytes(), &response)
@@ -226,8 +256,7 @@ func TestHandler_Get_Success(t *testing.T) {
 }
 
 func TestHandler_Get_BadRequest_InvalidID(t *testing.T) {
-	uc := &mockUserUseCase{}
-	handler := NewHandler(uc, testLogger)
+	handler, mocks := newTestHandler()
 
 	router := setupTestRouter(handler)
 	router.GET("/users/:id", handler.Get)
@@ -238,15 +267,14 @@ func TestHandler_Get_BadRequest_InvalidID(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
-	uc.AssertNotCalled(t, "Get")
+	mocks.Get.AssertNotCalled(t, "Execute")
 }
 
 func TestHandler_Get_NotFound(t *testing.T) {
-	uc := &mockUserUseCase{}
-	handler := NewHandler(uc, testLogger)
+	handler, mocks := newTestHandler()
 
 	userID := int64(999)
-	uc.On("Get", mock.Anything, userID).Return(nil, userentity.NewUserNotFound())
+	mocks.Get.On("Execute", mock.Anything, userID).Return(nil, userentity.NewUserNotFound())
 
 	router := setupTestRouter(handler)
 	router.GET("/users/:id", handler.Get)
@@ -257,15 +285,14 @@ func TestHandler_Get_NotFound(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusNotFound, w.Code)
-	uc.AssertExpectations(t)
+	mocks.Create.AssertExpectations(t); mocks.Get.AssertExpectations(t); mocks.List.AssertExpectations(t); mocks.Update.AssertExpectations(t); mocks.Delete.AssertExpectations(t); mocks.Login.AssertExpectations(t)
 }
 
 func TestHandler_Get_InternalServerError(t *testing.T) {
-	uc := &mockUserUseCase{}
-	handler := NewHandler(uc, testLogger)
+	handler, mocks := newTestHandler()
 
 	userID := int64(1)
-	uc.On("Get", mock.Anything, userID).Return(nil, errors.New("database error"))
+	mocks.Get.On("Execute", mock.Anything, userID).Return(nil, errors.New("database error"))
 
 	router := setupTestRouter(handler)
 	router.GET("/users/:id", handler.Get)
@@ -276,12 +303,11 @@ func TestHandler_Get_InternalServerError(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusInternalServerError, w.Code)
-	uc.AssertExpectations(t)
+	mocks.Create.AssertExpectations(t); mocks.Get.AssertExpectations(t); mocks.List.AssertExpectations(t); mocks.Update.AssertExpectations(t); mocks.Delete.AssertExpectations(t); mocks.Login.AssertExpectations(t)
 }
 
 func TestHandler_List_Success(t *testing.T) {
-	uc := &mockUserUseCase{}
-	handler := NewHandler(uc, testLogger)
+	handler, mocks := newTestHandler()
 
 	limit := 10
 	offset := 0
@@ -300,7 +326,7 @@ func TestHandler_List_Success(t *testing.T) {
 		Offset: offset,
 	}
 
-	uc.On("List", mock.Anything, limit, offset).Return(expectedResp, nil)
+	mocks.List.On("Execute", mock.Anything, limit, offset).Return(expectedResp, nil)
 
 	router := setupTestRouter(handler)
 	router.GET("/users", handler.List)
@@ -311,7 +337,7 @@ func TestHandler_List_Success(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusOK, w.Code)
-	uc.AssertExpectations(t)
+	mocks.Create.AssertExpectations(t); mocks.Get.AssertExpectations(t); mocks.List.AssertExpectations(t); mocks.Update.AssertExpectations(t); mocks.Delete.AssertExpectations(t); mocks.Login.AssertExpectations(t)
 
 	var response map[string]interface{}
 	err := json.Unmarshal(w.Body.Bytes(), &response)
@@ -321,8 +347,7 @@ func TestHandler_List_Success(t *testing.T) {
 }
 
 func TestHandler_List_WithQueryParams(t *testing.T) {
-	uc := &mockUserUseCase{}
-	handler := NewHandler(uc, testLogger)
+	handler, mocks := newTestHandler()
 
 	limit := 20
 	offset := 10
@@ -333,7 +358,7 @@ func TestHandler_List_WithQueryParams(t *testing.T) {
 		Offset: offset,
 	}
 
-	uc.On("List", mock.Anything, limit, offset).Return(expectedResp, nil)
+	mocks.List.On("Execute", mock.Anything, limit, offset).Return(expectedResp, nil)
 
 	router := setupTestRouter(handler)
 	router.GET("/users", handler.List)
@@ -344,16 +369,15 @@ func TestHandler_List_WithQueryParams(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusOK, w.Code)
-	uc.AssertExpectations(t)
+	mocks.Create.AssertExpectations(t); mocks.Get.AssertExpectations(t); mocks.List.AssertExpectations(t); mocks.Update.AssertExpectations(t); mocks.Delete.AssertExpectations(t); mocks.Login.AssertExpectations(t)
 }
 
 func TestHandler_List_InternalServerError(t *testing.T) {
-	uc := &mockUserUseCase{}
-	handler := NewHandler(uc, testLogger)
+	handler, mocks := newTestHandler()
 
 	limit := 10
 	offset := 0
-	uc.On("List", mock.Anything, limit, offset).Return(nil, errors.New("database error"))
+	mocks.List.On("Execute", mock.Anything, limit, offset).Return(nil, errors.New("database error"))
 
 	router := setupTestRouter(handler)
 	router.GET("/users", handler.List)
@@ -364,12 +388,11 @@ func TestHandler_List_InternalServerError(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusInternalServerError, w.Code)
-	uc.AssertExpectations(t)
+	mocks.Create.AssertExpectations(t); mocks.Get.AssertExpectations(t); mocks.List.AssertExpectations(t); mocks.Update.AssertExpectations(t); mocks.Delete.AssertExpectations(t); mocks.Login.AssertExpectations(t)
 }
 
 func TestHandler_Update_Success(t *testing.T) {
-	uc := &mockUserUseCase{}
-	handler := NewHandler(uc, testLogger)
+	handler, mocks := newTestHandler()
 
 	userID := int64(1)
 	reqBody := dto.UpdateUserRequest{
@@ -386,7 +409,7 @@ func TestHandler_Update_Success(t *testing.T) {
 		UpdatedAt: time.Now(),
 	}
 
-	uc.On("Update", mock.Anything, userID, reqBody).Return(expectedResp, nil)
+	mocks.Update.On("Execute", mock.Anything, userID, reqBody).Return(expectedResp, nil)
 
 	router := setupTestRouter(handler)
 	router.PUT("/users/:id", handler.Update)
@@ -399,7 +422,7 @@ func TestHandler_Update_Success(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusOK, w.Code)
-	uc.AssertExpectations(t)
+	mocks.Create.AssertExpectations(t); mocks.Get.AssertExpectations(t); mocks.List.AssertExpectations(t); mocks.Update.AssertExpectations(t); mocks.Delete.AssertExpectations(t); mocks.Login.AssertExpectations(t)
 
 	var response map[string]interface{}
 	err := json.Unmarshal(w.Body.Bytes(), &response)
@@ -409,8 +432,7 @@ func TestHandler_Update_Success(t *testing.T) {
 }
 
 func TestHandler_Update_BadRequest_InvalidID(t *testing.T) {
-	uc := &mockUserUseCase{}
-	handler := NewHandler(uc, testLogger)
+	handler, mocks := newTestHandler()
 
 	reqBody := dto.UpdateUserRequest{
 		Name:  "Updated User",
@@ -428,12 +450,11 @@ func TestHandler_Update_BadRequest_InvalidID(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
-	uc.AssertNotCalled(t, "Update")
+	mocks.Update.AssertNotCalled(t, "Execute")
 }
 
 func TestHandler_Update_BadRequest_InvalidJSON(t *testing.T) {
-	uc := &mockUserUseCase{}
-	handler := NewHandler(uc, testLogger)
+	handler, mocks := newTestHandler()
 
 	router := setupTestRouter(handler)
 	router.PUT("/users/:id", handler.Update)
@@ -445,12 +466,11 @@ func TestHandler_Update_BadRequest_InvalidJSON(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
-	uc.AssertNotCalled(t, "Update")
+	mocks.Update.AssertNotCalled(t, "Execute")
 }
 
 func TestHandler_Update_NotFound(t *testing.T) {
-	uc := &mockUserUseCase{}
-	handler := NewHandler(uc, testLogger)
+	handler, mocks := newTestHandler()
 
 	userID := int64(999)
 	reqBody := dto.UpdateUserRequest{
@@ -458,7 +478,7 @@ func TestHandler_Update_NotFound(t *testing.T) {
 		Email: "updated@example.com",
 	}
 
-	uc.On("Update", mock.Anything, userID, reqBody).Return(nil, userentity.NewUserNotFound())
+	mocks.Update.On("Execute", mock.Anything, userID, reqBody).Return(nil, userentity.NewUserNotFound())
 
 	router := setupTestRouter(handler)
 	router.PUT("/users/:id", handler.Update)
@@ -471,12 +491,11 @@ func TestHandler_Update_NotFound(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusNotFound, w.Code)
-	uc.AssertExpectations(t)
+	mocks.Create.AssertExpectations(t); mocks.Get.AssertExpectations(t); mocks.List.AssertExpectations(t); mocks.Update.AssertExpectations(t); mocks.Delete.AssertExpectations(t); mocks.Login.AssertExpectations(t)
 }
 
 func TestHandler_Update_Conflict_EmailExists(t *testing.T) {
-	uc := &mockUserUseCase{}
-	handler := NewHandler(uc, testLogger)
+	handler, mocks := newTestHandler()
 
 	userID := int64(1)
 	reqBody := dto.UpdateUserRequest{
@@ -484,7 +503,7 @@ func TestHandler_Update_Conflict_EmailExists(t *testing.T) {
 		Email: "existing@example.com",
 	}
 
-	uc.On("Update", mock.Anything, userID, reqBody).Return(nil, userentity.NewEmailExists())
+	mocks.Update.On("Execute", mock.Anything, userID, reqBody).Return(nil, userentity.NewEmailExists())
 
 	router := setupTestRouter(handler)
 	router.PUT("/users/:id", handler.Update)
@@ -497,12 +516,11 @@ func TestHandler_Update_Conflict_EmailExists(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusConflict, w.Code)
-	uc.AssertExpectations(t)
+	mocks.Create.AssertExpectations(t); mocks.Get.AssertExpectations(t); mocks.List.AssertExpectations(t); mocks.Update.AssertExpectations(t); mocks.Delete.AssertExpectations(t); mocks.Login.AssertExpectations(t)
 }
 
 func TestHandler_Update_InternalServerError(t *testing.T) {
-	uc := &mockUserUseCase{}
-	handler := NewHandler(uc, testLogger)
+	handler, mocks := newTestHandler()
 
 	userID := int64(1)
 	reqBody := dto.UpdateUserRequest{
@@ -510,7 +528,7 @@ func TestHandler_Update_InternalServerError(t *testing.T) {
 		Email: "updated@example.com",
 	}
 
-	uc.On("Update", mock.Anything, userID, reqBody).Return(nil, errors.New("database error"))
+	mocks.Update.On("Execute", mock.Anything, userID, reqBody).Return(nil, errors.New("database error"))
 
 	router := setupTestRouter(handler)
 	router.PUT("/users/:id", handler.Update)
@@ -523,15 +541,14 @@ func TestHandler_Update_InternalServerError(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusInternalServerError, w.Code)
-	uc.AssertExpectations(t)
+	mocks.Create.AssertExpectations(t); mocks.Get.AssertExpectations(t); mocks.List.AssertExpectations(t); mocks.Update.AssertExpectations(t); mocks.Delete.AssertExpectations(t); mocks.Login.AssertExpectations(t)
 }
 
 func TestHandler_Delete_Success(t *testing.T) {
-	uc := &mockUserUseCase{}
-	handler := NewHandler(uc, testLogger)
+	handler, mocks := newTestHandler()
 
 	userID := int64(1)
-	uc.On("Delete", mock.Anything, userID).Return(nil)
+	mocks.Delete.On("Execute", mock.Anything, userID).Return(nil)
 
 	router := setupTestRouter(handler)
 	router.DELETE("/users/:id", handler.Delete)
@@ -542,7 +559,7 @@ func TestHandler_Delete_Success(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusOK, w.Code)
-	uc.AssertExpectations(t)
+	mocks.Create.AssertExpectations(t); mocks.Get.AssertExpectations(t); mocks.List.AssertExpectations(t); mocks.Update.AssertExpectations(t); mocks.Delete.AssertExpectations(t); mocks.Login.AssertExpectations(t)
 
 	var response map[string]interface{}
 	err := json.Unmarshal(w.Body.Bytes(), &response)
@@ -552,8 +569,7 @@ func TestHandler_Delete_Success(t *testing.T) {
 }
 
 func TestHandler_Delete_BadRequest_InvalidID(t *testing.T) {
-	uc := &mockUserUseCase{}
-	handler := NewHandler(uc, testLogger)
+	handler, mocks := newTestHandler()
 
 	router := setupTestRouter(handler)
 	router.DELETE("/users/:id", handler.Delete)
@@ -564,15 +580,14 @@ func TestHandler_Delete_BadRequest_InvalidID(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
-	uc.AssertNotCalled(t, "Delete")
+	mocks.Delete.AssertNotCalled(t, "Execute")
 }
 
 func TestHandler_Delete_NotFound(t *testing.T) {
-	uc := &mockUserUseCase{}
-	handler := NewHandler(uc, testLogger)
+	handler, mocks := newTestHandler()
 
 	userID := int64(999)
-	uc.On("Delete", mock.Anything, userID).Return(userentity.NewUserNotFound())
+	mocks.Delete.On("Execute", mock.Anything, userID).Return(userentity.NewUserNotFound())
 
 	router := setupTestRouter(handler)
 	router.DELETE("/users/:id", handler.Delete)
@@ -583,15 +598,14 @@ func TestHandler_Delete_NotFound(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusNotFound, w.Code)
-	uc.AssertExpectations(t)
+	mocks.Create.AssertExpectations(t); mocks.Get.AssertExpectations(t); mocks.List.AssertExpectations(t); mocks.Update.AssertExpectations(t); mocks.Delete.AssertExpectations(t); mocks.Login.AssertExpectations(t)
 }
 
 func TestHandler_Delete_InternalServerError(t *testing.T) {
-	uc := &mockUserUseCase{}
-	handler := NewHandler(uc, testLogger)
+	handler, mocks := newTestHandler()
 
 	userID := int64(1)
-	uc.On("Delete", mock.Anything, userID).Return(errors.New("database error"))
+	mocks.Delete.On("Execute", mock.Anything, userID).Return(errors.New("database error"))
 
 	router := setupTestRouter(handler)
 	router.DELETE("/users/:id", handler.Delete)
@@ -602,12 +616,11 @@ func TestHandler_Delete_InternalServerError(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusInternalServerError, w.Code)
-	uc.AssertExpectations(t)
+	mocks.Create.AssertExpectations(t); mocks.Get.AssertExpectations(t); mocks.List.AssertExpectations(t); mocks.Update.AssertExpectations(t); mocks.Delete.AssertExpectations(t); mocks.Login.AssertExpectations(t)
 }
 
 func TestHandler_Register_Success(t *testing.T) {
-	uc := &mockUserUseCase{}
-	handler := NewHandler(uc, testLogger)
+	handler, mocks := newTestHandler()
 
 	reqBody := dto.CreateUserRequest{
 		Name:     "Test User",
@@ -623,7 +636,7 @@ func TestHandler_Register_Success(t *testing.T) {
 		UpdatedAt: time.Now(),
 	}
 
-	uc.On("Create", mock.Anything, reqBody).Return(expectedResp, nil)
+	mocks.Create.On("Execute", mock.Anything, reqBody).Return(expectedResp, nil)
 
 	router := setupTestRouter(handler)
 	router.POST("/users/register", handler.Register)
@@ -636,7 +649,7 @@ func TestHandler_Register_Success(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusCreated, w.Code)
-	uc.AssertExpectations(t)
+	mocks.Create.AssertExpectations(t); mocks.Get.AssertExpectations(t); mocks.List.AssertExpectations(t); mocks.Update.AssertExpectations(t); mocks.Delete.AssertExpectations(t); mocks.Login.AssertExpectations(t)
 
 	var response map[string]interface{}
 	err := json.Unmarshal(w.Body.Bytes(), &response)
@@ -646,8 +659,7 @@ func TestHandler_Register_Success(t *testing.T) {
 }
 
 func TestHandler_Register_BadRequest_InvalidJSON(t *testing.T) {
-	uc := &mockUserUseCase{}
-	handler := NewHandler(uc, testLogger)
+	handler, mocks := newTestHandler()
 
 	router := setupTestRouter(handler)
 	router.POST("/users/register", handler.Register)
@@ -659,12 +671,11 @@ func TestHandler_Register_BadRequest_InvalidJSON(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
-	uc.AssertNotCalled(t, "Create")
+	mocks.Create.AssertNotCalled(t, "Execute")
 }
 
 func TestHandler_Register_Conflict_EmailExists(t *testing.T) {
-	uc := &mockUserUseCase{}
-	handler := NewHandler(uc, testLogger)
+	handler, mocks := newTestHandler()
 
 	reqBody := dto.CreateUserRequest{
 		Name:     "Test User",
@@ -672,7 +683,7 @@ func TestHandler_Register_Conflict_EmailExists(t *testing.T) {
 		Password: "password123",
 	}
 
-	uc.On("Create", mock.Anything, reqBody).Return(nil, userentity.NewEmailExists())
+	mocks.Create.On("Execute", mock.Anything, reqBody).Return(nil, userentity.NewEmailExists())
 
 	router := setupTestRouter(handler)
 	router.POST("/users/register", handler.Register)
@@ -685,12 +696,11 @@ func TestHandler_Register_Conflict_EmailExists(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusConflict, w.Code)
-	uc.AssertExpectations(t)
+	mocks.Create.AssertExpectations(t); mocks.Get.AssertExpectations(t); mocks.List.AssertExpectations(t); mocks.Update.AssertExpectations(t); mocks.Delete.AssertExpectations(t); mocks.Login.AssertExpectations(t)
 }
 
 func TestHandler_Login_Success(t *testing.T) {
-	uc := &mockUserUseCase{}
-	handler := NewHandler(uc, testLogger)
+	handler, mocks := newTestHandler()
 
 	reqBody := dto.LoginRequest{
 		Email:    "test@example.com",
@@ -708,7 +718,7 @@ func TestHandler_Login_Success(t *testing.T) {
 		},
 	}
 
-	uc.On("Login", mock.Anything, reqBody).Return(expectedResp, nil)
+	mocks.Login.On("Execute", mock.Anything, reqBody).Return(expectedResp, nil)
 
 	router := setupTestRouter(handler)
 	router.POST("/users/login", handler.Login)
@@ -721,7 +731,7 @@ func TestHandler_Login_Success(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusOK, w.Code)
-	uc.AssertExpectations(t)
+	mocks.Create.AssertExpectations(t); mocks.Get.AssertExpectations(t); mocks.List.AssertExpectations(t); mocks.Update.AssertExpectations(t); mocks.Delete.AssertExpectations(t); mocks.Login.AssertExpectations(t)
 
 	var response map[string]interface{}
 	err := json.Unmarshal(w.Body.Bytes(), &response)
@@ -731,8 +741,7 @@ func TestHandler_Login_Success(t *testing.T) {
 }
 
 func TestHandler_Login_BadRequest_InvalidJSON(t *testing.T) {
-	uc := &mockUserUseCase{}
-	handler := NewHandler(uc, testLogger)
+	handler, mocks := newTestHandler()
 
 	router := setupTestRouter(handler)
 	router.POST("/users/login", handler.Login)
@@ -744,19 +753,18 @@ func TestHandler_Login_BadRequest_InvalidJSON(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
-	uc.AssertNotCalled(t, "Login")
+	mocks.Login.AssertNotCalled(t, "Execute")
 }
 
 func TestHandler_Login_Unauthorized_InvalidCredentials(t *testing.T) {
-	uc := &mockUserUseCase{}
-	handler := NewHandler(uc, testLogger)
+	handler, mocks := newTestHandler()
 
 	reqBody := dto.LoginRequest{
 		Email:    "test@example.com",
 		Password: "wrongpassword",
 	}
 
-	uc.On("Login", mock.Anything, reqBody).Return(nil, userentity.NewInvalidCredentials())
+	mocks.Login.On("Execute", mock.Anything, reqBody).Return(nil, userentity.NewInvalidCredentials())
 
 	router := setupTestRouter(handler)
 	router.POST("/users/login", handler.Login)
@@ -769,19 +777,18 @@ func TestHandler_Login_Unauthorized_InvalidCredentials(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusUnauthorized, w.Code)
-	uc.AssertExpectations(t)
+	mocks.Create.AssertExpectations(t); mocks.Get.AssertExpectations(t); mocks.List.AssertExpectations(t); mocks.Update.AssertExpectations(t); mocks.Delete.AssertExpectations(t); mocks.Login.AssertExpectations(t)
 }
 
 func TestHandler_Login_InternalServerError(t *testing.T) {
-	uc := &mockUserUseCase{}
-	handler := NewHandler(uc, testLogger)
+	handler, mocks := newTestHandler()
 
 	reqBody := dto.LoginRequest{
 		Email:    "test@example.com",
 		Password: "password123",
 	}
 
-	uc.On("Login", mock.Anything, reqBody).Return(nil, errors.New("database error"))
+	mocks.Login.On("Execute", mock.Anything, reqBody).Return(nil, errors.New("database error"))
 
 	router := setupTestRouter(handler)
 	router.POST("/users/login", handler.Login)
@@ -794,5 +801,5 @@ func TestHandler_Login_InternalServerError(t *testing.T) {
 	router.ServeHTTP(w, req)
 
 	assert.Equal(t, http.StatusInternalServerError, w.Code)
-	uc.AssertExpectations(t)
+	mocks.Create.AssertExpectations(t); mocks.Get.AssertExpectations(t); mocks.List.AssertExpectations(t); mocks.Update.AssertExpectations(t); mocks.Delete.AssertExpectations(t); mocks.Login.AssertExpectations(t)
 }

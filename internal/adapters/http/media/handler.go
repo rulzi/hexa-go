@@ -10,30 +10,62 @@ import (
 	"github.com/rulzi/hexa-go/internal/adapters/http/errmapper"
 	"github.com/rulzi/hexa-go/internal/adapters/http/response"
 	"github.com/rulzi/hexa-go/internal/application/media/dto"
+	"github.com/rulzi/hexa-go/internal/application/media/usecase"
 	domainerrs "github.com/rulzi/hexa-go/internal/domain/errs"
 	"github.com/rulzi/hexa-go/internal/infrastructure/logger"
 )
 
-// UseCase is the interface for media operations
-type UseCase interface {
-	Create(ctx context.Context, filename string, file io.Reader) (*dto.MediaResponse, error)
-	Get(ctx context.Context, id int64) (*dto.MediaResponse, error)
-	List(ctx context.Context, limit, offset int) (*dto.ListMediaResponse, error)
-	Update(ctx context.Context, id int64, filename string, file io.Reader) (*dto.MediaResponse, error)
-	Delete(ctx context.Context, id int64) error
+type createUseCase interface {
+	Execute(ctx context.Context, filename string, file io.Reader) (*dto.MediaResponse, error)
+}
+
+type getUseCase interface {
+	Execute(ctx context.Context, id int64) (*dto.MediaResponse, error)
+}
+
+type listUseCase interface {
+	Execute(ctx context.Context, limit, offset int) (*dto.ListMediaResponse, error)
+}
+
+type updateUseCase interface {
+	Execute(ctx context.Context, id int64, filename string, file io.Reader) (*dto.MediaResponse, error)
+}
+
+type deleteUseCase interface {
+	Execute(ctx context.Context, id int64) error
+}
+
+// Deps holds media use case operations
+type Deps struct {
+	Create createUseCase
+	Get    getUseCase
+	List   listUseCase
+	Update updateUseCase
+	Delete deleteUseCase
 }
 
 // Handler handles HTTP requests for media
 type Handler struct {
-	mediaUseCase UseCase
-	logger       logger.Logger
+	deps   Deps
+	logger logger.Logger
 }
 
 // NewHandler creates a new Handler
-func NewHandler(mediaUseCase UseCase, appLogger logger.Logger) *Handler {
+func NewHandler(mediaUseCase *usecase.MediaUseCase, appLogger logger.Logger) *Handler {
+	return NewHandlerWithDeps(Deps{
+		Create: mediaUseCase.Create,
+		Get:    mediaUseCase.Get,
+		List:   mediaUseCase.List,
+		Update: mediaUseCase.Update,
+		Delete: mediaUseCase.Delete,
+	}, appLogger)
+}
+
+// NewHandlerWithDeps creates a new Handler with explicit dependencies
+func NewHandlerWithDeps(deps Deps, appLogger logger.Logger) *Handler {
 	return &Handler{
-		mediaUseCase: mediaUseCase,
-		logger:       appLogger,
+		deps:   deps,
+		logger: appLogger,
 	}
 }
 
@@ -59,7 +91,7 @@ func (h *Handler) Create(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.mediaUseCase.Create(c.Request.Context(), filename, reader)
+	resp, err := h.deps.Create.Execute(c.Request.Context(), filename, reader)
 	if err != nil {
 		h.handleUseCaseError(c, err, map[string]interface{}{"filename": filename}, "media create failed")
 		return
@@ -77,7 +109,7 @@ func (h *Handler) Get(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.mediaUseCase.Get(c.Request.Context(), id)
+	resp, err := h.deps.Get.Execute(c.Request.Context(), id)
 	if err != nil {
 		h.handleUseCaseError(c, err, map[string]interface{}{"media_id": id}, "media get failed")
 		return
@@ -91,7 +123,7 @@ func (h *Handler) List(c *gin.Context) {
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
 	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
 
-	resp, err := h.mediaUseCase.List(c.Request.Context(), limit, offset)
+	resp, err := h.deps.List.Execute(c.Request.Context(), limit, offset)
 	if err != nil {
 		h.handleUseCaseError(c, err, nil, "media list failed")
 		return
@@ -114,7 +146,7 @@ func (h *Handler) Update(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.mediaUseCase.Update(c.Request.Context(), id, filename, reader)
+	resp, err := h.deps.Update.Execute(c.Request.Context(), id, filename, reader)
 	if err != nil {
 		h.handleUseCaseError(c, err, map[string]interface{}{"media_id": id, "filename": filename}, "media update failed")
 		return
@@ -151,7 +183,7 @@ func (h *Handler) Delete(c *gin.Context) {
 		return
 	}
 
-	err = h.mediaUseCase.Delete(c.Request.Context(), id)
+	err = h.deps.Delete.Execute(c.Request.Context(), id)
 	if err != nil {
 		h.handleUseCaseError(c, err, map[string]interface{}{"media_id": id}, "media delete failed")
 		return
