@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -48,4 +49,44 @@ func TestDeleteMedia_Execute_MediaNotFound(t *testing.T) {
 	assert.True(t, mediaentity.IsMediaNotFound(err))
 	storage.AssertNotCalled(t, "Delete")
 	repo.AssertNotCalled(t, "Delete")
+}
+
+func TestDeleteMedia_Execute_StorageError(t *testing.T) {
+	ctx := context.Background()
+	repo := &mockMediaRepository{}
+	storage := &mockMediaStorage{}
+	uc := NewDeleteMedia(repo, storage)
+
+	mediaID := int64(1)
+	existingMedia := &mediaentity.Media{
+		ID: mediaID, Name: "test.jpg", Path: "path/test.jpg",
+		CreatedAt: time.Now(), UpdatedAt: time.Now(),
+	}
+	repo.On("GetByID", ctx, mediaID).Return(existingMedia, nil)
+	storage.On("Delete", ctx, existingMedia.Path).Return(errors.New("storage error"))
+
+	err := uc.Execute(ctx, mediaID)
+
+	assert.Error(t, err)
+	repo.AssertNotCalled(t, "Delete")
+}
+
+func TestDeleteMedia_Execute_RepoDeleteError(t *testing.T) {
+	ctx := context.Background()
+	repo := &mockMediaRepository{}
+	storage := &mockMediaStorage{}
+	uc := NewDeleteMedia(repo, storage)
+
+	mediaID := int64(1)
+	existingMedia := &mediaentity.Media{
+		ID: mediaID, Name: "test.jpg", Path: "path/test.jpg",
+		CreatedAt: time.Now(), UpdatedAt: time.Now(),
+	}
+	repo.On("GetByID", ctx, mediaID).Return(existingMedia, nil)
+	storage.On("Delete", ctx, existingMedia.Path).Return(nil)
+	repo.On("Delete", ctx, mediaID).Return(errors.New("db error"))
+
+	err := uc.Execute(ctx, mediaID)
+
+	assert.Error(t, err)
 }

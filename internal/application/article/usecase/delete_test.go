@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -72,4 +73,41 @@ func TestDeleteArticle_Execute_WithNoopCache(t *testing.T) {
 	assert.NoError(t, err)
 	repo.AssertExpectations(t)
 	listCache.AssertExpectations(t)
+}
+
+func TestDeleteArticle_Execute_GetByIDError(t *testing.T) {
+	ctx := context.Background()
+	repo := &mockArticleRepository{}
+	cache := &mockArticleCache{}
+	listCache := &mockArticleListCache{}
+	uc := NewDeleteArticle(repo, cache, listCache)
+
+	articleID := int64(1)
+	repo.On("GetByID", ctx, articleID).Return(nil, errors.New("db error"))
+
+	err := uc.Execute(ctx, articleID)
+
+	assert.Error(t, err)
+	repo.AssertNotCalled(t, "Delete")
+}
+
+func TestDeleteArticle_Execute_DeleteError(t *testing.T) {
+	ctx := context.Background()
+	repo := &mockArticleRepository{}
+	cache := &mockArticleCache{}
+	listCache := &mockArticleListCache{}
+	uc := NewDeleteArticle(repo, cache, listCache)
+
+	articleID := int64(1)
+	existingArticle := &articleentity.Article{
+		ID: articleID, Title: "Test", Content: "Content", AuthorID: 1,
+		CreatedAt: time.Now(), UpdatedAt: time.Now(),
+	}
+	repo.On("GetByID", ctx, articleID).Return(existingArticle, nil)
+	repo.On("Delete", ctx, articleID).Return(errors.New("delete failed"))
+
+	err := uc.Execute(ctx, articleID)
+
+	assert.Error(t, err)
+	cache.AssertNotCalled(t, "Delete")
 }

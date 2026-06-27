@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -35,4 +36,55 @@ func TestListUser_Execute_Success(t *testing.T) {
 	assert.Equal(t, total, result.Total)
 	assert.Equal(t, limit, result.Limit)
 	assert.Len(t, result.Users, 1)
+}
+
+func TestListUser_Execute_DefaultPagination(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	ctx := context.Background()
+	repo := usermocks.NewMockRepository(ctrl)
+	uc := NewListUser(repo)
+
+	repo.EXPECT().List(ctx, 10, 0).Return([]*userentity.User{}, nil)
+	repo.EXPECT().Count(ctx).Return(int64(0), nil)
+
+	result, err := uc.Execute(ctx, 0, -1)
+
+	assert.NoError(t, err)
+	assert.Equal(t, 10, result.Limit)
+	assert.Equal(t, 0, result.Offset)
+}
+
+func TestListUser_Execute_ListError(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	ctx := context.Background()
+	repo := usermocks.NewMockRepository(ctrl)
+	uc := NewListUser(repo)
+
+	repo.EXPECT().List(ctx, 10, 0).Return(nil, errors.New("db error"))
+
+	result, err := uc.Execute(ctx, 10, 0)
+
+	assert.Error(t, err)
+	assert.Nil(t, result)
+}
+
+func TestListUser_Execute_CountError(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	ctx := context.Background()
+	repo := usermocks.NewMockRepository(ctrl)
+	uc := NewListUser(repo)
+
+	repo.EXPECT().List(ctx, 10, 0).Return([]*userentity.User{}, nil)
+	repo.EXPECT().Count(ctx).Return(int64(0), errors.New("count error"))
+
+	result, err := uc.Execute(ctx, 10, 0)
+
+	assert.Error(t, err)
+	assert.Nil(t, result)
 }

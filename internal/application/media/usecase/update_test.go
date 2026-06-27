@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"testing"
 	"time"
@@ -61,4 +62,48 @@ func TestUpdateMedia_Execute_MediaNotFound(t *testing.T) {
 	assert.True(t, mediaentity.IsMediaNotFound(err))
 	assert.Nil(t, result)
 	storage.AssertNotCalled(t, "Save")
+}
+
+func TestUpdateMedia_Execute_StorageError(t *testing.T) {
+	ctx := context.Background()
+	repo := &mockMediaRepository{}
+	storage := &mockMediaStorage{}
+	uc := NewUpdateMedia(repo, storage, "http://localhost:8080")
+
+	mediaID := int64(1)
+	existingMedia := &mediaentity.Media{
+		ID: mediaID, Name: "old.jpg", Path: "old/path.jpg",
+		CreatedAt: time.Now(), UpdatedAt: time.Now(),
+	}
+	repo.On("GetByID", ctx, mediaID).Return(existingMedia, nil)
+	storage.On("Save", ctx, "new.jpg", mock.Anything).Return("", errors.New("storage error"))
+
+	result, err := uc.Execute(ctx, mediaID, "new.jpg", strings.NewReader("x"))
+
+	assert.Error(t, err)
+	assert.Nil(t, result)
+}
+
+func TestUpdateMedia_Execute_RepoUpdateError(t *testing.T) {
+	ctx := context.Background()
+	repo := &mockMediaRepository{}
+	storage := &mockMediaStorage{}
+	uc := NewUpdateMedia(repo, storage, "http://localhost:8080")
+
+	mediaID := int64(1)
+	existingMedia := &mediaentity.Media{
+		ID: mediaID, Name: "old.jpg", Path: "old/path.jpg",
+		CreatedAt: time.Now(), UpdatedAt: time.Now(),
+	}
+	newPath := "new/path.jpg"
+
+	repo.On("GetByID", ctx, mediaID).Return(existingMedia, nil)
+	storage.On("Save", ctx, "new.jpg", mock.Anything).Return(newPath, nil)
+	storage.On("Delete", ctx, newPath).Return(nil)
+	repo.On("Update", ctx, mock.Anything).Return(nil, errors.New("db error"))
+
+	result, err := uc.Execute(ctx, mediaID, "new.jpg", strings.NewReader("content"))
+
+	assert.Error(t, err)
+	assert.Nil(t, result)
 }

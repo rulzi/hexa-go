@@ -60,3 +60,68 @@ func TestErrorsAs_WithFmtWrap(t *testing.T) {
 	assert.True(t, IsValidation(wrapped))
 	assert.Equal(t, "email is required", Message(wrapped))
 }
+
+func TestWrap_Nil(t *testing.T) {
+	assert.Nil(t, Wrap(nil, "context"))
+}
+
+func TestWrap_AllDomainTypes(t *testing.T) {
+	testCases := []struct {
+		name   string
+		err    error
+		check  func(error) bool
+	}{
+		{"not found", NewNotFound("NF", "not found"), IsNotFound},
+		{"validation", NewValidation("VAL", "invalid"), IsValidation},
+		{"conflict", NewConflict("CF", "conflict"), IsConflict},
+		{"unauthorized", NewUnauthorized("UA", "unauthorized"), IsUnauthorized},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			wrapped := Wrap(tc.err, "operation")
+			assert.True(t, tc.check(wrapped))
+			assert.ErrorIs(t, wrapped, tc.err)
+		})
+	}
+}
+
+func TestWrap_GenericError(t *testing.T) {
+	original := errors.New("db down")
+	wrapped := Wrap(original, "query")
+
+	assert.False(t, IsNotFound(wrapped))
+	assert.ErrorIs(t, wrapped, original)
+}
+
+func TestIsCode_False(t *testing.T) {
+	err := NewNotFound("USER_NOT_FOUND", "missing")
+	assert.False(t, IsCode(err, "OTHER_CODE"))
+	assert.False(t, IsCode(errors.New("plain"), "USER_NOT_FOUND"))
+}
+
+func TestDomainError_Unwrap(t *testing.T) {
+	cause := errors.New("root cause")
+
+	notFound := &NotFoundError{code: "NF", message: "missing", cause: cause}
+	assert.Equal(t, cause, notFound.Unwrap())
+
+	validation := &ValidationError{code: "VAL", message: "bad", cause: cause}
+	assert.Equal(t, cause, validation.Unwrap())
+
+	conflict := &ConflictError{code: "CF", message: "dup", cause: cause}
+	assert.Equal(t, cause, conflict.Unwrap())
+
+	unauthorized := &UnauthorizedError{code: "UA", message: "denied", cause: cause}
+	assert.Equal(t, cause, unauthorized.Unwrap())
+}
+
+func TestDomainError_CodeAndError(t *testing.T) {
+	conflict := NewConflict("CF", "duplicate")
+	assert.Equal(t, "duplicate", conflict.Error())
+	assert.Equal(t, "CF", conflict.Code())
+
+	unauthorized := NewUnauthorized("UA", "denied")
+	assert.Equal(t, "denied", unauthorized.Error())
+	assert.Equal(t, "UA", unauthorized.Code())
+}

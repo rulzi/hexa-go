@@ -60,3 +60,45 @@ func TestCreateMedia_Execute_StorageError(t *testing.T) {
 	assert.Nil(t, result)
 	repo.AssertNotCalled(t, "Create")
 }
+
+func TestCreateMedia_Execute_RepoError(t *testing.T) {
+	ctx := context.Background()
+	repo := &mockMediaRepository{}
+	storage := &mockMediaStorage{}
+	baseURL := "http://localhost:8080"
+
+	uc := NewCreateMedia(repo, storage, baseURL)
+
+	filename := "test.jpg"
+	file := strings.NewReader("content")
+	storagePath := "2025/01/01/test.jpg"
+
+	storage.On("Save", ctx, filename, mock.Anything).Return(storagePath, nil)
+	storage.On("Delete", ctx, storagePath).Return(nil)
+	repo.On("Create", ctx, mock.Anything).Return(nil, errors.New("db error"))
+
+	result, err := uc.Execute(ctx, filename, file)
+
+	assert.Error(t, err)
+	assert.Nil(t, result)
+	storage.AssertExpectations(t)
+}
+
+func TestCreateMedia_Execute_ValidationError(t *testing.T) {
+	ctx := context.Background()
+	repo := &mockMediaRepository{}
+	storage := &mockMediaStorage{}
+	baseURL := "http://localhost:8080"
+
+	uc := NewCreateMedia(repo, storage, baseURL)
+
+	storagePath := "2025/01/01/test.jpg"
+	storage.On("Save", ctx, "", mock.Anything).Return(storagePath, nil)
+	storage.On("Delete", ctx, storagePath).Return(nil)
+
+	result, err := uc.Execute(ctx, "", strings.NewReader("content"))
+
+	assert.Error(t, err)
+	assert.Nil(t, result)
+	repo.AssertNotCalled(t, "Create")
+}

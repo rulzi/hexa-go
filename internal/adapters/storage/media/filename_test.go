@@ -66,3 +66,10 @@ func TestSanitizeFilename_RejectsInvalidBasename(t *testing.T) {
 	_, err = SanitizeFilename("")
 	assert.ErrorIs(t, err, ErrInvalidFilename)
 }
+
+func TestAllowedExtensions(t *testing.T) {
+	exts := AllowedExtensions()
+	assert.Contains(t, exts, ".jpg")
+	assert.Contains(t, exts, ".pdf")
+	assert.NotContains(t, exts, ".php")
+}
